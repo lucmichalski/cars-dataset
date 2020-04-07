@@ -26,7 +26,7 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/jinzhu/gorm"
 	"github.com/k0kubun/pp"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/qor/media"
 	"github.com/qor/media/media_library"
 	"github.com/qor/validations"
@@ -58,7 +58,7 @@ func main() {
 
 	// Instanciate the sqlite3 client
 
-	DB, err = gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
+	DB, err := gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
 	if err != nil {
 		log.Fatal(err)
 	}

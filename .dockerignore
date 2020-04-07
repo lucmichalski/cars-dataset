@@ -7,8 +7,6 @@
 *.yml
 *.md
 Dockerfile
-go.mod
-go.sum
 data
 data/**
 public

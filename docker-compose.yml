@@ -7,16 +7,27 @@ services:
     container_name: ${NAMESPACE}-crawler  
     build: .
     ports:
-    - 7000:7000
+    - 9000:9000
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
     volumes:
     - public-data:/opt/lucmichalski/bin/public
     restart: unless-stopped
+    depends_on:
+    - mysql
+    links:
+    - mysql:mysql
 
   mysql:
     image: mysql:5.7
     container_name: ${NAMESPACE}-db
     ports:
-    - 3306:3306
+    - 13306:3306
     volumes:
     - db-data:/var/lib/mysql
     environment:
@@ -26,8 +37,21 @@ services:
       MYSQL_USER: ${MYSQL_USER}
     restart: unless-stopped
 
+  imaginary:
+    image: h2non/imaginary:latest
+    container_name: ${NAMESPACE}_imaginary
+    volumes:
+    - imaginary-data:/mnt/data
+    environment:
+       PORT: 9002
+    ports:
+    - "9002:9002"
+    command: -cors -gzip -enable-url-source -mount /mnt/data
+    restart: unless-stopped
+
 volumes:
   db-data:
+  imaginary-data:
   public-data:
     driver_opts:
       type: none
