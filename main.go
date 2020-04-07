@@ -35,17 +35,19 @@ import (
 )
 
 var (
-	isHelp       bool
-	isVerbose      bool
-	isAdmin      bool
-	isCrawl      bool
-	isDataset    bool
+	isHelp        bool
+	isVerbose     bool
+	isAdmin       bool
+	isCrawl       bool
+	isDataset     bool
+	parallelJobs  int
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
 )
 
 func main() {
 
+	pflag.IntVarP(&parallelJobs, "parallel-jobs", "j", 35, "parallel jobs.")
 	pflag.BoolVarP(&isAdmin, "admin", "a", false, "launch web admin interface.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
 	pflag.BoolVarP(&isDataset, "dataset", "d", false, "launch the crawler.")
@@ -162,7 +164,7 @@ func main() {
 
 	// create a request queue with 1 consumer thread
 	q, _ := queue.New(
-		4, // Number of consumer threads set to 1 to avoid dead lock on database
+		parallelJobs, // Number of consumer threads set to 1 to avoid dead lock on database
 		&queue.InMemoryQueueStorage{
 			MaxSize: queueMaxSize,
 		}, // Use default queue storage
