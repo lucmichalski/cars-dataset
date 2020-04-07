@@ -13,3 +13,16 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+*.db
+*.db-shm
+*.db*
+data
+data/
+data/*
+data/**
+
+public
+public/
+public/*
+public/**
