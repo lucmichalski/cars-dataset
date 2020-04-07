@@ -36,7 +36,7 @@ import (
 
 var (
 	isHelp       bool
-	isDebug      bool
+	isVerbose      bool
 	isAdmin      bool
 	isCrawl      bool
 	isDataset    bool
@@ -48,7 +48,8 @@ func main() {
 
 	pflag.BoolVarP(&isAdmin, "admin", "a", false, "launch web admin interface.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
-	pflag.BoolVarP(&isDebug, "debug", "d", false, "debug mode.")
+	pflag.BoolVarP(&isDataset, "dataset", "d", false, "launch the crawler.")
+	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
 	pflag.Parse()
 	if isHelp {
@@ -92,7 +93,6 @@ func main() {
 			Images string
 		}
 
-		// [{"ID":4598,"Url":"/system/vehicle_images/4598/file.png","VideoLink":"","FileName":"","Description":""}]
 		type entryProperty struct {
 			ID          int
 			Url         string
@@ -119,7 +119,7 @@ func main() {
 				continue
 			}
 
-			prefixPath := filepath.Join("./", "shared", "datasets", "cars", result.Name)
+			prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
 			os.MkdirAll(prefixPath, 0755)
 			pp.Println("prefixPath:", prefixPath)
 
@@ -145,6 +145,7 @@ func main() {
 				sfile.Sync()
 			}
 		}
+		os.Exit(0)
 	}
 
 	// Instantiate default collector
@@ -196,14 +197,14 @@ func main() {
 		vehicle := &vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 		modele := e.ChildText("span[class=modele]")
-		if isDebug {
+		if isVerbose {
 			fmt.Println("modele:", modele)
 		}
 		if modele == "" {
 			return
 		}
 		version := e.ChildText("span[class=version]")
-		if isDebug {
+		if isVerbose {
 			fmt.Println("version:", version)
 		}
 
@@ -217,7 +218,7 @@ func main() {
 						log.Fatalln("unmarshal error, ", err)
 					}
 				}
-				if isDebug {
+				if isVerbose {
 					pp.Println(carInfo)
 				}
 			}
@@ -242,7 +243,7 @@ func main() {
 		e.ForEach(`div[class=swiper-slide] > img`, func(_ int, el *colly.HTMLElement) {
 			carPicSrc := el.Attr("src")
 			carPicDataSrc := el.Attr("data-src")
-			if isDebug {
+			if isVerbose {
 				if carPicSrc != "" {
 					fmt.Println("carPicSrc:", carPicSrc)
 				}
@@ -257,7 +258,7 @@ func main() {
 		})
 
 		carImgLinks = removeDuplicates(carImgLinks)
-		if isDebug {
+		if isVerbose {
 			pp.Println(carImgLinks)
 		}
 
@@ -365,7 +366,7 @@ func main() {
 
 		})
 
-		if isDebug {
+		if isVerbose {
 			fmt.Println("manufacturer:", manufacturer)
 			fmt.Println("color:", color)
 			fmt.Println("model:", model)
@@ -391,14 +392,14 @@ func main() {
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		if isDebug {
+		if isVerbose {
 			fmt.Println("OnResponse from", r.Ctx.Get("url"))
 		}
 	})
 
 	// Before making a request print "Visiting ..."
 	c.OnRequest(func(r *colly.Request) {
-		//if isDebug {
+		//if isVerbose {
 		fmt.Println("Visiting", r.URL.String())
 		//}
 		r.Ctx.Put("url", r.URL.String())
