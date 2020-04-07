@@ -304,6 +304,11 @@ func main() {
 						Url: image.File.URL(),
 					}}
 				}
+				// delete tmp file
+				err := os.Remove(file.Name())
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 
