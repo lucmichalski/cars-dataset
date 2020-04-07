@@ -16,6 +16,8 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
+    - ./dataset:/opt/lucmichalski/bin/dataset
+    - cache-data:/opt/lucmichalski/bin/data
     - public-data:/opt/lucmichalski/bin/public
     restart: unless-stopped
     depends_on:
@@ -51,6 +53,7 @@ services:
 
 volumes:
   db-data:
+  cache-data:
   imaginary-data:
   public-data:
     driver_opts:
