@@ -16,7 +16,7 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
-    - ./dataset:/opt/lucmichalski/bin/dataset
+    - ./dataset:/opt/lucmichalski/bin/datasets
     - cache-data:/opt/lucmichalski/bin/data
     - public-data:/opt/lucmichalski/bin/public
     restart: unless-stopped
