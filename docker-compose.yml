@@ -1,0 +1,35 @@
+---
+version: '3.7'
+services:
+
+  crawler:
+    image: lucmichalski/car-crawler:latest
+    container_name: ${NAMESPACE}-crawler  
+    build: .
+    ports:
+    - 7000:7000
+    volumes:
+    - public-data:/opt/lucmichalski/bin/public
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:5.7
+    container_name: ${NAMESPACE}-db
+    ports:
+    - 3306:3306
+    volumes:
+    - db-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  public-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/public

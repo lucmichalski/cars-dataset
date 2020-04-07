@@ -19,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	// "regexp"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/beevik/etree"
 	"github.com/corpix/uarand"
@@ -58,12 +57,12 @@ func main() {
 	}
 
 	// Instanciate the sqlite3 client
-	DB, err := gorm.Open("sqlite3", "cars-dataset.db?cache=shared&mode=rwc")
+
+	DB, err = gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer DB.Close()
-	DB.Exec("PRAGMA journal_mode=WAL;")
 
 	// callback for images and validation
 	validations.RegisterCallbacks(DB)
@@ -286,10 +285,7 @@ func main() {
 				}
 
 				// transaction
-				tx := DB.Begin()
-				defer tx.Commit()
-
-				if err := tx.Create(&image).Error; err != nil {
+				if err := DB.Create(&image).Error; err != nil {
 					log.Fatalln("create variation_image (%v) failure, got err %v\n", image, err)
 					continue
 				}
@@ -385,11 +381,7 @@ func main() {
 			fmt.Println("places:", places)
 		}
 
-		// transaction
-		tx := DB.Begin()
-		defer tx.Commit()
-
-		if err := tx.Create(&vehicle).Error; err != nil {
+		if err := DB.Create(&vehicle).Error; err != nil {
 			log.Fatalf("create vehicle (%v) failure, got err %v", vehicle, err)
 			return
 		}

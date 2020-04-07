@@ -1,0 +1,15 @@
+.git
+.git/**
+.github/
+.github/**
+.gitignore
+.dockerignore
+*.yml
+*.md
+Dockerfile
+go.mod
+go.sum
+data
+data/**
+public
+public/**
