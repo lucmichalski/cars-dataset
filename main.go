@@ -1,48 +1,48 @@
 package main
 
 import (
-	"fmt"
-	"encoding/json"
-	"strings"
-	"errors"
-	"net/http"
-	"os"
-	"crypto/md5"
-	"encoding/hex"
-	"database/sql/driver"
-	"reflect"
-	"path/filepath"
-	"io"
 	"compress/gzip"
-	"net/url"
-	"math/rand"
+	"crypto/md5"
+	"database/sql/driver"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"reflect"
 	"strconv"
-	// "regexp"
+	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/qor/validations"
+	// "regexp"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/beevik/etree"
-	"github.com/k0kubun/pp"	
 	"github.com/corpix/uarand"
-	"github.com/qor/media"
-	"github.com/qor/media/media_library"
-	"github.com/spf13/pflag"
-	"github.com/jinzhu/gorm"	
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/jinzhu/gorm"
+	"github.com/k0kubun/pp"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/qor/media"
+	"github.com/qor/media/media_library"
+	"github.com/qor/validations"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
 )
 
 var (
-	isHelp 		  bool
-	isDebug       bool
-	isAdmin       bool 
-	isCrawl 	  bool
-	isDataset     bool
-	queueMaxSize  = 100000000
-	cachePath     = "./data/cache"
+	isHelp       bool
+	isDebug      bool
+	isAdmin      bool
+	isCrawl      bool
+	isDataset    bool
+	queueMaxSize = 100000000
+	cachePath    = "./data/cache"
 )
 
 func main() {
@@ -67,38 +67,38 @@ func main() {
 
 	// callback for images and validation
 	validations.RegisterCallbacks(DB)
-	media.RegisterCallbacks(DB)	
+	media.RegisterCallbacks(DB)
 
 	// migrate tables
 	DB.AutoMigrate(&vehicle{})
-	DB.AutoMigrate(&vehicleImage{})	
+	DB.AutoMigrate(&vehicleImage{})
 
-    if isDataset {
+	if isDataset {
 
 		sName := "dataset.txt"
 		sfile, err := os.Create(sName)
 		if err != nil {
 			log.Fatalf("Cannot create file %q: %s\n", sName, err)
 		}
-		defer sfile.Close()    	
+		defer sfile.Close()
 
-	    _, err = sfile.WriteString("name;image_path\n")
+		_, err = sfile.WriteString("name;image_path\n")
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Scan
 		type res struct {
-		  Name string
-		  Images  string
+			Name   string
+			Images string
 		}
 
 		// [{"ID":4598,"Url":"/system/vehicle_images/4598/file.png","VideoLink":"","FileName":"","Description":""}]
 		type entryProperty struct {
-			ID  int
-			Url string
-			VideoLink string
-			FileName string
+			ID          int
+			Url         string
+			VideoLink   string
+			FileName    string
 			Description string
 		}
 
@@ -109,37 +109,37 @@ func main() {
 				continue
 			}
 
-   			var ep []entryProperty
+			var ep []entryProperty
 			fmt.Println(result.Images)
 			if err := json.Unmarshal([]byte(result.Images), &ep); err != nil {
-        		   log.Fatalln("unmarshal error, ", err)
-    			}
+				log.Fatalln("unmarshal error, ", err)
+			}
 			pp.Println(ep)
 
 			if len(ep) < 2 {
-			  continue
+				continue
 			}
 
-            prefixPath := filepath.Join("./", "shared", "datasets", "cars", result.Name)
-            os.MkdirAll(prefixPath, 0755)
-            pp.Println("prefixPath:", prefixPath)
+			prefixPath := filepath.Join("./", "shared", "datasets", "cars", result.Name)
+			os.MkdirAll(prefixPath, 0755)
+			pp.Println("prefixPath:", prefixPath)
 
 			for _, entry := range ep {
 				sourceFile := filepath.Join("./", "public", entry.Url)
-            	pp.Println("sourceFile:", sourceFile)
+				pp.Println("sourceFile:", sourceFile)
 
-    			input, err := ioutil.ReadFile(sourceFile)
-    			if err != nil {
+				input, err := ioutil.ReadFile(sourceFile)
+				if err != nil {
 					log.Fatalln("reading file error, ", err)
-    			}
+				}
 
 				destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
-    			err = ioutil.WriteFile(destinationFile, input, 0644)
-    			if err != nil {
+				err = ioutil.WriteFile(destinationFile, input, 0644)
+				if err != nil {
 					log.Fatalln("creating file error, ", err)
-	        	}
+				}
 				pp.Println("destinationFile:", destinationFile)
-			    _, err = sfile.WriteString(fmt.Sprintf("%s;%s\n", result.Name, destinationFile))
+				_, err = sfile.WriteString(fmt.Sprintf("%s;%s\n", result.Name, destinationFile))
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -153,10 +153,10 @@ func main() {
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cachePath),
 		/*
-		colly.URLFilters(
-			regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
-			regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
-		),
+			colly.URLFilters(
+				regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
+				regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
+			),
 		*/
 	)
 
@@ -192,8 +192,7 @@ func main() {
 		if !DB.Where("url = ?", e.Request.Ctx.Get("url")).First(&vehicleExists).RecordNotFound() {
 			fmt.Printf("skipping url=%s as already exists\n", e.Request.Ctx.Get("url"))
 			return
-		}		
-
+		}
 
 		vehicle := &vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
@@ -216,10 +215,10 @@ func main() {
 			if len(infoParts) > 0 {
 				if infoParts[0] != "" {
 					if err := json.Unmarshal([]byte(infoParts[0]), &carInfo); err != nil {
-        			   log.Fatalln("unmarshal error, ", err)
-    				}
-    			}
-    			if isDebug {
+						log.Fatalln("unmarshal error, ", err)
+					}
+				}
+				if isDebug {
 					pp.Println(carInfo)
 				}
 			}
@@ -267,7 +266,7 @@ func main() {
 			return
 		}
 
-		for _, carImage :=  range carImgLinks {
+		for _, carImage := range carImgLinks {
 			// download and scan image
 			if file, size, checksum, err := openFileByURL(carImage); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
@@ -288,7 +287,7 @@ func main() {
 
 				// transaction
 				tx := DB.Begin()
-				defer tx.Commit()		
+				defer tx.Commit()
 
 				if err := tx.Create(&image).Error; err != nil {
 					log.Fatalln("create variation_image (%v) failure, got err %v\n", image, err)
@@ -367,7 +366,7 @@ func main() {
 				places = strings.TrimSpace(texts[1])
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, vehicleProperty{Name: "Places", Value: places})
 			}
-			
+
 		})
 
 		if isDebug {
@@ -388,14 +387,14 @@ func main() {
 
 		// transaction
 		tx := DB.Begin()
-		defer tx.Commit()	
+		defer tx.Commit()
 
 		if err := tx.Create(&vehicle).Error; err != nil {
 			log.Fatalf("create vehicle (%v) failure, got err %v", vehicle, err)
 			return
 		}
 
-		log.Infoln("Add manufacturer: ", carInfo.ProductBrand , ", Model:", carInfo.ProductModele, ", Year:", carInfo.ProductYear)
+		log.Infoln("Add manufacturer: ", carInfo.ProductBrand, ", Model:", carInfo.ProductModele, ", Year:", carInfo.ProductYear)
 
 	})
 
@@ -443,17 +442,16 @@ func main() {
 
 }
 
-
 type vehicle struct {
 	gorm.Model
-	URL 			  string `gorm:"index:url"`
+	URL               string `gorm:"index:url"`
 	Name              string `gorm:"index:name"`
 	Modl              string `gorm:"index:modl"`
 	Engine            string `gorm:"index:engine"`
 	Year              string `gorm:"index:year"`
 	Source            string `gorm:"index:source"`
 	Manufacturer      string `gorm:"index:manufacturer"`
-	MainImage         media_library.MediaBox 
+	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox
 	VehicleProperties vehicleProperties `sql:"type:text"`
 }
@@ -597,13 +595,13 @@ func openFileByURL(rawURL string) (*os.File, int64, string, error) {
 }
 
 func shuffle(slice interface{}) {
-    rv := reflect.ValueOf(slice)
-    swap := reflect.Swapper(slice)
-    length := rv.Len()
-    for i := length - 1; i > 0; i-- {
-        j := rand.Intn(i + 1)
-        swap(i, j)
-    }
+	rv := reflect.ValueOf(slice)
+	swap := reflect.Swapper(slice)
+	length := rv.Len()
+	for i := length - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		swap(i, j)
+	}
 }
 
 func getMD5File(filePath string) (result string, err error) {
@@ -632,14 +630,14 @@ func extractSitemapIndex(url string) ([]string, error) {
 	client := new(http.Client)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
-	}	
+	}
 	defer response.Body.Close()
 
 	doc := etree.NewDocument()
@@ -650,9 +648,9 @@ func extractSitemapIndex(url string) ([]string, error) {
 	index := doc.SelectElement("sitemapindex")
 	sitemaps := index.SelectElements("sitemap")
 	for _, sitemap := range sitemaps {
-	 	loc := sitemap.SelectElement("loc")
-	 	log.Infoln("loc:", loc.Text())
-	 	urls = append(urls, loc.Text())
+		loc := sitemap.SelectElement("loc")
+		log.Infoln("loc:", loc.Text())
+		urls = append(urls, loc.Text())
 	}
 	return urls, nil
 }
@@ -661,20 +659,20 @@ func extractSitemapGZ(url string) ([]string, error) {
 	client := new(http.Client)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
-	}	
+	}
 	defer response.Body.Close()
 
 	var reader io.ReadCloser
 	reader, err = gzip.NewReader(response.Body)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	defer reader.Close()
@@ -687,9 +685,9 @@ func extractSitemapGZ(url string) ([]string, error) {
 	urlset := doc.SelectElement("urlset")
 	entries := urlset.SelectElements("url")
 	for _, entry := range entries {
-	 	loc := entry.SelectElement("loc")
-	 	log.Infoln("loc:", loc.Text())
-	 	urls = append(urls, loc.Text())
+		loc := entry.SelectElement("loc")
+		log.Infoln("loc:", loc.Text())
+		urls = append(urls, loc.Text())
 	}
 	return urls, err
 }
