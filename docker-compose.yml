@@ -51,15 +51,23 @@ services:
     command: -cors -gzip -enable-url-source -mount /mnt/data
     restart: unless-stopped
 
+  sidekiq: &darknet_base
+    build:
+      context: .docker/darknet
+    image: go-darknet:latest
+    working_dir: /darknet
+    volumes:
+    - darknet-data:/darknet/models
+    command: /darknet/download_models.sh
+
   darknet:
-   image: go-darknet:latest
-   build: .docker/darknet
-   ports:
-   - "9003:9003"   
-   volumes:
-   -  darknet-data:/models
-   # command: -cors -gzip   
-   restart: unless-stopped   
+    <<: *darknet_base
+    ports:
+    - "9003:9003
+    volumes:
+    - ./darknet:/darknet"  
+    restart: unless-stopped
+    # command: ["darkent-server"]
 
 volumes:
   db-data:

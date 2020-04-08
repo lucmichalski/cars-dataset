@@ -30,7 +30,9 @@ RUN mv staging/darknet /usr/local/bin && \
 	mv staging/libdarknet.so /usr/lib && \
 	rm -rf staging
 
-RUN go get -u github.com/LdDl/go-darknet
-WORKDIR /go/src/github.com/LdDl/go-darknet/example
+RUN go get -u github.com/LdDl/go-darknet \
+    && go get -u github.com/disintegration/imaging
+
+WORKDIR /darknet
 
 CMD ["/bin/bash"]
