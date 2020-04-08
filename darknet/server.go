@@ -5,9 +5,11 @@ import (
 	"flag"
 	"image"
 	"image/jpeg"
-	// "image/color"
+	"image/color"
+	"image/draw"
 	"log"
 	"strconv"
+	"io"
 	"path/filepath"
 	"math"
 	"os"
@@ -34,7 +36,7 @@ func server() {
 		c.File("index.html")
 	})
 
-
+/*
 	r.POST("/bbox", func(c *gin.Context) {
 
 		// Source
@@ -82,18 +84,33 @@ func server() {
 				maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
 				rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
 
+
+				// img, err := drawableJPEGImage(f)
+				img, _, err := image.Decode(f)
+				if err != nil {
+				    // Handle error
+					panic(err.Error())
+				}
+
 				fmt.Println(rect)
-				/*
-			    src, err := imaging.Decode(f)
-			    if err != nil {
-			        log.Fatalf("failed to open image: %v", err)
-			    }
-			    */
+
+				Rect(round(minX), round(minY), round(maxX), round(maxY), 2, img)
+				// Specify the quality, between 0-100
+				// Higher is better
+				opt := jpeg.Options{
+				    Quality: 100,
+				}
+				err = jpeg.Encode(c.Writer, img, &opt)
+				if err != nil {
+				    // Handle error
+					panic(err.Error())
+				}
 
 			}
 		}
 
 	})
+*/
 
 	r.POST("/upload", func(c *gin.Context) {
 
@@ -134,14 +151,13 @@ func server() {
 		for _, d := range dr.Detections {
 			for i := range d.ClassIDs {
 				bBox := d.BoundingBox
-				log.Printf("[%s] %s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
-					imageFile,
+				log.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
 					d.ClassNames[i], d.ClassIDs[i],
 					d.Probabilities[i],
 					bBox.StartPoint.X, bBox.StartPoint.Y,
 					bBox.EndPoint.X, bBox.EndPoint.Y,
 				)
-				if d.ClassNames[i] == "car" {
+				if d.ClassNames[i] == "car" && d.Probabilities[i] > 0.90 {
 					// save bouding boxes
 					// cropZone(imageFile, i, d.ClassNames[i], image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20))
 					// check image size if not acceptable size
@@ -156,10 +172,10 @@ func server() {
 					// }
 				    // Open a test image.
 					bbox := image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20)
-				    src, err := imaging.Decode(f)
-				    if err != nil {
-				        log.Fatalf("failed to open image: %v", err)
-				    }
+				    //src, err := imaging.Decode(f)
+				    //if err != nil {
+				    //   log.Fatalf("failed to open image: %v", err)
+				    //}
 				    src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
 					err = imaging.Encode(c.Writer, src, imaging.JPEG)
 				    if err != nil {
@@ -199,6 +215,36 @@ func main() {
 
 	server()
 }
+
+func drawableJPEGImage(r io.Reader) (draw.Image, error) {
+    img, err := jpeg.Decode(r)
+    if err != nil {
+        return nil, err
+    }
+    dimg, ok := img.(draw.Image)
+    if !ok {
+        return nil, fmt.Errorf("%T is not a drawable image type", img)
+    }
+    return dimg, nil
+}
+
+func Rect(x1, y1, x2, y2, thickness int, img *image.RGBA) {
+    col := color.RGBA{0, 0, 0, 255}
+
+    for t:=0; t<thickness; t++ {
+        // draw horizontal lines
+        for x := x1; x<= x2; x++ {
+            img.Set(x, y1+t, col)
+            img.Set(x, y2-t, col)
+        }
+        // draw vertical lines
+        for y := y1; y <= y2; y++ {
+            img.Set(x1+t, y, col)
+            img.Set(x2-t, y, col)
+        }
+    }
+}
+
 
 func round(v float64) int {
 	if v >= 0 {
