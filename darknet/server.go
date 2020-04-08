@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sort"
 	"time"
+	"io/ioutil"
 
 	"github.com/h2non/filetype"
 	"github.com/cavaliercoder/grab"
@@ -35,6 +36,7 @@ import (
 	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
 	- https://i.pinimg.com/originals/28/1b/ed/281bed127dae148b0e0536ea611e5e67.jpg
 	- https://www.lambocars.com/images/lambonews/production_numbers.jpg
+	- https://i.pinimg.com/originals/7e/fc/ab/7efcabaff4c082e99955b7b555b8b3da.png
 
 	Refs:
 	- https://hackernoon.com/docker-compose-gpu-tensorflow-%EF%B8%8F-a0e2011d36
@@ -209,12 +211,18 @@ func server() {
 
 		if size > 0 {
 
+			/*
 			buf := bytes.NewBuffer(nil)
 			if _, err := io.Copy(buf, file); err != nil {
 				panic(err.Error())
 			}
 
 			kind, _ := filetype.Match(buf.Bytes())
+			*/
+
+			buf, _ := ioutil.ReadFile(file.Name())
+			kind, _ := filetype.Match(buf)
+
 			var src image.Image
 
 			log.Println("kind.MIME.Value:", kind.MIME.Value)
