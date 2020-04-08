@@ -63,7 +63,7 @@ services:
   darknet:
     <<: *darknet_base
     ports:
-    - "9003:9003
+    - "9003:9003"
     volumes:
     - ./darknet:/darknet"  
     restart: unless-stopped
