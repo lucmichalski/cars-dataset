@@ -51,10 +51,25 @@ services:
     command: -cors -gzip -enable-url-source -mount /mnt/data
     restart: unless-stopped
 
+  darknet:
+   image: go-darknet:latest
+   build: .docker/darknet
+   ports:
+   - "9003:9003"   
+   volumes:
+   -  darknet-data:/models
+   # command: -cors -gzip   
+   restart: unless-stopped   
+
 volumes:
   db-data:
   cache-data:
   imaginary-data:
+  darknet-data:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/models
   public-data:
     driver_opts:
       type: none
