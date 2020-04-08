@@ -57,17 +57,25 @@ services:
     image: go-darknet:latest
     working_dir: /darknet
     volumes:
+    - ./darknet:/darknet
     - darknet-data:/darknet/models
-    command: /darknet/download_models.sh
+    command: ./scripts/download_data.sh
 
   darknet:
     <<: *darknet_base
     ports:
     - "9003:9003"
-    volumes:
-    - ./darknet:/darknet"  
     restart: unless-stopped
-    # command: ["darkent-server"]
+    # command: ["/bin/bash"]
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    # - internal
+    - web # for tests purpose    
+
+networks:
+  internal:
+  web:
+    external: true
 
 volumes:
   db-data:

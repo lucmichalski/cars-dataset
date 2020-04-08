@@ -31,8 +31,12 @@ RUN mv staging/darknet /usr/local/bin && \
 	rm -rf staging
 
 RUN go get -u github.com/LdDl/go-darknet \
-    && go get -u github.com/disintegration/imaging
+    && go get -u github.com/disintegration/imaging \
+    && go get -u github.com/gin-gonic/gin \
+    && go get -u github.com/olahol/go-imageupload
 
 WORKDIR /darknet
+
+COPY download_data.sh .
 
 CMD ["/bin/bash"]
