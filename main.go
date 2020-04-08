@@ -270,6 +270,8 @@ func main() {
 
 		for _, carImage := range carImgLinks {
 			// download and scan image
+			// crop car
+			// resize image
 			if file, size, checksum, err := openFileByURL(carImage); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {

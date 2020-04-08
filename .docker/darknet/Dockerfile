@@ -34,7 +34,10 @@ RUN go get -u github.com/LdDl/go-darknet \
     && go get -u github.com/disintegration/imaging \
     && go get -u github.com/gin-gonic/gin \
     && go get -u github.com/llgcode/draw2d/draw2dimg \
-    && go get -u github.com/k0kubun/pp
+    && go get -u github.com/k0kubun/pp \
+    && go get -u github.com/cavaliercoder/grab \
+    && go get -u github.com/pkg/errors \
+    && go get -u github.com/h2non/filetype
 
 WORKDIR /darknet
 

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"flag"
 	"image"
+	"image/png"
 	"image/jpeg"
 	"image/color"
 	"image/draw"
 	"log"
 	"strconv"
 	"io"
-	"net/url"
 	"path/filepath"
 	"math"
 	"os"
@@ -18,7 +18,11 @@ import (
 	"fmt"
 	"strings"
 	"sort"
+	"time"
 
+	"github.com/h2non/filetype"
+	"github.com/cavaliercoder/grab"
+	"github.com/pkg/errors"
 	"github.com/k0kubun/pp"	
 	"github.com/gin-gonic/gin"
     "github.com/disintegration/imaging"
@@ -26,10 +30,24 @@ import (
 )
 
 /*
+	Examples:
+	- https://cdn-photos.autosphere.fr/media/FL/FL-823-GFF.jpg
+	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
+	- https://i.pinimg.com/originals/28/1b/ed/281bed127dae148b0e0536ea611e5e67.jpg
+	- https://www.lambocars.com/images/lambonews/production_numbers.jpg
+
 	Refs:
 	- https://hackernoon.com/docker-compose-gpu-tensorflow-%EF%B8%8F-a0e2011d36
 	- https://github.com/eywalker/nvidia-docker-compose
 	- https://github.com/NVIDIA/nvidia-docker
+	- https://github.com/dbolya/yolact
+	- https://github.com/Jonarod/tensorflow_lite_alpine
+	- https://github.com/tinrab/go-tensorflow-image-recognition
+	- https://github.com/dereklstinson/coco
+	- https://github.com/chtorr/go-tensorflow-realtime-object-detection/blob/master/src/main.go
+	- https://github.com/codegangsta/gin
+	- https://github.com/shunk031/libtorch-gin-api-server/blob/master/docker/Dockerfile.api
+	- https://github.com/tinrab/go-tensorflow-image-recognition/blob/master/main.go
 */
 
 var (
@@ -71,9 +89,30 @@ func server() {
 			panic(err.Error())
 		}
 
-		src, err := jpeg.Decode(f)
-		if err != nil {
+		buf := bytes.NewBuffer(nil)
+		if _, err := io.Copy(buf, f); err != nil {
 			panic(err.Error())
+		}
+
+		kind, _ := filetype.Match(buf.Bytes())
+		var src image.Image
+
+		log.Println("kind.MIME.Value:", kind.MIME.Value)
+
+		switch kind.MIME.Value {
+		case "image/jpeg":
+			src, err = jpeg.Decode(f)
+			if err != nil {
+				panic(err.Error())
+			}
+		case "image/png":
+			src, err = png.Decode(f)
+			if err != nil {
+				panic(err.Error())
+			}
+		default:
+			c.String(200, "")
+			return		
 		}
 
 		imgDarknet, err := darknet.Image2Float32(src)
@@ -117,9 +156,10 @@ func server() {
 
 				// Draw watermark
 				// draw.Draw(m, watermarkImage.Bounds().Add(offset), watermarkImage, image.ZP, draw.Over)
+				// draw.Draw(image3, src.Bounds(), src, image.ZP, draw.Src)
 
 				drawBbox(round(minX), round(minY), round(maxX), round(maxY), 10, m)
-				draw.Draw(m, src.Bounds(), src, image.ZP, draw.Over)
+				draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
 
 			}
 		}
@@ -159,7 +199,7 @@ func server() {
 		var file *os.File
 		var size int64
 		if url != "" && strings.HasPrefix(url, "http") {
-			file, size, err = openFileByURL(url)
+			file, size, err = grabFileByURL(url)
 		}
 
 		log.Println("file", file.Name())
@@ -169,9 +209,30 @@ func server() {
 
 		if size > 0 {
 
-			src, err := jpeg.Decode(file)
-			if err != nil {
+			buf := bytes.NewBuffer(nil)
+			if _, err := io.Copy(buf, file); err != nil {
 				panic(err.Error())
+			}
+
+			kind, _ := filetype.Match(buf.Bytes())
+			var src image.Image
+
+			log.Println("kind.MIME.Value:", kind.MIME.Value)
+
+			switch kind.MIME.Value {
+			case "image/jpeg":
+				src, err = jpeg.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			case "image/png":
+				src, err = png.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			default:
+				c.String(200, "")
+				return		
 			}
 
 			imgDarknet, err := darknet.Image2Float32(src)
@@ -222,10 +283,23 @@ func server() {
 			} else {
 				bbox := image.Rect(bboxInfos[0].minX-20, bboxInfos[0].minY-20, bboxInfos[0].maxX+20, bboxInfos[0].maxY+20)
 			    src = imaging.Crop(src, bbox)
+				b := src.Bounds()
+				imgWidth := b.Max.X
+				imgHeight := b.Max.Y
+			    log.Println("src.Width:", imgWidth ,"src.Height:", imgHeight)
+			    if imgWidth > 700 {
+					src = imaging.Resize(src, 700, 0, imaging.Lanczos)
+			    }			  
 				err = imaging.Encode(c.Writer, src, imaging.JPEG)
 			    if err != nil {
 			        log.Fatalf("failed to encode image: %v", err)
 			    }
+			}
+
+			// remove temporary file
+			err = os.Remove(file.Name())
+			if err != nil {
+				panic(err)
 			}
 
 		} else {
@@ -416,51 +490,52 @@ func cropZone(inputFile string, idx int, className string, bbox image.Rectangle)
     return nil
 }
 
-func openFileByURL(rawURL string) (*os.File, int64, error) {
-	if fileURL, err := url.Parse(rawURL); err != nil {
-		return nil, 0, err
-	} else {
-		path := fileURL.Path
-		segments := strings.Split(path, "/")
-		// extension := filepath.Ext(path)
-		fileName := segments[len(segments)-1]
+func grabFileByURL(rawURL string) (*os.File, int64, error) {
+	clientGrab := grab.NewClient()
 
-		filePath := filepath.Join(os.TempDir(), fileName)
-
-		if fi, err := os.Stat(filePath); err == nil {
-			file, err := os.Open(filePath)
-			return file, fi.Size(), err
-		}
-
-		file, err := os.Create(filePath)
-		if err != nil {
-			return file, 0, err
-		}
-
-		check := http.Client{
-			CheckRedirect: func(r *http.Request, via []*http.Request) error {
-				r.URL.Opaque = r.URL.Path
-				return nil
-			},
-		}
-		resp, err := check.Get(rawURL) // add a filter to check redirect
-		if err != nil {
-			return file, 0, err
-		}
-		defer resp.Body.Close()
-		fmt.Printf("----> Downloaded %v\n", rawURL)
-
-		_, err = io.Copy(file, resp.Body)
-		if err != nil {
-			return file, 0, err
-		}
-
-		fi, err := file.Stat()
-		if err != nil {
-			return file, 0, err
-		}
-
-		return file, fi.Size(), nil
+	req, _ := grab.NewRequest(os.TempDir(), rawURL)
+	if req == nil {
+		return nil, 0, errors.New("----> could not make request.\n")
 	}
-}
 
+	// start download
+	log.Printf("----> Downloading %v...\n", req.URL())
+	resp := clientGrab.Do(req)
+	// pp.Println(resp)
+	// fmt.Printf("  %v\n", resp.HTTPResponse.Status)
+
+	// start UI loop
+	t := time.NewTicker(500 * time.Millisecond)
+	defer t.Stop()
+
+Loop:
+	for {
+		select {
+		case <-t.C:
+			log.Printf("---->  transferred %v / %v bytes (%.2f%%)\n",
+				resp.BytesComplete(),
+				resp.Size,
+				100*resp.Progress())
+
+		case <-resp.Done:
+			// download is complete
+			break Loop
+		}
+	}
+
+	// check for errors
+	if err := resp.Err(); err != nil {
+		log.Printf("----> Download failed: %v\n", err)
+		return nil, 0, errors.Wrap(err, "Download failed")
+	}
+
+	// fmt.Printf("----> Downloaded %v\n", rawURL)
+	log.Printf("----> Download saved to %v \n", resp.Filename)
+	fi, err := os.Stat(resp.Filename)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "os stat failed")
+	}
+	file, _ := os.Open(resp.Filename)
+
+	return file, fi.Size(), nil
+}
