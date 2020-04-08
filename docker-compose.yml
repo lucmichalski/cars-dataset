@@ -8,6 +8,8 @@ services:
     build: .
     ports:
     - 9000:9000
+    networks:
+    - internal
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -32,6 +34,8 @@ services:
     - 13306:3306
     volumes:
     - db-data:/var/lib/mysql
+    networks:
+    - internal
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -48,6 +52,8 @@ services:
        PORT: 9002
     ports:
     - "9002:9002"
+    networks:
+    - internal
     command: -cors -gzip -enable-url-source -mount /mnt/data
     restart: unless-stopped
 
@@ -69,7 +75,7 @@ services:
     # command: ["/bin/bash"]
     command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
-    # - internal
+    - internal
     - web # for tests purpose    
 
 networks:
