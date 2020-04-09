@@ -77,6 +77,19 @@ services:
     - internal
     - web # for tests purpose    
 
+  gocv:
+    image: gocv:cpu-latest
+    build:
+      context: .docker/gocv
+      dockerfile: Dockerfile
+    container_name: ${NAMESPACE}-gocv
+    ports:
+    - 8099:8099
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+
 networks:
   internal:
   web:

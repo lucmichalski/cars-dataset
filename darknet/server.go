@@ -31,6 +31,12 @@ import (
 )
 
 /*
+
+	Todo:
+	- https://www.lacentrale.fr/robots.txt
+	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-annonce.xml.gz
+	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-cotft.xml.gz
+
 	Examples:
 	- https://cdn-photos.autosphere.fr/media/FL/FL-823-GFF.jpg
 	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
