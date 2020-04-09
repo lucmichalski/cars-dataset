@@ -1,11 +1,13 @@
-FROM golang:1.12-alpine3.10
+FROM golang:1.14-alpine3.11
 
-ENV OPENCV_VERSION=4.1.2
+ENV OPENCV_VERSION=4.3.0
 ENV BUILD="ca-certificates \
          musl \
          alpine-sdk \
          make \
          gcc \
+         bash \
+         nano \
          libc-dev \
          linux-headers \
          libjpeg-turbo \
@@ -89,3 +91,5 @@ RUN apk update && \
     cd / && rm -rf /opt/ufraw-${UFRAW_VERSION} && \
     apk del dev-dependencies && \
     rm -rf /var/cache/apk/*
+
+CMD ["/bin/bash"]

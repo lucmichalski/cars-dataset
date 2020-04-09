@@ -78,9 +78,9 @@ services:
     - web # for tests purpose    
 
   gocv:
-    image: gocv:cpu-latest
+    image: gocv:alpine-cpu-latest
     build:
-      context: .docker/gocv
+      context: .docker/gocv-alpine
       dockerfile: Dockerfile
     container_name: ${NAMESPACE}-gocv
     ports:
