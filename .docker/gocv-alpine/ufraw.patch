@@ -1,0 +1,22 @@
+Description: Fixes build failure with gcc-7.1 :
+
+dcraw.cc:9245:16: error: call of overloaded 'abs(unsigned int&)' is ambiguous
+       if (abs(i) < abs(c)) {
+
+This was a speculative change to get it to build - I have no idea what that
+particular hunk of ocde does, but this seems to match the current version of
+dcraw.c (9.27).
+
+--- ufraw-0.22/dcraw.cc.orig	2017-05-15 03:52:55.360068631 +0100
++++ ufraw-0.22/dcraw.cc	2017-05-15 04:06:36.962790098 +0100
+@@ -8766,8 +8766,8 @@
+       "Nikon", "Nokia", "Olympus", "Pentax", "Phase One", "Ricoh",
+       "Samsung", "Sigma", "Sinar", "Sony" };
+   char head[32], *cp;
+-  unsigned fsize, i, c;
+-  int hlen, flen, zero_fsize=1;
++  unsigned fsize;
++  int hlen, flen, zero_fsize=1, i, c;
+   struct jhead jh;
+ 
+   tiff_flip = flip = filters = UINT_MAX;	/* unknown */
