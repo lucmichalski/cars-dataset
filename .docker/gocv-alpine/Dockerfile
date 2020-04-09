@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine3.11
+FROM golang:1.14-alpine3.11 AS builder
 
 ENV OPENCV_VERSION=4.3.0
 ENV BUILD="ca-certificates \
@@ -8,6 +8,8 @@ ENV BUILD="ca-certificates \
          gcc \
          bash \
          nano \
+	 openblas-dev \
+	 py3-numpy \
          libc-dev \
          linux-headers \
          libjpeg-turbo \
@@ -62,8 +64,9 @@ RUN apk update && \
     -D BUILD_opencv_python=NO \
     -D BUILD_opencv_python2=NO \
     -D BUILD_opencv_python3=NO \
+    -D OPENCV_ENABLE_NONFREE:BOOL=ON \
     -D OPENCV_GENERATE_PKGCONFIG=YES .. && \
-    make -j4 && \
+    make -j$(nproc) && \
     make install && \
     cd && rm -rf /tmp/opencv && \
     go get -u -d gocv.io/x/gocv && go run ${GOPATH}/src/gocv.io/x/gocv/cmd/version/main.go && \
@@ -82,14 +85,53 @@ RUN apk update && \
 	make -j$(nproc) && make install && \
 	ldconfig /usr/local/lib && \
     cd / && rm -rf /tmp/imagick && \
-    curl -s --fail -L https://sourceforge.net/projects/ufraw/files/ufraw/ufraw-${UFRAW_VERSION}/ufraw-${UFRAW_VERSION}.tar.gz/download | tar -C /opt -xz && \
-         patch /opt/ufraw-${UFRAW_VERSION}/dcraw.cc /ufraw.patch && \
-         cd /opt/ufraw-${UFRAW_VERSION} && \
-         ./configure --prefix=/usr/local --disable-dependency-tracking --without-gtk --without-gimp && \
-         make && \
-         make install && \
-    cd / && rm -rf /opt/ufraw-${UFRAW_VERSION} && \
     apk del dev-dependencies && \
     rm -rf /var/cache/apk/*
+
+FROM golang:1.14-alpine3.11
+
+# OpenCV 4.x shared objects from build-stage
+COPY --from=builder /usr/local/lib64 /usr/local/lib64
+COPY --from=builder /usr/local/lib64/pkgconfig/opencv4.pc /usr/local/lib64/pkgconfig/opencv4.pc
+COPY --from=builder /usr/local/include/opencv4/opencv2 /usr/local/include/opencv4/opencv2
+
+ENV PKG="libstdc++ \
+         ca-certificates \
+         wget \
+         libjpeg-turbo \
+         libpng \
+         libwebp \
+         libwebp-dev \
+         tiff \
+         libavc1394 \
+         openblas \
+         gcc \
+         g++ \
+         git \
+	 musl-dev \
+         libgphoto2"
+
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache ${PKG} && \
+    # The gblic v2.31-r0 doesn't have sgerrand.rsa.pub.
+    # Downloading it from previous version.
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.27-r0/sgerrand.rsa.pub && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.31-r0/glibc-2.31-r0.apk && \
+    apk add --no-cache glibc-2.31-r0.apk && \
+    go get -u -d gocv.io/x/gocv && \
+    go run ${GOPATH}/src/gocv.io/x/gocv/cmd/version/main.go \
+    rm -fr /glibc-2.31-r0.apk && \
+    rm -rf /var/cache/apk/* && \
+    apk del wget g++ gcc git musl-dev
+
+
+ENV PKG_CONFIG_PATH /usr/local/lib64/pkgconfig
+ENV LD_LIBRARY_PATH /usr/local/lib64
+ENV CGO_CPPFLAGS -I/usr/local/include
+ENV CGO_CXXFLAGS "--std=c++1z"
+ENV CGO_LDFLAGS "-L/usr/local/lib -lopencv_core -lopencv_face -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_features2d -lopencv_video -lopencv_dnn -lopencv_xfeatures2d -lopencv_plot -lopencv_tracking"
+
+RUN go get -u -d gocv.io/x/gocv && go run ${GOPATH}/src/gocv.io/x/gocv/cmd/version/main.go
 
 CMD ["/bin/bash"]

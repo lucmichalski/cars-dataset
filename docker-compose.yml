@@ -78,7 +78,7 @@ services:
     - web # for tests purpose    
 
   gocv:
-    image: gocv:alpine-cpu-latest
+    image: lucmichalski/gocv:alpine-cpu-latest
     build:
       context: .docker/gocv-alpine
       dockerfile: Dockerfile
@@ -89,6 +89,20 @@ services:
     - internal
     - web # for tests purpose
     restart: unless-stopped
+
+  find-object:
+    image: lucmichalski/find-object:alpine-cpu-latest
+    build:
+      context: .docker/find-object
+      dockerfile: Dockerfile
+    container_name: ${NAMESPACE}-findobj
+    ports:
+    - 8100:8100
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+    # command [""]
 
 networks:
   internal:
