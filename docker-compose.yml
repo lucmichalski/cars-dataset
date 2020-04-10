@@ -18,6 +18,7 @@ services:
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
     - ./dataset:/opt/lucmichalski/bin/datasets
+    - ./tmp:/tmp
     - cache-data:/opt/lucmichalski/bin/data
     - public-data:/opt/lucmichalski/bin/public
     restart: unless-stopped
@@ -25,6 +26,32 @@ services:
     - mysql
     links:
     - mysql:mysql
+    command: ["cars-dataset", "--parallel-jobs", "1", "--truncate"]
+
+  admin:
+    image: lucmichalski/car-admin:latest
+    container_name: ${NAMESPACE}-admin  
+    build: .
+    ports:
+    - 9008:9008
+    networks:
+    - internal
+    - web
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+    restart: unless-stopped
+    volumes:
+    - ./public:/opt/lucmichalski/bin/public
+    - ./templates:/opt/lucmichalski/bin/templates
+    depends_on:
+    - mysql
+    links:
+    - mysql:mysql
+    command: ["cars-dataset", "--admin"]
 
   mysql:
     image: mysql:5.7
@@ -59,7 +86,8 @@ services:
   sidekiq: &darknet_base
     build:
       context: .docker/darknet
-    image: go-darknet:latest
+      dockerfile: Dockerfile.gpu
+    image: go-darknet:gpu-latest
     working_dir: /darknet
     volumes:
     - ./darknet:/darknet
@@ -70,9 +98,10 @@ services:
     <<: *darknet_base
     ports:
     - "9003:9003"
-    restart: unless-stopped
+    # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose    

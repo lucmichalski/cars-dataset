@@ -1,0 +1,76 @@
+<div class="qor-page__body">
+  {{render "shared/flashes"}}
+  {{render "shared/errors"}}
+
+  <div class="qor-section introduction">
+    <h5>This is the DEMO app for Peaks-Tires/Pneus-Illico.com</h5>
+    Github: <a href="https://github.com/lucmichalski/peaks-tires" target="_blank">github.com/lucmichalski/peaks-tires</a><br/>
+    WebSite: <a href="https://pneus-illico.com" target="_blank">pneus-illico.com</a><br/>
+  </div>
+
+  <div class="qor-section reports">
+    <div class="qor-section__header">
+      <h4 class="qor-section-title">{{t "Reports"}}</h4>
+    </div>
+
+    <div class="mdl-grid reports-daterange">
+      <div class="mdl-cell">
+        <input class="mdl-textfield__input" id="startDate" type="text" data-toggle="qor.datepicker" >
+      </div>
+      <div class="mdl-cell datepicker-separator">
+        -
+      </div>
+      <div class="mdl-cell">
+        <input class="mdl-textfield__input" id="endDate" type="text" data-toggle="qor.datepicker" >
+      </div>
+
+      <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect j-update-record" > {{t "Update Report"}} </button>
+      <button class="mdl-button yesterday-reports" > {{t "Yesterday"}} </button>
+      <button class="mdl-button this-week-reports" > {{t "This Week"}} </button>
+      <button class="mdl-button last-week-reports" > {{t "Last Week"}} </button>
+    </div>
+
+    <script src="/public/vendors/Chart.min.js"></script>
+    <div class="mdl-grid">
+      <div class="mdl-cell mdl-cell--4-col">
+        <h4 class="qor-section-title">{{t "Products Indexation"}}</h4>
+        <img src="https://igsave.net/public/assets/images/loading.gif" id="products_report_loader">
+        <canvas id="products_report"></canvas>
+      </div>
+
+      <div class="mdl-cell mdl-cell--4-col">
+        <h4 class="qor-section-title">{{t "Reviews Indexation"}}</h4>
+        <img src="https://igsave.net/public/assets/images/loading.gif" id="reviews_report_loader">
+        <canvas id="reviews_report"></canvas>
+      </div>
+
+      <div class="mdl-cell mdl-cell--4-col">
+        <h4 class="qor-section-title">{{t "Vehicles Indexation"}}</h4>
+        <img src="https://igsave.net/public/assets/images/loading.gif" id="vehicles_report_loader">
+        <canvas id="vehicles_report"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- if have table please add qor-section__table className -->
+  <div class="qor-section qor-section__table qor-theme-slideout">
+    <div class="qor-section__header">
+      <h4 class="qor-section-title">{{t "Latest Reviews"}}</h4>
+    </div>
+    <div class="qor-section__body qor-table-container">
+      {{render_latest_reviews .}}
+    </div>
+  </div>
+
+  <!-- if have table please add qor-section__table className -->
+  <div class="qor-section qor-section__table qor-theme-slideout">
+    <div class="qor-section__header">
+      <h4 class="qor-section-title">{{t "Latest Products"}}</h4>
+    </div>
+    <div class="qor-section__body qor-table-container">
+      {{render_latest_products .}}
+    </div>
+  </div>
+
+</div>

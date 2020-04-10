@@ -17,7 +17,13 @@
 *.db
 *.db-shm
 *.db*
+
 data
 data/
 data/*
 data/**
+
+tmp
+tmp/
+tmp/*
+tmp/**

@@ -20,6 +20,7 @@ import (
 	"sort"
 	"time"
 	"io/ioutil"
+	"sync"
 
 	"github.com/h2non/filetype"
 	"github.com/cavaliercoder/grab"
@@ -31,6 +32,40 @@ import (
 )
 
 /*
+
+	Snippets:
+	- gdrivedl
+		- !sudo wget -O /usr/sbin/gdrivedl 'https://f.mjh.nz/gdrivedl'
+		- !sudo chmod +x /usr/sbin/gdrivedl
+		- !gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
+		- !tar xf camembert_sentiment.tar.xz
+	- find-object
+		- apk add --no-cache qt5-qtbase-dev cmake
+		- cmake -DCMAKE_BUILD_TYPE=Release ..
+	- nvidia-docker
+		- distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+		- curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+		- curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+		- sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+		- sudo systemctl restart docker
+		- docker run --gpus all nvidia/cuda:10.0-base nvidia-smi
+	- docker-compose gpu
+        - sudo apt-get install nvidia-container-runtime
+        - ~$ sudo vim /etc/docker/daemon.json
+        - then , in this daemon.json file, add this content:
+        - {
+        - "default-runtime": "nvidia"
+        - "runtimes": {
+        - "nvidia": {
+        - "path": "/usr/bin/nvidia-container-runtime",
+        - "runtimeArgs": []
+        - }
+        - }
+        - }
+        - ~$ sudo systemctl daemon-reload
+        - ~$ sudo systemctl restart docker
+    - remove files
+    	- find ./ -type f -size 0 -exec rm -f {} \;
 
 	Todo:
 	- https://www.lacentrale.fr/robots.txt
@@ -56,14 +91,24 @@ import (
 	- https://github.com/codegangsta/gin
 	- https://github.com/shunk031/libtorch-gin-api-server/blob/master/docker/Dockerfile.api
 	- https://github.com/tinrab/go-tensorflow-image-recognition/blob/master/main.go
+	- https://github.com/x0rzkov/gocv-alpine (runtime,builder)
+	- https://stackoverflow.com/questions/15341538/numpy-opencv-2-how-do-i-crop-non-rectangular-region
+	- https://www.pyimagesearch.com/2018/11/19/mask-r-cnn-with-opencv/
+	- https://note.nkmk.me/en/python-opencv-numpy-alpha-blend-mask/
 */
 
 var (
-	n darknet.YOLONetwork
+	// n darknet.YOLONetwork
+	m yoloModel
 	configFile = flag.String("configFile", "", "Path to network layer configuration file. Example: cfg/yolov3.cfg")
 	weightsFile = flag.String("weightsFile", "", "Path to weights file. Example: yolov3.weights")
 	imageFile = flag.String("imageFile", "", "Path to image file, for detection. Example: image.jpg")
 )
+
+type yoloModel struct {
+	n darknet.YOLONetwork
+	l sync.RWMutex
+}
 
 type bboxInfo struct {
 	minX int
@@ -84,6 +129,8 @@ func server() {
 
 
 	r.POST("/bbox", func(c *gin.Context) {
+		m.l.RLock()
+		defer m.l.RUnlock()
 
 		// Source
 		file, err := c.FormFile("file")
@@ -129,7 +176,7 @@ func server() {
 		}
 		defer imgDarknet.Close()
 
-		dr, err := n.Detect(imgDarknet)
+		dr, err := m.n.Detect(imgDarknet)
 		if err != nil {
 			printError(err)
 			return
@@ -158,14 +205,11 @@ func server() {
 				minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
 				maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
 				// rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
-
 				// img, err := drawableJPEGImage(f)
 				// fmt.Println(rect)
-
 				// Draw watermark
 				// draw.Draw(m, watermarkImage.Bounds().Add(offset), watermarkImage, image.ZP, draw.Over)
 				// draw.Draw(image3, src.Bounds(), src, image.ZP, draw.Src)
-
 				drawBbox(round(minX), round(minY), round(maxX), round(maxY), 10, m)
 				draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
 
@@ -185,6 +229,8 @@ func server() {
 	})
 
 	r.GET("/crop", func(c *gin.Context) {
+		m.l.RLock()
+		defer m.l.RUnlock()
 
 		log.Println("crop start")
 
@@ -230,7 +276,6 @@ func server() {
 			kind, _ := filetype.Match(buf)
 
 			var src image.Image
-
 			log.Println("kind.MIME.Value:", kind.MIME.Value)
 
 			switch kind.MIME.Value {
@@ -255,7 +300,7 @@ func server() {
 			}
 			defer imgDarknet.Close()
 
-			dr, err := n.Detect(imgDarknet)
+			dr, err := m.n.Detect(imgDarknet)
 			if err != nil {
 				printError(err)
 				return
@@ -266,13 +311,13 @@ func server() {
 			for _, d := range dr.Detections {
 				for i := range d.ClassIDs {
 					bBox := d.BoundingBox
-					log.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
-						d.ClassNames[i], d.ClassIDs[i],
-						d.Probabilities[i],
-						bBox.StartPoint.X, bBox.StartPoint.Y,
-						bBox.EndPoint.X, bBox.EndPoint.Y,
-					)
-					if d.ClassNames[i] == "car" && d.Probabilities[i] > 90 {
+					if d.ClassNames[i] == "car" && d.Probabilities[i] >= 70 {
+						log.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
+							d.ClassNames[i], d.ClassIDs[i],
+							d.Probabilities[i],
+							bBox.StartPoint.X, bBox.StartPoint.Y,
+							bBox.EndPoint.X, bBox.EndPoint.Y,
+						)
 						bboxInfos = append(bboxInfos, &bboxInfo{
 							minX: bBox.StartPoint.X,
 							minY: bBox.StartPoint.Y,
@@ -311,10 +356,10 @@ func server() {
 			}
 
 			// remove temporary file
-			err = os.Remove(file.Name())
-			if err != nil {
-				panic(err)
-			}
+			//err = os.Remove(file.Name())
+			//if err != nil {
+			//	panic(err)
+			//}
 
 		} else {
 			c.String(200, "Nothing")
@@ -324,7 +369,8 @@ func server() {
 	})
 
 	r.POST("/crop", func(c *gin.Context) {
-
+		m.l.RLock()
+		defer m.l.RUnlock()
 		// classes := c.PostForm("classes")
 		// threshold := c.PostForm("threshold")
 
@@ -351,7 +397,7 @@ func server() {
 		}
 		defer imgDarknet.Close()
 
-		dr, err := n.Detect(imgDarknet)
+		dr, err := m.n.Detect(imgDarknet)
 		if err != nil {
 			printError(err)
 			return
@@ -412,17 +458,23 @@ func main() {
 		return
 	}
 
-	n = darknet.YOLONetwork{
+	n := darknet.YOLONetwork{
 		GPUDeviceIndex:           0,
 		NetworkConfigurationFile: *configFile,
 		WeightsFile:              *weightsFile,
 		Threshold:                .25,
 	}
+
 	if err := n.Init(); err != nil {
 		printError(err)
 		return
 	}
 	defer n.Close()
+
+	m = yoloModel{
+		n: n,
+		l: sync.RWMutex{},
+	}
 
 	server()
 }

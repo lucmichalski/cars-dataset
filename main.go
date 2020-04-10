@@ -19,6 +19,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/thanhhh/gin-gonic-realip"
+	"github.com/gin-gonic/gin"
+	"github.com/qor/qor/utils"
+	"github.com/qor/admin"
+	"github.com/qor/assetfs"
+	"github.com/h2non/filetype"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/beevik/etree"
 	"github.com/corpix/uarand"
@@ -40,6 +46,8 @@ var (
 	isAdmin       bool
 	isCrawl       bool
 	isDataset     bool
+	isTruncate    bool
+	isClean       bool
 	parallelJobs  int
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
@@ -48,9 +56,11 @@ var (
 func main() {
 
 	pflag.IntVarP(&parallelJobs, "parallel-jobs", "j", 35, "parallel jobs.")
-	pflag.BoolVarP(&isAdmin, "admin", "a", false, "launch web admin interface.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
 	pflag.BoolVarP(&isDataset, "dataset", "d", false, "launch the crawler.")
+	pflag.BoolVarP(&isClean, "clean", "", false, "auto-clean temporary files.")
+	pflag.BoolVarP(&isAdmin, "admin", "", false, "launch the admin interface.")
+	pflag.BoolVarP(&isTruncate, "truncate", "t", false, "truncate table content.")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
 	pflag.Parse()
@@ -71,9 +81,78 @@ func main() {
 	validations.RegisterCallbacks(DB)
 	media.RegisterCallbacks(DB)
 
+	// truncate table
+	if isTruncate {
+		if err := DB.DropTableIfExists(&vehicle{}).Error; err != nil {
+			panic(err)
+		}
+		if err := DB.DropTableIfExists(&vehicleImage{}).Error; err != nil {
+			panic(err)
+		}
+	}
+
 	// migrate tables
 	DB.AutoMigrate(&vehicle{})
 	DB.AutoMigrate(&vehicleImage{})
+
+	if isAdmin {
+
+		// Initialize AssetFS
+		AssetFS := assetfs.AssetFS().NameSpace("admin")
+
+		// Register custom paths to manually saved views
+		AssetFS.RegisterPath(filepath.Join(utils.AppRoot, "./templates/qor/admin/views"))
+		AssetFS.RegisterPath(filepath.Join(utils.AppRoot, "./templates/qor/media/views"))
+
+		// Initialize Admin
+		Admin := admin.New(&admin.AdminConfig{
+			SiteName: "Cars Dataset",
+			DB:       DB,
+			AssetFS:  AssetFS,
+		})
+
+		Admin.AddMenu(&admin.Menu{Name: "Crawl Management", Priority: 1})
+
+		// Add VehicleImage as Media Libraray
+		VehicleImagesResource := Admin.AddResource(&vehicleImage{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})
+
+		VehicleImagesResource.Filter(&admin.Filter{
+			Name:       "SelectedType",
+			Label:      "Media Type",
+			Operations: []string{"contains"},
+			Config:     &admin.SelectOneConfig{Collection: [][]string{{"video", "Video"}, {"image", "Image"}, {"file", "File"}, {"video_link", "Video Link"}}},
+		})
+		VehicleImagesResource.IndexAttrs("File", "Title")
+ 
+		VehicleImagesResource.UseTheme("grid")
+
+		vehicle := Admin.AddResource(&vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
+		vehicle.IndexAttrs("ID", "Name", "Modl", "Engine", "Year", "Source", "Manufacturer", "MainImage", "Images")
+
+		// initalize an HTTP request multiplexer
+		mux := http.NewServeMux()
+
+		// Mount admin interface to mux
+		Admin.MountTo("/admin", mux)
+
+		router := gin.Default()
+
+		router.Use(realip.RealIP())
+
+		// add basic auth
+		admin := router.Group("/admin", gin.BasicAuth(gin.Accounts{"cars": "cars"}))
+		{
+			admin.Any("/*resources", gin.WrapH(mux))
+		}
+
+		router.Static("/system", "./public/system")
+		router.Static("/public", "./public")
+
+		fmt.Println("Listening on: 9008")
+		log.Fatal(router.Run(fmt.Sprintf("%s:%s", "", "9008")))
+		// http.ListenAndServe(":9008", mux)
+
+	}
 
 	if isDataset {
 
@@ -272,18 +351,32 @@ func main() {
 			// download and scan image
 			// crop car
 			// resize image
-			if file, size, checksum, err := openFileByURL(carImage); err != nil {
+			if carImage == "" {
+				continue
+			}
+
+			proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage)
+			log.Println("proxyURL:", proxyURL)
+			if file, size, checksum, err := openFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
 				defer file.Close()
 
-				if size == 0 {
+				if size < 40000 {
+					if isClean {
+						// delete tmp file
+						err := os.Remove(file.Name())
+						if err != nil {
+							log.Fatal(err)
+						}
+					}
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
 					continue
 				}
 
 				image := vehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
 
-				log.Println("----> Scanning file: ", file.Name())
+				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -291,7 +384,7 @@ func main() {
 
 				// transaction
 				if err := DB.Create(&image).Error; err != nil {
-					log.Fatalln("create variation_image (%v) failure, got err %v\n", image, err)
+					log.Fatalln("create image (%v) failure, got err %v\n", image, err)
 					continue
 				}
 
@@ -306,10 +399,13 @@ func main() {
 						Url: image.File.URL(),
 					}}
 				}
+
+				if isClean {
 				// delete tmp file
-				err := os.Remove(file.Name())
-				if err != nil {
-					log.Fatal(err)
+					err := os.Remove(file.Name())
+					if err != nil {
+						log.Fatal(err)
+					}
 				}
 			}
 		}
@@ -544,12 +640,19 @@ func openFileByURL(rawURL string) (*os.File, int64, string, error) {
 	if fileURL, err := url.Parse(rawURL); err != nil {
 		return nil, 0, "", err
 	} else {
-		path := fileURL.Path
-		segments := strings.Split(path, "/")
+		q := fileURL.Query()
+		var segments []string
+		if q.Get("url") != "" {
+			segments = strings.Split(q.Get("url"), "/")
+		} else {
+			path := fileURL.Path
+			segments = strings.Split(path, "/")
+		} 
 
 		fileName := getMD5Hash(rawURL) + "-" + segments[len(segments)-1]
 		filePath := filepath.Join(os.TempDir(), fileName)
 
+		/*
 		if fi, err := os.Stat(filePath); err == nil {
 			file, err := os.Open(filePath)
 			checksum, err := getMD5File(filePath)
@@ -558,6 +661,7 @@ func openFileByURL(rawURL string) (*os.File, int64, string, error) {
 			}
 			return file, fi.Size(), checksum, err
 		}
+		*/
 
 		file, err := os.Create(filePath)
 		if err != nil {
@@ -577,10 +681,16 @@ func openFileByURL(rawURL string) (*os.File, int64, string, error) {
 		defer resp.Body.Close()
 		fmt.Printf("----> Downloaded %v\n", rawURL)
 
+		fmt.Println("Content-Length:", resp.Header.Get("Content-Length"))
+
 		_, err = io.Copy(file, resp.Body)
 		if err != nil {
 			return file, 0, "", err
 		}
+
+		buf, _ := ioutil.ReadFile(file.Name())
+		kind, _ := filetype.Match(buf)
+		pp.Println("kind: ", kind)
 
 		fi, err := file.Stat()
 		if err != nil {
@@ -712,3 +822,4 @@ func removeDuplicates(elements []string) []string {
 	// Return the new slice.
 	return result
 }
+
