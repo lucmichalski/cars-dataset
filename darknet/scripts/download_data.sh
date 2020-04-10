@@ -10,6 +10,8 @@ sed -i -e "\$anames = coco.names" ../models/yolov3.cfg
 wget -nc --output-document=../models/yolov4-tiny.cfg https://raw.githubusercontent.com/ultralytics/yolov3/master/cfg/yolov4-tiny.cfg
 wget -nc --output-document=../models/yolov4-tiny-1cls.cfg https://raw.githubusercontent.com/ultralytics/yolov3/master/cfg/yolov4-tiny-1cls.cfg
 wget -nc --output-document=../models/yolov3.weights https://pjreddie.com/media/files/yolov3.weights
+wget -nc --output-document=../models/yolov2.weights https://pjreddie.com/media/files/yolov2.weights
+
 
 wget -O /usr/sbin/gdrivedl 'https://f.mjh.nz/gdrivedl'
 chmod +x /usr/sbin/gdrivedl

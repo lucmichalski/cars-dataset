@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/qor/media/media_library"
 	"github.com/thanhhh/gin-gonic-realip"
 	"github.com/gin-gonic/gin"
 	"github.com/qor/qor/utils"
@@ -94,6 +95,7 @@ func main() {
 	// migrate tables
 	DB.AutoMigrate(&vehicle{})
 	DB.AutoMigrate(&vehicleImage{})
+	DB.AutoMigrate(&media_library.MediaLibrary{})
 
 	if isAdmin {
 
