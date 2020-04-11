@@ -11,3 +11,5 @@ data
 data/**
 public
 public/**
+shared/data
+shared/data/**

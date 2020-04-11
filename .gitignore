@@ -27,3 +27,8 @@ tmp
 tmp/
 tmp/*
 tmp/**
+
+shared/data
+shared/data/
+shared/data/*
+shared/data/**
