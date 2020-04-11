@@ -3,81 +3,72 @@ package main
 import (
 	"context"
 	"fmt"
+	"errors"
 
-	adm "github.com/lucmichalski/cars-contrib/autosphere.fr/admin"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/lucmichalski/cars-contrib/stanford-cars/catalog"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
 
-var Tables = []interface{}{
-	&models.SettingAutosphere{},
-}
+var Tables = []interface{}{}
 
-var Resources = []interface{}{
-	&models.SettingAutosphere{},
-}
+var Resources = []interface{}{}
 
-type autospherePlugin string
+type stanfordCarsPlugin string
 
-func (o autospherePlugin) Name() string      { return string(o) }
-func (o autospherePlugin) Section() string   { return `autosphere.fr` }
-func (o autospherePlugin) Usage() string     { return `hello` }
-func (o autospherePlugin) ShortDesc() string { return `autosphere.fr crawler"` }
-func (o autospherePlugin) LongDesc() string  { return o.ShortDesc() }
+func (o stanfordCarsPlugin) Name() string      { return string(o) }
+func (o stanfordCarsPlugin) Section() string   { return `Stanford Cars` }
+func (o stanfordCarsPlugin) Usage() string     { return `hello` }
+func (o stanfordCarsPlugin) ShortDesc() string { return `Stanford Cars data importer"` }
+func (o stanfordCarsPlugin) LongDesc() string  { return o.ShortDesc() }
 
-func (o autospherePlugin) Migrate() []interface{} {
+func (o stanfordCarsPlugin) Migrate() []interface{} {
 	return Tables
 }
 
-func (o autospherePlugin) Resources(Admin *admin.Admin) {
-	adm.ConfigureAdmin(Admin)
+func (o stanfordCarsPlugin) Resources(Admin *admin.Admin) {}
+
+func (o stanfordCarsPlugin) Crawl(cfg *config.Config) error {
+	return errors.New("Not implemented")
 }
 
-func (o autospherePlugin) Crawl(cfg *config.Config) error {
-	return crawler.Extract(cfg)
+func (o stanfordCarsPlugin) Catalog(cfg *config.Config) error {
+	return catalog.ImportFromURL(cfg)
 }
 
-func (o autospherePlugin) Config() *config.Config {
+func (o stanfordCarsPlugin) Config() *config.Config {
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autosphere.fr", "autosphere.fr"},
-		URLs: []string{
-			"https://www.autosphere.fr/sitemap.xml",
-		},
-		QueueMaxSize:    1000000,
-		ConsumerThreads: 1,
-		IsSitemapIndex: true,
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		CatalogURL: "file://./shared/datasets/stanford-cars/data/cars_data.csv",
 	}
 	return cfg
 }
 
-type autosphereCommands struct{}
+type stanfordCarsCommands struct{}
 
-func (t *autosphereCommands) Init(ctx context.Context) error {
+func (t *stanfordCarsCommands) Init(ctx context.Context) error {
 	// to set your splash, modify the text in the println statement below, multiline is supported
 	fmt.Println(`
------------------------------------------------------------------------------------------------------------------------------------
-:::'###::::'##::::'##:'########::'#######:::'######::'########::'##::::'##:'########:'########::'########::::::'########:'########::
-::'## ##::: ##:::: ##:... ##..::'##.... ##:'##... ##: ##.... ##: ##:::: ##: ##.....:: ##.... ##: ##.....::::::: ##.....:: ##.... ##:
-:'##:. ##:: ##:::: ##:::: ##:::: ##:::: ##: ##:::..:: ##:::: ##: ##:::: ##: ##::::::: ##:::: ##: ##:::::::::::: ##::::::: ##:::: ##:
-'##:::. ##: ##:::: ##:::: ##:::: ##:::: ##:. ######:: ########:: #########: ######::: ########:: ######:::::::: ######::: ########::
- #########: ##:::: ##:::: ##:::: ##:::: ##::..... ##: ##.....::: ##.... ##: ##...:::: ##.. ##::: ##...::::::::: ##...:::: ##.. ##:::
- ##.... ##: ##:::: ##:::: ##:::: ##:::: ##:'##::: ##: ##:::::::: ##:::: ##: ##::::::: ##::. ##:: ##:::::::'###: ##::::::: ##::. ##::
- ##:::: ##:. #######::::: ##::::. #######::. ######:: ##:::::::: ##:::: ##: ########: ##:::. ##: ########: ###: ##::::::: ##:::. ##:
-..:::::..:::.......::::::..::::::.......::::......:::..:::::::::..:::::..::........::..:::::..::........::...::..::::::::..:::::..::
+--------------------------------------------------------------------------------------------------------------------------------------
+:'######::'########::::'###::::'##::: ##:'########::'#######::'########::'########::::::::::::'######:::::'###::::'########:::'######::
+'##... ##:... ##..::::'## ##::: ###:: ##: ##.....::'##.... ##: ##.... ##: ##.... ##::::::::::'##... ##:::'## ##::: ##.... ##:'##... ##:
+ ##:::..::::: ##:::::'##:. ##:: ####: ##: ##::::::: ##:::: ##: ##:::: ##: ##:::: ##:::::::::: ##:::..:::'##:. ##:: ##:::: ##: ##:::..::
+. ######::::: ##::::'##:::. ##: ## ## ##: ######::: ##:::: ##: ########:: ##:::: ##:'#######: ##:::::::'##:::. ##: ########::. ######::
+:..... ##:::: ##:::: #########: ##. ####: ##...:::: ##:::: ##: ##.. ##::: ##:::: ##:........: ##::::::: #########: ##.. ##::::..... ##:
+'##::: ##:::: ##:::: ##.... ##: ##:. ###: ##::::::: ##:::: ##: ##::. ##:: ##:::: ##:::::::::: ##::: ##: ##.... ##: ##::. ##::'##::: ##:
+. ######::::: ##:::: ##:::: ##: ##::. ##: ##:::::::. #######:: ##:::. ##: ########:::::::::::. ######:: ##:::: ##: ##:::. ##:. ######::
+:......::::::..:::::..:::::..::..::::..::..:::::::::.......:::..:::::..::........:::::::::::::......:::..:::::..::..:::::..:::......:::
 `)
 
 	return nil
 }
 
-func (t *autosphereCommands) Registry() map[string]plugins.Plugin {
+func (t *stanfordCarsCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"autosphere": autospherePlugin("autosphere"), //OP
+		"stanfordCars": stanfordCarsPlugin("stanfordCars"), //OP
 	}
 }
 
-var Plugins autosphereCommands
+var Plugins stanfordCarsCommands

@@ -19,6 +19,7 @@ type Vehicle struct {
 	Engine            string `gorm:"index:engine"`
 	Year              string `gorm:"index:year"`
 	Source            string `gorm:"index:source"`
+	Gid               string `gorm:"index:gid"`
 	Manufacturer      string `gorm:"index:manufacturer"`
 	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
+	"github.com/lucmichalski/cars-contrib/stanford-cars/catalog"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 )
@@ -11,18 +11,13 @@ import (
 func main() {
 
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autosphere.fr", "autosphere.fr"},
-		URLs: []string{
-			"https://www.autosphere.fr/fiche4/auto-occasion-renault-megane-1-3-tce-140ch-fap-intens-120g-38200-vienne-95322?recobdme=reco",
-		},
-		CacheDir:        "../../../shared/data",
-		QueueMaxSize:    1000000,
-		ConsumerThreads: 35,
+		AnalyzerURL: 	"http://localhost:9003/crop?url=%s",
+		CatalogURL: 	"file://./shared/datasets/stanford-cars/data/cars_data.csv",
 		DryMode:         true,
 		IsDebug:         true,
 	}
 
-	err := crawler.Extract(cfg)
+	err := catalog.ImportFromURL(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

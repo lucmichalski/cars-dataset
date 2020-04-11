@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"errors"
 
 	adm "github.com/lucmichalski/cars-contrib/autosphere.fr/admin"
 	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
@@ -39,6 +40,10 @@ func (o autospherePlugin) Resources(Admin *admin.Admin) {
 
 func (o autospherePlugin) Crawl(cfg *config.Config) error {
 	return crawler.Extract(cfg)
+}
+
+func (o autospherePlugin) Catalog(cfg *config.Config) error {
+	return errors.New("Not Implemented")
 }
 
 func (o autospherePlugin) Config() *config.Config {

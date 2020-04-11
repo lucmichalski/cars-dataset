@@ -21,6 +21,7 @@ type Plugin interface {
 	LongDesc() string
 	Migrate() []interface{}
 	Resources(Admin *admin.Admin)
+	Catalog(cfg *config.Config) error
 	Config() *config.Config
 	Crawl(cfg *config.Config) error
 }

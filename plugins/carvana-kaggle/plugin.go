@@ -3,81 +3,71 @@ package main
 import (
 	"context"
 	"fmt"
+	"errors"
 
-	adm "github.com/lucmichalski/cars-contrib/autosphere.fr/admin"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/lucmichalski/cars-contrib/carvana-kaggle/catalog"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
 
-var Tables = []interface{}{
-	&models.SettingAutosphere{},
-}
+var Tables = []interface{}{}
+var Resources = []interface{}{}
 
-var Resources = []interface{}{
-	&models.SettingAutosphere{},
-}
+type carvanaKagglePlugin string
 
-type autospherePlugin string
+func (o carvanaKagglePlugin) Name() string      { return string(o) }
+func (o carvanaKagglePlugin) Section() string   { return `carvana-kaggle` }
+func (o carvanaKagglePlugin) Usage() string     { return `hello` }
+func (o carvanaKagglePlugin) ShortDesc() string { return `carvana-kaggle data importer"` }
+func (o carvanaKagglePlugin) LongDesc() string  { return o.ShortDesc() }
 
-func (o autospherePlugin) Name() string      { return string(o) }
-func (o autospherePlugin) Section() string   { return `autosphere.fr` }
-func (o autospherePlugin) Usage() string     { return `hello` }
-func (o autospherePlugin) ShortDesc() string { return `autosphere.fr crawler"` }
-func (o autospherePlugin) LongDesc() string  { return o.ShortDesc() }
-
-func (o autospherePlugin) Migrate() []interface{} {
+func (o carvanaKagglePlugin) Migrate() []interface{} {
 	return Tables
 }
 
-func (o autospherePlugin) Resources(Admin *admin.Admin) {
-	adm.ConfigureAdmin(Admin)
+func (o carvanaKagglePlugin) Resources(Admin *admin.Admin) {}
+
+func (o carvanaKagglePlugin) Crawl(cfg *config.Config) error {
+	return errors.New("not implemented")
 }
 
-func (o autospherePlugin) Crawl(cfg *config.Config) error {
-	return crawler.Extract(cfg)
+func (o carvanaKagglePlugin) Catalog(cfg *config.Config) error {
+	return catalog.ImportFromURL(cfg)
 }
 
-func (o autospherePlugin) Config() *config.Config {
+func (o carvanaKagglePlugin) Config() *config.Config {
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autosphere.fr", "autosphere.fr"},
-		URLs: []string{
-			"https://www.autosphere.fr/sitemap.xml",
-		},
-		QueueMaxSize:    1000000,
-		ConsumerThreads: 1,
-		IsSitemapIndex: true,
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		CatalogURL: "file://./shared/datasets/carvana-kaggle/metadata.csv",
 	}
 	return cfg
 }
 
-type autosphereCommands struct{}
+type carvanaKaggleCommands struct{}
 
-func (t *autosphereCommands) Init(ctx context.Context) error {
+func (t *carvanaKaggleCommands) Init(ctx context.Context) error {
 	// to set your splash, modify the text in the println statement below, multiline is supported
 	fmt.Println(`
------------------------------------------------------------------------------------------------------------------------------------
-:::'###::::'##::::'##:'########::'#######:::'######::'########::'##::::'##:'########:'########::'########::::::'########:'########::
-::'## ##::: ##:::: ##:... ##..::'##.... ##:'##... ##: ##.... ##: ##:::: ##: ##.....:: ##.... ##: ##.....::::::: ##.....:: ##.... ##:
-:'##:. ##:: ##:::: ##:::: ##:::: ##:::: ##: ##:::..:: ##:::: ##: ##:::: ##: ##::::::: ##:::: ##: ##:::::::::::: ##::::::: ##:::: ##:
-'##:::. ##: ##:::: ##:::: ##:::: ##:::: ##:. ######:: ########:: #########: ######::: ########:: ######:::::::: ######::: ########::
- #########: ##:::: ##:::: ##:::: ##:::: ##::..... ##: ##.....::: ##.... ##: ##...:::: ##.. ##::: ##...::::::::: ##...:::: ##.. ##:::
- ##.... ##: ##:::: ##:::: ##:::: ##:::: ##:'##::: ##: ##:::::::: ##:::: ##: ##::::::: ##::. ##:: ##:::::::'###: ##::::::: ##::. ##::
- ##:::: ##:. #######::::: ##::::. #######::. ######:: ##:::::::: ##:::: ##: ########: ##:::. ##: ########: ###: ##::::::: ##:::. ##:
-..:::::..:::.......::::::..::::::.......::::......:::..:::::::::..:::::..::........::..:::::..::........::...::..::::::::..:::::..::
+--------------------------------------------------------------------------------------------------------------------------------------------------
+:'######:::::'###::::'########::'##::::'##::::'###::::'##::: ##::::'###:::::::::::::'##:::'##::::'###:::::'######::::'######:::'##:::::::'########:
+'##... ##:::'## ##::: ##.... ##: ##:::: ##:::'## ##::: ###:: ##:::'## ##:::::::::::: ##::'##::::'## ##:::'##... ##::'##... ##:: ##::::::: ##.....::
+ ##:::..:::'##:. ##:: ##:::: ##: ##:::: ##::'##:. ##:: ####: ##::'##:. ##::::::::::: ##:'##::::'##:. ##:: ##:::..::: ##:::..::: ##::::::: ##:::::::
+ ##:::::::'##:::. ##: ########:: ##:::: ##:'##:::. ##: ## ## ##:'##:::. ##:'#######: #####::::'##:::. ##: ##::'####: ##::'####: ##::::::: ######:::
+ ##::::::: #########: ##.. ##:::. ##:: ##:: #########: ##. ####: #########:........: ##. ##::: #########: ##::: ##:: ##::: ##:: ##::::::: ##...::::
+ ##::: ##: ##.... ##: ##::. ##:::. ## ##::: ##.... ##: ##:. ###: ##.... ##:::::::::: ##:. ##:: ##.... ##: ##::: ##:: ##::: ##:: ##::::::: ##:::::::
+. ######:: ##:::: ##: ##:::. ##:::. ###:::: ##:::: ##: ##::. ##: ##:::: ##:::::::::: ##::. ##: ##:::: ##:. ######:::. ######::: ########: ########:
+:......:::..:::::..::..:::::..:::::...:::::..:::::..::..::::..::..:::::..:::::::::::..::::..::..:::::..:::......:::::......::::........::........::
 `)
 
 	return nil
 }
 
-func (t *autosphereCommands) Registry() map[string]plugins.Plugin {
+func (t *carvanaKaggleCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"autosphere": autospherePlugin("autosphere"), //OP
+		"carvanaKaggle": carvanaKagglePlugin("carvanaKaggle"), //OP
 	}
 }
 
-var Plugins autosphereCommands
+var Plugins carvanaKaggleCommands

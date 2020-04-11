@@ -18,6 +18,8 @@ type Config struct {
 	DryMode         bool
 	IsClean         bool
 	AnalyzerURL     string
+	CatalogURL      string
+	ImageDir        string
 	DumpDir         string   `default:"./shared/dump"`
 	DB              *gorm.DB `gorm:"-"`
 	IDX             *sql.DB  `gorm:"-"`
