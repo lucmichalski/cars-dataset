@@ -19,7 +19,7 @@ type Config struct {
 	IsClean         bool
 	AnalyzerURL     string
 	CatalogURL      string
-	ImageDir        string
+	ImageDirs       []string
 	DumpDir         string   `default:"./shared/dump"`
 	DB              *gorm.DB `gorm:"-"`
 	IDX             *sql.DB  `gorm:"-"`

@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"plugin"
 
 	"github.com/thanhhh/gin-gonic-realip"
 	"github.com/gin-gonic/gin"
@@ -40,7 +41,7 @@ import (
 	"github.com/spf13/pflag"
 
 	// "github.com/lucmichalski/cars-dataset/pkg/models"
-	// "github.com/lucmichalski/cars-dataset/pkg/plugins"
+	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
 
 var (
@@ -51,13 +52,31 @@ var (
 	isDataset     bool
 	isTruncate    bool
 	isClean       bool
+	isCatalog     bool
 	parallelJobs  int
+	pluginDir     string
+	usePlugins    []string
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
 )
 
 func main() {
 
+	listPlugins, err := filepath.Glob("./release/*.so")
+	if err != nil {
+		panic(err)
+	}
+	var defaultPlugins []string
+	for _, p := range listPlugins {
+		p = strings.Replace(p, ".so", "", -1)
+		p = strings.Replace(p, "peaks-tires-", "", -1)
+		p = strings.Replace(p, "release/", "", -1)
+		defaultPlugins = append(defaultPlugins, p)
+	}
+
+	pflag.BoolVarP(&isCatalog, "catalog", "", false, "import datasets/catalogs.")
+	pflag.StringVarP(&pluginDir, "plugin-dir", "", "./release", "plugins directory.")
+	pflag.StringSliceVarP(&usePlugins, "plugins", "", defaultPlugins, "plugins to load.")
 	pflag.IntVarP(&parallelJobs, "parallel-jobs", "j", 35, "parallel jobs.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
 	pflag.BoolVarP(&isDataset, "dataset", "d", false, "launch the crawler.")
@@ -98,6 +117,79 @@ func main() {
 	DB.AutoMigrate(&vehicle{})
 	DB.AutoMigrate(&vehicleImage{})
 	DB.AutoMigrate(&media_library.MediaLibrary{})
+
+	// load plugins
+	ptPlugins := plugins.New()
+
+	// The plugins (the *.so files) must be in a 'release' sub-directory
+	allPlugins, err := filepath.Glob(pluginDir + "/*.so")
+	if err != nil {
+		panic(err)
+	}
+
+	var loadPlugins []string
+	if len(usePlugins) > 0 {
+		for _, p := range allPlugins {
+			for _, u := range usePlugins {
+				if strings.Contains(p, u) {
+					loadPlugins = append(loadPlugins, p)
+				}
+			}
+		}
+	} else {
+		loadPlugins = allPlugins
+	}
+
+	// register commands from plugins
+	for _, filename := range loadPlugins {
+		p, err := plugin.Open(filename)
+		if err != nil {
+			panic(err)
+		}
+		// lookup for symbols
+		cmdSymbol, err := p.Lookup(plugins.CmdSymbolName)
+		if err != nil {
+			fmt.Printf("plugin %s does not export symbol \"%s\"\n",
+				filename, plugins.CmdSymbolName)
+			continue
+		}
+		// check if symbol is implemented in Plugins interface
+		commands, ok := cmdSymbol.(plugins.Plugins)
+		if !ok {
+			fmt.Printf("Symbol %s (from %s) does not implement Plugins interface\n",
+				plugins.CmdSymbolName, filename)
+			continue
+		}
+		// initialize plugin
+		if err := commands.Init(ptPlugins.Ctx); err != nil {
+			fmt.Printf("%s initialization failed: %v\n", filename, err)
+			continue
+		}
+		// register commands from plugin
+		for name, cmd := range commands.Registry() {
+			ptPlugins.Commands[name] = cmd
+		}
+	}
+
+	// migrate table from plugins
+	for _, cmd := range ptPlugins.Commands {
+		for _, table := range cmd.Migrate() {
+			DB.AutoMigrate(table)
+		}
+	}
+
+	// import catalog
+	if isCatalog {
+		for _, cmd := range ptPlugins.Commands {
+			c := cmd.Config()
+			c.DB = DB
+			err := cmd.Catalog(c)
+			if err != nil {
+				panic(err)
+			}
+		}
+	   os.Exit(0)
+	}
 
 	if isAdmin {
 
@@ -552,6 +644,7 @@ type vehicle struct {
 	Engine            string `gorm:"index:engine"`
 	Year              string `gorm:"index:year"`
 	Source            string `gorm:"index:source"`
+	Gid               string `gorm:"index:gid"`
 	Manufacturer      string `gorm:"index:manufacturer"`
 	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox

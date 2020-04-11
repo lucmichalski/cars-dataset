@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -12,7 +13,8 @@ func main() {
 
 	cfg := &config.Config{
 		AnalyzerURL: 	"http://localhost:9003/crop?url=%s",
-		CatalogURL: 	"file://./shared/datasets/carvana-kaggle/metadata.csv",
+		CatalogURL: 	"../../../shared/datasets/carvana-kaggle/metadata.csv",
+		ImageDirs:       []string{"../../../shared/datasets/carvana-kaggle/train_hq", "../../../shared/datasets/carvana-kaggle/test_hq"},
 		DryMode:         true,
 		IsDebug:         true,
 	}

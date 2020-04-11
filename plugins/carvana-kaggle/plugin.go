@@ -40,7 +40,7 @@ func (o carvanaKagglePlugin) Catalog(cfg *config.Config) error {
 func (o carvanaKagglePlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
-		CatalogURL: "file://./shared/datasets/carvana-kaggle/metadata.csv",
+		CatalogURL: "./shared/datasets/carvana-kaggle/metadata.csv",
 	}
 	return cfg
 }

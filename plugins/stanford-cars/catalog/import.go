@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"os"
+	"io"
 
 	"github.com/k0kubun/pp"
 	"github.com/nozzle/throttler"
@@ -32,24 +34,29 @@ type imageSrc struct {
 }
 
 func ImportFromURL(cfg *config.Config) error {
-	fmt.Printf("Import csv from %s\n", cfg.CatalogURL)
-	file, size, checksum, err := utils.OpenFileByURL(cfg.CatalogURL)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Inspect remote csv for '%s', stored at '%s', size='%d', checksum='%s'\n", cfg.CatalogURL, file.Name(), size, checksum)
+
+    	file, err := os.Open(cfg.CatalogURL)
+        if err != nil {
+                return err
+        }
 
 	reader := csv.NewReader(file)
 	reader.Comma = ','
 	reader.LazyQuotes = true
-	data, err := reader.ReadAll()
-	if err != nil {
-		return err
-	}
 
-	t := throttler.New(32, len(data))
+	t := throttler.New(32, 10000000)
 
-	for _, row := range data {
+	for {
+		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+		    if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
+		        continue
+		    }
+		    return err
+		}
 
 		go func(row []string) error {
 			// Let Throttler know when the goroutine completes
@@ -61,12 +68,12 @@ func ImportFromURL(cfg *config.Config) error {
 
 			name := row[2]
 			nameParts := strings.Split(name, " ")
-
+			vehicle.Name = row[2]
 			vehicle.Year = nameParts[len(nameParts)-1]
 			vehicle.Manufacturer = nameParts[0]
 			model := strings.Replace(name, nameParts[0], "", -1)
 			model = strings.Replace(model, vehicle.Year, "", -1)
-			vehicle.Modl = model
+			vehicle.Modl = strings.TrimSpace(model)
 
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
@@ -76,12 +83,21 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
-			file, size, checksum, err := utils.OpenFileByURL(row[1])
+			file, err := os.Open(row[1])
 			if err != nil {
-				fmt.Printf("open file failure, got err %v", err)
-				file.Close()
 				return err
 			}
+
+			fi, err := file.Stat()
+                        if err != nil {
+                                return err
+                        }
+
+			size := fi.Size()
+			checksum, err := utils.GetMD5File(file.Name())
+                        if err != nil {
+                                return err
+                        }
 
 			if size == 0 {
 				file.Close()
