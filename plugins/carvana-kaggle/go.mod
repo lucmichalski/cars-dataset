@@ -13,4 +13,5 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481
 	github.com/qor/admin v0.0.0-20200315024928-877b98a68a6f
 	github.com/qor/media v0.0.0-20191022071353-19cf289e17d4
+	github.com/sirupsen/logrus v1.5.0
 )

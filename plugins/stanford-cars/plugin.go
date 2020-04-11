@@ -41,7 +41,7 @@ func (o stanfordCarsPlugin) Catalog(cfg *config.Config) error {
 func (o stanfordCarsPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
-		CatalogURL: "file://./shared/datasets/stanford-cars/data/cars_data.csv",
+		CatalogURL: "./shared/datasets/stanford-cars/data/cars_data.csv",
 	}
 	return cfg
 }

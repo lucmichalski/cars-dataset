@@ -4,10 +4,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
+	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/k0kubun/pp"
 	"github.com/nozzle/throttler"
 	"github.com/qor/media/media_library"
@@ -33,12 +34,11 @@ type imageSrc struct {
 }
 
 func ImportFromURL(cfg *config.Config) error {
-	fmt.Printf("Import csv from %s\n", cfg.CatalogURL)
-	file, size, checksum, err := utils.OpenFileByURL(cfg.CatalogURL)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Inspect remote csv for '%s', stored at '%s', size='%d', checksum='%s'\n", cfg.CatalogURL, file.Name(), size, checksum)
+
+        file, err := os.Open(cfg.CatalogURL)
+        if err != nil {
+                return err
+        }
 
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -66,9 +66,6 @@ func ImportFromURL(cfg *config.Config) error {
 			// so it can dispatch another worker
 			defer t.Done(nil)
 
-			// var imageURLs []string
-			// imageSrcs := make([]*imageSrc, 0)
-
 			vehicle := models.Vehicle{}
 			vehicle.Source = "carvana-kaggle"
 			for id, header := range csvMap {
@@ -86,6 +83,8 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
+			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
 				if !cfg.DB.Where("gid = ?", vehicle.Gid).First(&vehicleExists).RecordNotFound() {
@@ -94,21 +93,38 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
-			imageSrcs, err := walkImages(vehicle.Gid, cfg.ImageDir)
+			imageSrcs, err := walkImages(vehicle.Gid, cfg.ImageDirs)
 			if err != nil {
 				log.Fatal(err)
 			}
 
+			pp.Println(vehicle)
+			pp.Println(imageSrcs)
+
 			for i, imgSrc := range imageSrcs {
-				if file, size, checksum, err := utils.OpenFileByURL(imgSrc.URL); err != nil {
-					fmt.Printf("open file failure, got err %v", err)
-					file.Close()
-					continue
-				} else {
-					imageSrcs[i].Size = size
-					imageSrcs[i].Checksum = checksum
-					imageSrcs[i].File = file.Name()
-				}
+
+	                        file, err := os.Open(imgSrc.URL)
+	                        if err != nil {
+	                                return err
+	                        }
+
+	                        fi, err := file.Stat()
+	                        if err != nil {
+	                                return err
+	                        }
+
+	                        size := fi.Size()
+	                        checksum, err := utils.GetMD5File(file.Name())
+	                        if err != nil {
+	                                return err
+	                        }
+
+				imageSrcs[i].Size = size
+				imageSrcs[i].Checksum = checksum
+				imageSrcs[i].File = file.Name()
+
+				file.Close()
+
 			}
 
 			sort.Slice(imageSrcs[:], func(i, j int) bool {
@@ -118,53 +134,54 @@ func ImportFromURL(cfg *config.Config) error {
 			pp.Println("imageSrcs:", imageSrcs)
 
 			for _, imgSrc := range imageSrcs {
-				if file, _, checksum, err := utils.OpenFileByURL(imgSrc.URL); err != nil {
-					fmt.Printf("open file failure, got err %v", err)
+
+                                file, err := os.Open(imgSrc.URL)
+                                if err != nil {
+                                        return err
+                                }
+
+                                fi, err := file.Stat()
+                                if err != nil {
+                                        return err
+                                }
+
+                                size := fi.Size()
+                                checksum, err := utils.GetMD5File(file.Name())
+                                if err != nil {
+                                        return err
+                                }
+
+				if size == 0 {
 					file.Close()
 					continue
-				} else {
+				}
 
-					if imgSrc.Size == 0 {
+				image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum}
+
+				log.Println("----> Scanning file: ", file.Name())
+				image.File.Scan(file)
+
+				if !cfg.DryMode {
+					if err := cfg.DB.Create(&image).Error; err != nil {
+						log.Printf("create variation_image (%v) failure, got err %v\n", image, err)
+						// return err
 						file.Close()
 						continue
-					}
-
-					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image"}
-
-					var imageExists models.VehicleImage
-					if !cfg.DB.Where("checksum = ?", checksum).First(&imageExists).RecordNotFound() {
-						fmt.Printf("skipping checksum=%s as already exists\n", checksum)
-						image.ID = imageExists.ID
-						image.CreatedAt = imageExists.CreatedAt
-						continue
-					} else {
-
-						log.Println("----> Scanning file: ", file.Name())
-						image.File.Scan(file)
-
-						if !cfg.DryMode {
-							if err := cfg.DB.Create(&image).Error; err != nil {
-								log.Printf("create variation_image (%v) failure, got err %v\n", image, err)
-								// return err
-								file.Close()
-								continue
-							}
-						}
-
-						vehicle.Images.Files = append(vehicle.Images.Files, media_library.File{
-							ID:  json.Number(fmt.Sprint(image.ID)),
-							Url: image.File.URL(),
-						})
-
-						if len(vehicle.MainImage.Files) == 0 {
-							vehicle.MainImage.Files = []media_library.File{{
-								ID:  json.Number(fmt.Sprint(image.ID)),
-								Url: image.File.URL(),
-							}}
-						}
-						file.Close()
 					}
 				}
+
+				vehicle.Images.Files = append(vehicle.Images.Files, media_library.File{
+					ID:  json.Number(fmt.Sprint(image.ID)),
+					Url: image.File.URL(),
+				})
+
+				if len(vehicle.MainImage.Files) == 0 {
+					vehicle.MainImage.Files = []media_library.File{{
+						ID:  json.Number(fmt.Sprint(image.ID)),
+						Url: image.File.URL(),
+					}}
+				}
+				file.Close()
 			}
 
 			pp.Println(vehicle)
@@ -193,13 +210,14 @@ func ImportFromURL(cfg *config.Config) error {
 	return nil
 }
 
-func walkImages(gid, dirname string) (list []*imageSrc, err error ){
+func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
+	for _, dirname := range dirnames {
 	err = godirwalk.Walk(dirname, &godirwalk.Options{
 		Callback: func(osPathname string, de *godirwalk.Dirent) error {
 			if !de.IsDir() {
 				if strings.Contains(osPathname, gid) {
-					fmt.Println("found ", osPathname)
-					list = append(list, &imageSrc{URL: "file://"+osPathname, Type: "image_link"})
+					fmt.Println("found ", osPathname, "gid", gid)
+					list = append(list, &imageSrc{URL: osPathname, Type: "image_link"})
 					// list = append(list, "file://"+osPathname)
 				}
 			}
@@ -207,5 +225,6 @@ func walkImages(gid, dirname string) (list []*imageSrc, err error ){
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 	})
+	}
 	return 
 }

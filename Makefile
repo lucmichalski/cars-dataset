@@ -34,9 +34,9 @@ BUILT:=`date`
 
 ## plugin				:	Build plugin (defined by PLUGIN variable).
 plugin:
-	-mkdir -p release
+	mkdir -p release
 	echo ">>> Building: $(PLUGIN_SO) $(VERSION) for $(GOOS)-$(GOARCH) ..."
-	cd plugins/$(PLUGIN) && GOOS=$(GOOS) GOARCH=$(GOARCH) go build -buildmode=plugin -o ../../release/$(PLUGIN_SO)
+	echo "cd plugins/$(PLUGIN) && GOOS=$(GOOS) GOARCH=$(GOARCH) go build -buildmode=plugin -o ../../release/$(PLUGIN_SO)"
 .PHONY: plugin
 
 ## plugins			:	Build all qorpress plugins
