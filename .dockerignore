@@ -27,3 +27,5 @@ shared/datasets
 shared/datasets/
 shared/datasets/*
 shared/datasets/**
+shared/data
+shared/data/**
