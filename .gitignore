@@ -27,3 +27,8 @@ tmp
 tmp/
 tmp/*
 tmp/**
+
+shared/datasets
+shared/datasets/
+shared/datasets/*
+shared/datasets/**

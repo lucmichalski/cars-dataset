@@ -19,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qor/media/media_library"
 	"github.com/thanhhh/gin-gonic-realip"
 	"github.com/gin-gonic/gin"
 	"github.com/qor/qor/utils"
