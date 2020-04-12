@@ -45,6 +45,14 @@ type imageSrc struct {
 	Type     string
 }
 
+type carInfo struct {
+	name string
+	model string
+	year string
+	make string
+	imgs []string
+}
+
 func ImportFromURL(cfg *config.Config) error {
 
 	file, err := os.Open(cfg.CatalogURL)
@@ -58,6 +66,8 @@ func ImportFromURL(cfg *config.Config) error {
 
 	t := throttler.New(1, 10000000)
 
+	cars := make(map[string]*carInfo, 0)
+
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -70,7 +80,33 @@ func ImportFromURL(cfg *config.Config) error {
 		    return err
 		}
 
-		go func(row []string) error {
+		name := row[2]
+		nameParts := strings.Split(name, " ")
+		year := nameParts[len(nameParts)-1]
+		model := strings.Replace(name, nameParts[0], "", -1)
+		model = strings.Replace(model, year, "", -1)
+
+		var imageSrcs []string
+		imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_test/"+row[1])
+		imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_train/"+row[1])
+
+		if _, ok := cars[name]; ok {
+			cars[name].imgs = append(cars[name].imgs, imageSrcs...)
+		} else {
+			car := &carInfo{
+				name: row[2],
+				make: nameParts[0],
+				model: strings.TrimSpace(model),
+				year: nameParts[len(nameParts)-1],
+			}
+			car.imgs = append(car.imgs, imageSrcs...)
+			cars[name] = car
+		}
+	}
+
+	for _, row := range cars {
+
+		go func(row *carInfo) error {
 			// Let Throttler know when the goroutine completes
 			// so it can dispatch another worker
 			defer t.Done(nil)
@@ -78,116 +114,102 @@ func ImportFromURL(cfg *config.Config) error {
 			vehicle := models.Vehicle{}
 			vehicle.Source = "stanford-cars"
 
-			name := row[2]
-			nameParts := strings.Split(name, " ")
-			vehicle.Name = row[2]
-			vehicle.Year = nameParts[len(nameParts)-1]
-			vehicle.Manufacturer = nameParts[0]
-			model := strings.Replace(name, nameParts[0], "", -1)
-			model = strings.Replace(model, vehicle.Year, "", -1)
-			vehicle.Modl = strings.TrimSpace(model)
+			vehicle.Name = row.name
+			vehicle.Year = row.year
+			vehicle.Manufacturer = row.make
 
-			/*
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
-				if !cfg.DB.Where("gid = ?", vehicle.Gid).First(&vehicleExists).RecordNotFound() {
-					fmt.Printf("skipping gid=%s as already exists\n", vehicle.Gid)
+				if !cfg.DB.Where("name = ? AND year = ? AND manufacturer = ? AND source = ?", vehicle.Name, vehicle.Year, vehicle.Manufacturer, vehicle.Source).First(&vehicleExists).RecordNotFound() {
+					fmt.Printf("skipping name=%s,year=%s,manufacturer=%s,source=%s as already exists\n", vehicle.Name, vehicle.Year, vehicle.Manufacturer, vehicle.Source)
 					return nil
 				}
 			}
-			*/
 
-			imageSrcs, err := walkImages(row[1], cfg.ImageDirs)
-			if err != nil {
-				log.Fatal(err)
-			}
+			for _, imgSrc := range row.imgs {
 
-			pp.Println(vehicle)
-			pp.Println(imageSrcs)
+				pp.Println(vehicle)
+				pp.Println(imgSrc)
 
-			if len(imageSrcs) < 1 {
-				fmt.Println("check")
-				os.Exit(1)
-			}
+				// create temporary file
 
-			// create temporary file
-
-			tmpfilePath := filepath.Join(os.TempDir(), path.Base(imageSrcs[0].URL))
-			file, err := os.Create(tmpfilePath)
-			if err != nil {
-				log.Fatal("Create tmpfilePath", err)
-				return err
-			}
-
-			pp.Println("tmpfilePath", tmpfilePath)
-			pp.Println("imageSrcs[0].URL", imageSrcs[0].URL)
-
-			// make request to darknet service
-			request, err := newfileUploadRequest("http://localhost:9003/crop", nil, "file", imageSrcs[0].URL)
-			if err != nil {
-				log.Fatalln("newfileUploadRequest", err)
-			}
-			client := &http.Client{}
-			resp, err := client.Do(request)
-			if err != nil {
-				log.Fatalln("client.Do", err)
-			} else {
-				defer resp.Body.Close()
-
-				_, err = io.Copy(file, resp.Body)
+				tmpfilePath := filepath.Join(os.TempDir(), path.Base(imgSrc))
+				file, err := os.Create(tmpfilePath)
 				if err != nil {
-					log.Fatal("io.Copy", err)
+					log.Fatal("Create tmpfilePath", err)
 					return err
 				}
 
-				buf, _ := ioutil.ReadFile(file.Name())
-				kind, _ := filetype.Match(buf)
-				pp.Println("kind: ", kind)
+				pp.Println("tmpfilePath", tmpfilePath)
+				pp.Println("imgSrc", imgSrc)
 
-				fi, err := file.Stat()
+				// make request to darknet service
+				request, err := newfileUploadRequest("http://localhost:9003/crop", nil, "file", imgSrc)
 				if err != nil {
-					log.Fatal("file.Stat()", err)
-					return err
+					log.Fatalln("newfileUploadRequest", err)
 				}
-
-				size := fi.Size()
-
-				checksum, err := utils.GetMD5File(tmpfilePath)
+				client := &http.Client{}
+				resp, err := client.Do(request)
 				if err != nil {
-					log.Fatal("GetMD5File", err)
-					return err
-				}
+					log.Fatalln("client.Do", err)
+				} else {
+					defer resp.Body.Close()
 
-				if size == 0 {
-					file.Close()
-					log.Warnln("image to small")
-					return nil
-				}
-
-				image := models.VehicleImage{Title: name, SelectedType: "image", Checksum: checksum}
-
-				log.Println("----> Scanning file: ", file.Name())
-				image.File.Scan(file)
-
-				if !cfg.DryMode {
-					if err := cfg.DB.Create(&image).Error; err != nil {
-						log.Printf("create variation_image (%v) failure, got err %v\n", image, err)
+					_, err = io.Copy(file, resp.Body)
+					if err != nil {
+						log.Fatal("io.Copy", err)
 						return err
 					}
-				}
 
-				vehicle.Images.Files = append(vehicle.Images.Files, media_library.File{
-					ID:  json.Number(fmt.Sprint(image.ID)),
-					Url: image.File.URL(),
-				})
+					buf, _ := ioutil.ReadFile(file.Name())
+					kind, _ := filetype.Match(buf)
+					pp.Println("kind: ", kind)
 
-				if len(vehicle.MainImage.Files) == 0 {
-					vehicle.MainImage.Files = []media_library.File{{
+					fi, err := file.Stat()
+					if err != nil {
+						log.Fatal("file.Stat()", err)
+						return err
+					}
+
+					size := fi.Size()
+
+					checksum, err := utils.GetMD5File(tmpfilePath)
+					if err != nil {
+						log.Fatal("GetMD5File", err)
+						return err
+					}
+
+					if size == 0 {
+						file.Close()
+						log.Warnln("image to small")
+						return nil
+					}
+
+					image := models.VehicleImage{Title: row.name, SelectedType: "image", Checksum: checksum}
+
+					log.Println("----> Scanning file: ", file.Name())
+					image.File.Scan(file)
+
+					if !cfg.DryMode {
+						if err := cfg.DB.Create(&image).Error; err != nil {
+							log.Printf("create variation_image (%v) failure, got err %v\n", image, err)
+							return err
+						}
+					}
+
+					vehicle.Images.Files = append(vehicle.Images.Files, media_library.File{
 						ID:  json.Number(fmt.Sprint(image.ID)),
 						Url: image.File.URL(),
-					}}
+					})
+
+					if len(vehicle.MainImage.Files) == 0 {
+						vehicle.MainImage.Files = []media_library.File{{
+							ID:  json.Number(fmt.Sprint(image.ID)),
+							Url: image.File.URL(),
+						}}
+					}
+					file.Close()
 				}
-				file.Close()
 			}
 
 			pp.Println(vehicle)
@@ -214,6 +236,25 @@ func ImportFromURL(cfg *config.Config) error {
 	}
 
 	return nil
+}
+
+func walkImagesSlice(gid string, dirnames []string) (list []string, err error ){
+	for _, dirname := range dirnames {
+		err = godirwalk.Walk(dirname, &godirwalk.Options{
+			Callback: func(osPathname string, de *godirwalk.Dirent) error {
+				if !de.IsDir() {
+					if strings.Contains(osPathname, gid) {
+						// fmt.Println("found ", osPathname, "gid", gid)
+						list = append(list, osPathname)
+						// list = append(list, "file://"+osPathname)
+					}
+				}
+				return nil
+			},
+			Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
+		})
+	}
+	return 
 }
 
 func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
