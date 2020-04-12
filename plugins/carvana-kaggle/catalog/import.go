@@ -157,7 +157,7 @@ func ImportFromURL(cfg *config.Config) error {
 				}				
 
 				// make request to darknet service
-				request, err := newfileUploadRequest("http://localhost:9003/crop", nil, "file", imgSrc.URL)
+				request, err := newfileUploadRequest("http://localhost:9004/crop", nil, "file", imgSrc.URL)
 				if err != nil {
 					log.Fatalln("newfileUploadRequest", err)
 				}

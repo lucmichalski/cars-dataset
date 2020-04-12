@@ -474,7 +474,7 @@ func main() {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://darknet2:9004/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := openFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)

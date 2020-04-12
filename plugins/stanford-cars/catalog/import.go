@@ -128,9 +128,6 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for _, imgSrc := range row.imgs {
 
-				pp.Println(vehicle)
-				pp.Println(imgSrc)
-
 				// create temporary file
 
 				tmpfilePath := filepath.Join(os.TempDir(), path.Base(imgSrc))
@@ -143,8 +140,12 @@ func ImportFromURL(cfg *config.Config) error {
 				pp.Println("tmpfilePath", tmpfilePath)
 				pp.Println("imgSrc", imgSrc)
 
+				if _, err := os.Stat(imgSrc); err != nil {
+					continue
+				}
+
 				// make request to darknet service
-				request, err := newfileUploadRequest("http://localhost:9003/crop", nil, "file", imgSrc)
+				request, err := newfileUploadRequest("http://localhost:9005/crop", nil, "file", imgSrc)
 				if err != nil {
 					log.Fatalln("newfileUploadRequest", err)
 				}
@@ -212,10 +213,10 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
-			pp.Println(vehicle)
 			if !cfg.DryMode {
+				pp.Println(vehicle)
 				if err := cfg.DB.Create(&vehicle).Error; err != nil {
-					log.Printf("create product (%v) failure, got err %v", vehicle, err)
+					log.Fatalf("create product (%v) failure, got err %v", vehicle, err)
 					return err
 				}
 			}

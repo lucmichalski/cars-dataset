@@ -445,7 +445,12 @@ func server() {
 		}
 	})
 
-	r.Run(":9003")
+	port := "9003"
+	if os.Getenv("DARKNET_PORT") != "" {
+		port = os.Getenv("DARKNET_PORT")
+	}
+
+	r.Run(fmt.Sprintf(":%s", port))
 }
 
 func printError(err error) {
