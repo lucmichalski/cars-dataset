@@ -42,6 +42,7 @@ func (o stanfordCarsPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
 		CatalogURL: "./shared/datasets/stanford-cars/data/cars_data.csv",
+		ImageDirs:  []string{"./shared/datasets/stanford-cars/cars_test", "./shared/datasets/stanford-cars/cars_train"},
 	}
 	return cfg
 }

@@ -69,6 +69,26 @@ services:
       MYSQL_USER: ${MYSQL_USER}
     restart: unless-stopped
 
+  backup:
+    image: zeenlym/mariadb-backup
+    container_name: ${NAMESPACE}_backup
+    depends_on:
+    - mysql
+    restart: unless-stopped
+    networks:
+    - internal
+    environment:
+    - TIMEZONE=${TIME_ZONE}
+    - SCHEDULE=0 0 0 3 *
+    - BACKUP_METHOD=mysqldump
+    - MYSQL_HOST=mysql
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_USER=${MYSQL_USER}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+    - ${MYSQL_BACKUP_DIR}:/backup
+    restart: unless-stopped
+
   imaginary:
     image: h2non/imaginary:latest
     container_name: ${NAMESPACE}_imaginary

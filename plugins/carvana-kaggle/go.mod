@@ -6,7 +6,7 @@ go 1.14
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible // indirect
-	github.com/h2non/filetype v1.0.12 // indirect
+	github.com/h2non/filetype v1.0.12
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/karrick/godirwalk v1.15.6
 	github.com/lucmichalski/cars-dataset v0.0.0-00010101000000-000000000000
