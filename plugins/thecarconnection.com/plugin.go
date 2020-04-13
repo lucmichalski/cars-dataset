@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"errors"
 
-	adm "github.com/lucmichalski/cars-contrib/autosphere.fr/admin"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
-	"github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	adm "github.com/lucmichalski/cars-contrib/thecarconnection.com/admin"
+	"github.com/lucmichalski/cars-contrib/thecarconnection.com/crawler"
+	"github.com/lucmichalski/cars-contrib/thecarconnection.com/models"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -15,42 +15,42 @@ import (
 )
 
 var Tables = []interface{}{
-	&models.SettingAutosphere{},
+	&models.SettingTheCarConnection{},
 }
 
 var Resources = []interface{}{
-	&models.SettingAutosphere{},
+	&models.SettingTheCarConnection{},
 }
 
-type autospherePlugin string
+type theCarConnectionPlugin string
 
-func (o autospherePlugin) Name() string      { return string(o) }
-func (o autospherePlugin) Section() string   { return `autosphere.fr` }
-func (o autospherePlugin) Usage() string     { return `hello` }
-func (o autospherePlugin) ShortDesc() string { return `autosphere.fr crawler"` }
-func (o autospherePlugin) LongDesc() string  { return o.ShortDesc() }
+func (o theCarConnectionPlugin) Name() string      { return string(o) }
+func (o theCarConnectionPlugin) Section() string   { return `thecarconnection.com` }
+func (o theCarConnectionPlugin) Usage() string     { return `hello` }
+func (o theCarConnectionPlugin) ShortDesc() string { return `thecarconnection.com crawler"` }
+func (o theCarConnectionPlugin) LongDesc() string  { return o.ShortDesc() }
 
-func (o autospherePlugin) Migrate() []interface{} {
+func (o theCarConnectionPlugin) Migrate() []interface{} {
 	return Tables
 }
 
-func (o autospherePlugin) Resources(Admin *admin.Admin) {
+func (o theCarConnectionPlugin) Resources(Admin *admin.Admin) {
 	adm.ConfigureAdmin(Admin)
 }
 
-func (o autospherePlugin) Crawl(cfg *config.Config) error {
+func (o theCarConnectionPlugin) Crawl(cfg *config.Config) error {
 	return crawler.Extract(cfg)
 }
 
-func (o autospherePlugin) Catalog(cfg *config.Config) error {
+func (o theCarConnectionPlugin) Catalog(cfg *config.Config) error {
 	return errors.New("Not Implemented")
 }
 
-func (o autospherePlugin) Config() *config.Config {
+func (o theCarConnectionPlugin) Config() *config.Config {
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autosphere.fr", "autosphere.fr"},
+		AllowedDomains: []string{"www.thecarconnection.com", "thecarconnection.com"},
 		URLs: []string{
-			"https://www.autosphere.fr/sitemap.xml",
+			"https://www.thecarconnection.com/sitemap.xml",
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
@@ -60,29 +60,29 @@ func (o autospherePlugin) Config() *config.Config {
 	return cfg
 }
 
-type autosphereCommands struct{}
+type theCarConnectionCommands struct{}
 
-func (t *autosphereCommands) Init(ctx context.Context) error {
+func (t *theCarConnectionCommands) Init(ctx context.Context) error {
 	// to set your splash, modify the text in the println statement below, multiline is supported
 	fmt.Println(`
------------------------------------------------------------------------------------------------------------------------------------
-:::'###::::'##::::'##:'########::'#######:::'######::'########::'##::::'##:'########:'########::'########::::::'########:'########::
-::'## ##::: ##:::: ##:... ##..::'##.... ##:'##... ##: ##.... ##: ##:::: ##: ##.....:: ##.... ##: ##.....::::::: ##.....:: ##.... ##:
-:'##:. ##:: ##:::: ##:::: ##:::: ##:::: ##: ##:::..:: ##:::: ##: ##:::: ##: ##::::::: ##:::: ##: ##:::::::::::: ##::::::: ##:::: ##:
-'##:::. ##: ##:::: ##:::: ##:::: ##:::: ##:. ######:: ########:: #########: ######::: ########:: ######:::::::: ######::: ########::
- #########: ##:::: ##:::: ##:::: ##:::: ##::..... ##: ##.....::: ##.... ##: ##...:::: ##.. ##::: ##...::::::::: ##...:::: ##.. ##:::
- ##.... ##: ##:::: ##:::: ##:::: ##:::: ##:'##::: ##: ##:::::::: ##:::: ##: ##::::::: ##::. ##:: ##:::::::'###: ##::::::: ##::. ##::
- ##:::: ##:. #######::::: ##::::. #######::. ######:: ##:::::::: ##:::: ##: ########: ##:::. ##: ########: ###: ##::::::: ##:::. ##:
-..:::::..:::.......::::::..::::::.......::::......:::..:::::::::..:::::..::........::..:::::..::........::...::..::::::::..:::::..::
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+'########:'##::::'##:'########::'######:::::'###::::'########:::'######:::'#######::'##::: ##:'##::: ##:'########::'######::'########:'####::'#######::'##::: ##:::::::'######:::'#######::'##::::'##:
+... ##..:: ##:::: ##: ##.....::'##... ##:::'## ##::: ##.... ##:'##... ##:'##.... ##: ###:: ##: ###:: ##: ##.....::'##... ##:... ##..::. ##::'##.... ##: ###:: ##::::::'##... ##:'##.... ##: ###::'###:
+::: ##:::: ##:::: ##: ##::::::: ##:::..:::'##:. ##:: ##:::: ##: ##:::..:: ##:::: ##: ####: ##: ####: ##: ##::::::: ##:::..::::: ##::::: ##:: ##:::: ##: ####: ##:::::: ##:::..:: ##:::: ##: ####'####:
+::: ##:::: #########: ######::: ##:::::::'##:::. ##: ########:: ##::::::: ##:::: ##: ## ## ##: ## ## ##: ######::: ##:::::::::: ##::::: ##:: ##:::: ##: ## ## ##:::::: ##::::::: ##:::: ##: ## ### ##:
+::: ##:::: ##.... ##: ##...:::: ##::::::: #########: ##.. ##::: ##::::::: ##:::: ##: ##. ####: ##. ####: ##...:::: ##:::::::::: ##::::: ##:: ##:::: ##: ##. ####:::::: ##::::::: ##:::: ##: ##. #: ##:
+::: ##:::: ##:::: ##: ##::::::: ##::: ##: ##.... ##: ##::. ##:: ##::: ##: ##:::: ##: ##:. ###: ##:. ###: ##::::::: ##::: ##:::: ##::::: ##:: ##:::: ##: ##:. ###:'###: ##::: ##: ##:::: ##: ##:.:: ##:
+::: ##:::: ##:::: ##: ########:. ######:: ##:::: ##: ##:::. ##:. ######::. #######:: ##::. ##: ##::. ##: ########:. ######::::: ##::::'####:. #######:: ##::. ##: ###:. ######::. #######:: ##:::: ##:
+:::..:::::..:::::..::........:::......:::..:::::..::..:::::..:::......::::.......:::..::::..::..::::..::........:::......::::::..:::::....:::.......:::..::::..::...:::......::::.......:::..:::::..::
 `)
 
 	return nil
 }
 
-func (t *autosphereCommands) Registry() map[string]plugins.Plugin {
+func (t *theCarConnectionCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"autosphere": autospherePlugin("autosphere"), //OP
+		"theCarConnection": theCarConnectionPlugin("theCarConnection"), //OP
 	}
 }
 
-var Plugins autosphereCommands
+var Plugins theCarConnectionCommands
