@@ -19,11 +19,14 @@ import (
 	"strconv"
 	"strings"
 	"plugin"
+	"bytes"
+	"html/template"
 
 	"github.com/thanhhh/gin-gonic-realip"
 	"github.com/gin-gonic/gin"
 	"github.com/qor/qor/utils"
 	"github.com/qor/admin"
+	"github.com/qor/qor"
 	"github.com/qor/assetfs"
 	"github.com/h2non/filetype"
 	"github.com/PuerkitoBio/goquery"
@@ -53,6 +56,7 @@ var (
 	isTruncate    bool
 	isClean       bool
 	isCatalog     bool
+	isDryMode     bool
 	parallelJobs  int
 	pluginDir     string
 	usePlugins    []string
@@ -74,6 +78,7 @@ func main() {
 		defaultPlugins = append(defaultPlugins, p)
 	}
 
+	pflag.BoolVarP(&isDryMode, "dry-mode", "", false, "do not insert data into database tables.")
 	pflag.BoolVarP(&isCatalog, "catalog", "", false, "import datasets/catalogs.")
 	pflag.StringVarP(&pluginDir, "plugin-dir", "", "./release", "plugins directory.")
 	pflag.StringSliceVarP(&usePlugins, "plugins", "", defaultPlugins, "plugins to load.")
@@ -183,6 +188,7 @@ func main() {
 		for _, cmd := range ptPlugins.Commands {
 			c := cmd.Config()
 			c.DB = DB
+			c.DryMode = isDryMode			
 			err := cmd.Catalog(c)
 			if err != nil {
 				panic(err)
@@ -222,8 +228,25 @@ func main() {
  
 		VehicleImagesResource.UseTheme("grid")
 
-		vehicle := Admin.AddResource(&vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
-		vehicle.IndexAttrs("ID", "Name", "Modl", "Engine", "Year", "Source", "Manufacturer", "MainImage", "Images")
+		cars := Admin.AddResource(&vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
+		cars.IndexAttrs("ID", "Name", "Modl", "Engine", "Year", "Source", "Manufacturer", "MainImage", "Images")
+
+		cars.Meta(&admin.Meta{Name: "MainImage", Config: &media_library.MediaBoxConfig{
+			RemoteDataResource: VehicleImagesResource,
+			Max:                1,
+			//Sizes: map[string]*media.Size{
+			//	"main": {Width: 560, Height: 700},
+			//},
+		}})
+		cars.Meta(&admin.Meta{Name: "MainImageURL", Valuer: func(record interface{}, context *qor.Context) interface{} {
+			if p, ok := record.(*vehicle); ok {
+				result := bytes.NewBufferString("")
+				tmpl, _ := template.New("").Parse("<img src='{{.image}}'></img>")
+				tmpl.Execute(result, map[string]string{"image": p.MainImageURL()})
+				return template.HTML(result.String())
+			}
+			return ""
+		}})
 
 		// initalize an HTTP request multiplexer
 		mux := http.NewServeMux()
@@ -451,7 +474,7 @@ func main() {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://darknet2:9004/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := openFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
@@ -649,6 +672,18 @@ type vehicle struct {
 	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox
 	VehicleProperties vehicleProperties `sql:"type:text"`
+}
+
+func (v vehicle) MainImageURL(styles ...string) string {
+	style := "original"
+	if len(styles) > 0 {
+		style = styles[0]
+	}
+
+	if len(v.MainImage.Files) > 0 {
+		return v.MainImage.URL(style)
+	}
+	return "/images/no_image.png"
 }
 
 type vehicleGtm struct {

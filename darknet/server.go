@@ -73,6 +73,8 @@ import (
 	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-cotft.xml.gz
 
 	Examples:
+	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQD.jpg (utilitaire)
+	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQC.jpg (utilitaire)
 	- https://cdn-photos.autosphere.fr/media/FL/FL-823-GFF.jpg
 	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
 	- https://i.pinimg.com/originals/28/1b/ed/281bed127dae148b0e0536ea611e5e67.jpg
@@ -311,13 +313,13 @@ func server() {
 			for _, d := range dr.Detections {
 				for i := range d.ClassIDs {
 					bBox := d.BoundingBox
-					if d.ClassNames[i] == "car" && d.Probabilities[i] >= 70 {
-						log.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
-							d.ClassNames[i], d.ClassIDs[i],
-							d.Probabilities[i],
-							bBox.StartPoint.X, bBox.StartPoint.Y,
-							bBox.EndPoint.X, bBox.EndPoint.Y,
-						)
+					log.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
+						d.ClassNames[i], d.ClassIDs[i],
+						d.Probabilities[i],
+						bBox.StartPoint.X, bBox.StartPoint.Y,
+						bBox.EndPoint.X, bBox.EndPoint.Y,
+					)
+					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
 							minX: bBox.StartPoint.X,
 							minY: bBox.StartPoint.Y,
@@ -414,7 +416,7 @@ func server() {
 					bBox.StartPoint.X, bBox.StartPoint.Y,
 					bBox.EndPoint.X, bBox.EndPoint.Y,
 				)
-				if d.ClassNames[i] == "car" && d.Probabilities[i] > 0.90 {
+				if (d.ClassNames[i] == "car" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 					// save bouding boxes
 					// cropZone(imageFile, i, d.ClassNames[i], image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20))
 					// check image size if not acceptable size
@@ -443,7 +445,12 @@ func server() {
 		}
 	})
 
-	r.Run(":9003")
+	port := "9003"
+	if os.Getenv("DARKNET_PORT") != "" {
+		port = os.Getenv("DARKNET_PORT")
+	}
+
+	r.Run(fmt.Sprintf(":%s", port))
 }
 
 func printError(err error) {
