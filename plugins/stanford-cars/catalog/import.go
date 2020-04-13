@@ -87,7 +87,7 @@ func ImportFromURL(cfg *config.Config) error {
 		model = strings.Replace(model, year, "", -1)
 
 		var imageSrcs []string
-		imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_test/"+row[1])
+		// imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_test/"+row[1])
 		imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_train/"+row[1])
 
 		if _, ok := cars[name]; ok {

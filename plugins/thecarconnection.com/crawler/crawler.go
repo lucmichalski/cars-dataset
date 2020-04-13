@@ -24,6 +24,7 @@ import (
 
 /*
 	Refs:
+	- cd plugins/thecarconnection.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-thecarconnection.com.so ; cd ../..
 	- https://medium.com/syncedreview/vroom-vroom-new-dataset-rolls-out-64-000-pictures-of-cars-b99ac99843ea
 	- https://github.com/nicolas-gervais/predicting-car-price-from-scraped-data/tree/master/picture-scraper
 		- cols :'Make', 'Model', 'Year', 'MSRP', 'Front Wheel Size (in)', 'SAE Net Horsepower @ RPM', 'Displacement', 'Engine Type', 'Width, Max w/o mirrors (in)', 'Height, Overall (in)', 'Length, Overall (in)', 'Gas Mileage', 'Drivetrain', 'Passenger Capacity', 'Passenger Doors', 'Body Style'
@@ -166,9 +167,9 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			// proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage.Images.Large.URL)
-			// log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(carImage.Images.Large.URL); err != nil {
+			proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage.Images.Large.URL)
+			log.Println("proxyURL:", proxyURL)
+			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
 				defer file.Close()
