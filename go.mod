@@ -6,6 +6,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/corpix/uarand v0.1.1 // indirect
+	github.com/daetal-us/getld v1.0.1 // indirect
 	github.com/dgraph-io/badger v1.6.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/gin-gonic/gin v1.6.2 // indirect
