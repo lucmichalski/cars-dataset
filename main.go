@@ -57,8 +57,11 @@ var (
 	isClean       bool
 	isCatalog     bool
 	isDryMode     bool
+	isNoCache     bool
+	isExtract     bool
 	parallelJobs  int
 	pluginDir     string
+	cacheDir      string
 	usePlugins    []string
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
@@ -88,6 +91,9 @@ func main() {
 	pflag.BoolVarP(&isClean, "clean", "", false, "auto-clean temporary files.")
 	pflag.BoolVarP(&isAdmin, "admin", "", false, "launch the admin interface.")
 	pflag.BoolVarP(&isTruncate, "truncate", "t", false, "truncate table content.")
+	pflag.BoolVarP(&isExtract, "extract", "e", false, "extract data from urls.")
+	pflag.StringVarP(&cacheDir, "cache-dir", "", "./shared/data", "cache directory.")
+	pflag.BoolVarP(&isNoCache, "no-cache", "", false, "disable crawler cache.")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
 	pflag.Parse()
@@ -180,6 +186,22 @@ func main() {
 	for _, cmd := range ptPlugins.Commands {
 		for _, table := range cmd.Migrate() {
 			DB.AutoMigrate(table)
+		}
+	}
+
+	if isExtract {
+		fmt.Print("extracting...\n")
+		for _, cmd := range ptPlugins.Commands {
+			fmt.Printf(" from %s", cmd.Name())
+			c := cmd.Config()
+			if !isNoCache {
+				c.CacheDir = cacheDir
+			}
+			c.IsDebug = true
+			c.ConsumerThreads = 1
+			pp.Println(c)
+			c.DB = DB
+			cmd.Crawl(c)
 		}
 	}
 
