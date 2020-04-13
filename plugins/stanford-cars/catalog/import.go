@@ -114,6 +114,7 @@ func ImportFromURL(cfg *config.Config) error {
 			vehicle := models.Vehicle{}
 			vehicle.Source = "stanford-cars"
 
+			vehicle.Modl = row.model
 			vehicle.Name = row.name
 			vehicle.Year = row.year
 			vehicle.Manufacturer = row.make
@@ -177,13 +178,13 @@ func ImportFromURL(cfg *config.Config) error {
 					checksum, err := utils.GetMD5File(tmpfilePath)
 					if err != nil {
 						log.Fatal("GetMD5File", err)
-						return err
+						continue
 					}
 
 					if size == 0 {
 						file.Close()
 						log.Warnln("image to small")
-						return nil
+						continue
 					}
 
 					image := models.VehicleImage{Title: row.name, SelectedType: "image", Checksum: checksum}
@@ -194,7 +195,7 @@ func ImportFromURL(cfg *config.Config) error {
 					if !cfg.DryMode {
 						if err := cfg.DB.Create(&image).Error; err != nil {
 							log.Printf("create variation_image (%v) failure, got err %v\n", image, err)
-							return err
+							continue
 						}
 					}
 
