@@ -83,21 +83,24 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
+			// filter with darknet
+			
+
 			file, err := os.Open(row[1])
 			if err != nil {
 				return err
 			}
 
 			fi, err := file.Stat()
-                        if err != nil {
-                                return err
-                        }
+            if err != nil {
+                return err
+            }
 
 			size := fi.Size()
 			checksum, err := utils.GetMD5File(file.Name())
-                        if err != nil {
-                                return err
-                        }
+            if err != nil {
+                return err
+            }
 
 			if size == 0 {
 				file.Close()
