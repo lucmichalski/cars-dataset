@@ -41,9 +41,9 @@ plugin:
 
 ## plugins			:	Build all qorpress plugins
 plugins:
-	GOARCH=amd64 PLUGIN="stanford-cars" make plugin
-	GOARCH=amd64 PLUGIN="carvana-kaggle" make plugin
-        GOARCH=amd64 PLUGIN="autosphere.fr" make plugin
+	GOARCH=amd64 PLUGIN=stanford-cars make plugin
+	GOARCH=amd64 PLUGIN=carvana-kaggle make plugin
+	GOARCH=amd64 PLUGIN=autosphere.fr make plugin
 	# GOARCH=amd64 PLUGIN=autotrader.com make plugin
 	# GOARCH=amd64 PLUGIN=autotrader.co.uk make plugin
 	# GOARCH=amd64 PLUGIN=carvana.com make plugin

@@ -4,7 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type SettingAutosphere struct {
+type SettingTheCarConnection struct {
 	gorm.Model
 	Enabled         bool
 	SitemapURL      string
