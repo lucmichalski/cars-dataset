@@ -40,6 +40,7 @@ func Extract(cfg *config.Config) error {
 		colly.CacheDir(cfg.CacheDir),
 		colly.URLFilters(
 			regexp.MustCompile("https://www\\.thecarconnection\\.com/overview/(.*)"),
+			regexp.MustCompile("https://www\\.thecarconnection\\.com/photos/(.*)"),
 		),
 	)
 
