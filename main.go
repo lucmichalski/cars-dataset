@@ -198,7 +198,7 @@ func main() {
 				c.CacheDir = cacheDir
 			}
 			c.IsDebug = true
-			c.ConsumerThreads = 4
+			c.ConsumerThreads = 24
 			pp.Println(c)
 			c.DB = DB
 			cmd.Crawl(c)
