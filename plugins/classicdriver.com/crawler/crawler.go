@@ -122,9 +122,9 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			// proxyURL := fmt.Sprintf("http://localhost:9003/crop?url=%s", carImage)
-			// log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(carImage); err != nil {
+			proxyURL := fmt.Sprintf("http://localhost:9003/crop?url=%s", carImage)
+			log.Println("proxyURL:", proxyURL)
+			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
 				defer file.Close()
