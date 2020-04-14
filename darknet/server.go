@@ -109,7 +109,7 @@ var (
 
 type yoloModel struct {
 	n darknet.YOLONetwork
-	l sync.RWMutex
+	l sync.Mutex
 }
 
 type bboxInfo struct {
@@ -131,8 +131,8 @@ func server() {
 
 
 	r.POST("/bbox", func(c *gin.Context) {
-		m.l.RLock()
-		defer m.l.RUnlock()
+		m.l.Lock()
+		defer m.l.Unlock()
 
 		// Source
 		file, err := c.FormFile("file")
@@ -231,8 +231,8 @@ func server() {
 	})
 
 	r.GET("/crop", func(c *gin.Context) {
-		m.l.RLock()
-		defer m.l.RUnlock()
+		m.l.Lock()
+		defer m.l.Unlock()
 
 		log.Println("crop start")
 
@@ -371,8 +371,8 @@ func server() {
 	})
 
 	r.POST("/crop", func(c *gin.Context) {
-		m.l.RLock()
-		defer m.l.RUnlock()
+		m.l.Lock()
+		defer m.l.Unlock()
 		// classes := c.PostForm("classes")
 		// threshold := c.PostForm("threshold")
 
@@ -480,7 +480,7 @@ func main() {
 
 	m = yoloModel{
 		n: n,
-		l: sync.RWMutex{},
+		l: sync.Mutex{},
 	}
 
 	server()
