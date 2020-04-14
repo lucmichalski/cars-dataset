@@ -30,14 +30,11 @@ tmp/
 tmp/*
 tmp/**
 
-<<<<<<< HEAD
 shared/datasets
 shared/datasets/
 shared/datasets/*
 shared/datasets/**
-=======
 shared/data
 shared/data/
 shared/data/*
 shared/data/**
->>>>>>> ce4425948007080b576bf84fa6537e4942501b96
