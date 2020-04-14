@@ -164,6 +164,9 @@ func Extract(cfg *config.Config) error {
 		// vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Transmission", Value: carInfo.ProductTransmission})
 
 		// Pictures
+		if len(carDataImage) == 0 {
+			return
+		}
 
 		for _, carImage := range carDataImage {
 			if carImage.Images.Large.URL == "" {
