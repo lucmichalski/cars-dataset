@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"os"
-	"regexp"
+	//"regexp"
 
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
@@ -32,9 +32,9 @@ func Extract(cfg *config.Config) error {
 	c := colly.NewCollector(
 		// colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
-		colly.URLFilters(
-			regexp.MustCompile("https://www\\.cars24\\.com/buy-used(.*)"),
-		),
+		//colly.URLFilters(
+		//	regexp.MustCompile("https://www\\.cars24\\.com/buy-used(.*)"),
+		//),
 	)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
