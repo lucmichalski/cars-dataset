@@ -28,6 +28,30 @@ services:
     - mysql:mysql
     command: ["cars-dataset", "--parallel-jobs", "1"]
 
+  dataset:
+    image: lucmichalski/car-admin:latest
+    container_name: ${NAMESPACE}-dataset
+    build: .
+    networks:
+    - internal
+    - web
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+    restart: unless-stopped
+    volumes:
+    - ./public:/opt/lucmichalski/bin/public
+    - ./templates:/opt/lucmichalski/bin/templates
+    - ./shared/datatset:/opt/lucmichalski/bin/dataset
+    depends_on:
+    - mysql
+    links:
+    - mysql:mysql
+    command: ["cars-dataset", "--dataset"]
+
   admin:
     image: lucmichalski/car-admin:latest
     container_name: ${NAMESPACE}-admin  

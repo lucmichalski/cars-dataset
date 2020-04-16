@@ -270,6 +270,29 @@ func main() {
 			return ""
 		}})
 
+		//cars.Filter(&admin.Filter{
+		//	Name:   "Collections",
+		//	Config: &admin.SelectOneConfig{RemoteDataResource: collection},
+		//})
+
+		cars.Filter(&admin.Filter{
+			Name: "Manufacturer",
+			Type: "string",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "Modl",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "Year",
+			// Type: "number",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "CreatedAt",
+		})
+
 		// initalize an HTTP request multiplexer
 		mux := http.NewServeMux()
 
@@ -304,7 +327,7 @@ func main() {
 		}
 		defer sfile.Close()
 
-		_, err = sfile.WriteString("name;image_path\n")
+		_, err = sfile.WriteString("name;make;model;year;image_path\n")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -312,6 +335,9 @@ func main() {
 		// Scan
 		type res struct {
 			Name   string
+			Make   string
+			Modl   string
+			Year   string
 			Images string
 		}
 
@@ -324,7 +350,7 @@ func main() {
 		}
 
 		var results []res
-		DB.Raw("select name, images FROM vehicles").Scan(&results)
+		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles").Scan(&results)
 		for _, result := range results {
 			if result.Images == "" {
 				continue
@@ -351,7 +377,8 @@ func main() {
 
 				input, err := ioutil.ReadFile(sourceFile)
 				if err != nil {
-					log.Fatalln("reading file error, ", err)
+					log.Warnln("reading file error, ", err)
+					continue
 				}
 
 				destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
@@ -360,7 +387,7 @@ func main() {
 					log.Fatalln("creating file error, ", err)
 				}
 				pp.Println("destinationFile:", destinationFile)
-				_, err = sfile.WriteString(fmt.Sprintf("%s;%s\n", result.Name, destinationFile))
+				_, err = sfile.WriteString(fmt.Sprintf("%s;%s;%s;%s;%s\n", result.Name, result.Make, result.Modl, result.Year,  destinationFile))
 				if err != nil {
 					log.Fatal(err)
 				}
