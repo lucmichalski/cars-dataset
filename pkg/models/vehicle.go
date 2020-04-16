@@ -21,6 +21,7 @@ type Vehicle struct {
 	Source            string `gorm:"index:source"`
 	Gid               string `gorm:"index:gid"`
 	Manufacturer      string `gorm:"index:manufacturer"`
+	Class 			  string `gorm:"index:class"`
 	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox
 	VehicleProperties VehicleProperties `sql:"type:text"`

@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/qor/validations"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 
 	"github.com/lucmichalski/cars-contrib/autotrader.com/crawler"
 )
@@ -25,6 +26,10 @@ func main() {
 	// callback for images and validation
 	validations.RegisterCallbacks(DB)
 	media.RegisterCallbacks(DB)
+
+	// migrate tables
+	DB.AutoMigrate(&models.Vehicle{})
+	DB.AutoMigrate(&models.VehicleImage{})
 
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.autotrader.com", "autotrader.com", "motorcycles.autotrader.com"},
