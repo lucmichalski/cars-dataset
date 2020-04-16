@@ -2,7 +2,7 @@ package crawler
 
 import (
 	// "encoding/json"
-	// "fmt"
+	"fmt"
 	"strings"
 	// "time"
 
@@ -20,11 +20,16 @@ import (
 	// pmodels "github.com/lucmichalski/cars-contrib/autotrader.com/models"
 )
 
+/*
+	- cd plugins/autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autotrader.com.so ; cd ../..
+*/
+
 
 func Extract(cfg *config.Config) error {
 
 	caps := selenium.Capabilities{"browserName": "chrome"}
 	chromeCaps := chrome.Capabilities{
+		// Path: "/usr/bin/chromium-browser",
 		Args: []string{
 			"--headless",
 			"--no-sandbox",
@@ -38,7 +43,7 @@ func Extract(cfg *config.Config) error {
 	}
 	caps.AddChrome(chromeCaps)
 
-	wd, err := selenium.NewRemote(caps, "")
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", 4444))
 	if err != nil {
 		return err
 	}

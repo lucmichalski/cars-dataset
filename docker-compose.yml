@@ -78,11 +78,15 @@ services:
     command: ["cars-dataset", "--admin"]
 
   selenium:
-    image: selenium/hub:latest
-    expose:
-    - 4444
+    image: selenium/standalone-chrome:latest
+    ports:
+    - 4444:4444
+    volumes:
+    # - ./selenium.json:/opt/selenium/config.json
+    - /dev/shm:/dev/shm
     networks:
     - internal
+    - web
 
   mysql:
     image: mysql:5.7
