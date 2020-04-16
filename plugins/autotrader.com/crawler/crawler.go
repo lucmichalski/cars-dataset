@@ -10,8 +10,8 @@ import (
 	// "github.com/corpix/uarand"
 	// "github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
-	"github.com/tebeka/selenium"
-	"github.com/tebeka/selenium/chrome"
+	"github.com/x0rzkov/selenium"
+	"github.com/x0rzkov/selenium/chrome"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	// "github.com/lucmichalski/cars-dataset/pkg/models"
