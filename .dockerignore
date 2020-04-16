@@ -29,3 +29,7 @@ shared/datasets/*
 shared/datasets/**
 shared/data
 shared/data/**
+dataset
+dataset/
+dataset/*
+dataset/**

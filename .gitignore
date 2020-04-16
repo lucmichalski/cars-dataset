@@ -38,3 +38,8 @@ shared/data
 shared/data/
 shared/data/*
 shared/data/**
+
+dataset
+dataset/
+dataset/*
+dataset/**
