@@ -71,6 +71,7 @@ import (
 	- https://www.lacentrale.fr/robots.txt
 	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-annonce.xml.gz
 	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-cotft.xml.gz
+	- https://vitux.com/install-and-deploy-kubernetes-on-ubuntu/
 
 	Examples:
 	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQD.jpg (utilitaire)

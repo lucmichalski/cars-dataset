@@ -270,6 +270,30 @@ func main() {
 			return ""
 		}})
 
+
+		//cars.Filter(&admin.Filter{
+		//	Name:   "Collections",
+		//	Config: &admin.SelectOneConfig{RemoteDataResource: collection},
+		//})
+
+		cars.Filter(&admin.Filter{
+			Name: "Make",
+			Type: "string",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "Modl",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "Year",
+			// Type: "number",
+		})
+
+		cars.Filter(&admin.Filter{
+			Name: "CreatedAt",
+		})
+
 		// initalize an HTTP request multiplexer
 		mux := http.NewServeMux()
 

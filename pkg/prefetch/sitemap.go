@@ -180,6 +180,35 @@ func ExtractSitemapGZ(url string) ([]string, error) {
 
 	doc := etree.NewDocument()
 	if _, err := doc.ReadFrom(reader); err != nil {
+		return nil, err
+	}
+	var urls []string
+	urlset := doc.SelectElement("urlset")
+	entries := urlset.SelectElements("url")
+	for _, entry := range entries {
+	 	loc := entry.SelectElement("loc")
+	 	log.Infoln("loc:", loc.Text())
+	 	urls = append(urls, loc.Text())
+	}
+	return urls, err
+}
+
+func ExtractSitemap(url string) ([]string, error) {
+	client := new(http.Client)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+	 	fmt.Println(err)
+		return nil, err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+	 	fmt.Println(err)
+		return nil, err
+	}	
+	defer response.Body.Close()
+
+	doc := etree.NewDocument()
+	if _, err := doc.ReadFrom(response.Body); err != nil {
 		panic(err)
 	}
 	var urls []string
@@ -192,3 +221,4 @@ func ExtractSitemapGZ(url string) ([]string, error) {
 	}
 	return urls, err
 }
+
