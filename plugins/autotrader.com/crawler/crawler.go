@@ -17,7 +17,6 @@ import (
 	// "github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-	// pmodels "github.com/lucmichalski/cars-contrib/autotrader.com/models"
 )
 
 /*
@@ -29,7 +28,6 @@ func Extract(cfg *config.Config) error {
 
 	caps := selenium.Capabilities{"browserName": "chrome"}
 	chromeCaps := chrome.Capabilities{
-		// Path: "/usr/bin/chromium-browser",
 		Args: []string{
 			"--headless",
 			"--no-sandbox",
