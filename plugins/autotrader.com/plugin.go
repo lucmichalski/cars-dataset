@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"errors"
 
 	adm "github.com/lucmichalski/cars-contrib/autotrader.com/admin"
 	"github.com/lucmichalski/cars-contrib/autotrader.com/crawler"
@@ -41,18 +42,15 @@ func (o autoTraderComPlugin) Crawl(cfg *config.Config) error {
 	return crawler.Extract(cfg)
 }
 
+func (o autoTraderComPlugin) Catalog(cfg *config.Config) error {
+	return errors.New("Not Implemented")
+}
+
 func (o autoTraderComPlugin) Config() *config.Config {
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autotrader.com", "autotrader.com"},
+		AllowedDomains: []string{"www.autotrader.com", "autotrader.com", "motorcycles.autotrader.com"},
 		URLs: []string{
-			"https://www.autotrader.com/sitemap.xml",
-			"https://www.autotrader.com/sitemap_certified_geo.xml.gz",
-			"https://www.autotrader.com/sitemap_new_geo.xml.gz",
-			"https://www.autotrader.com/sitemap_used_geo.xml.gz",
-			"https://www.autotrader.com/sitemap_dlr.xml.gz",
-			"https://www.autotrader.com/sitemap_mm.xml.gz",
-			"https://www.autotrader.com/sitemap_mmt.xml.gz",
-			"https://www.autotrader.com/sitemap_mmty.xml.gz",
+			"https://motorcycles.autotrader.com/sitemap.xml",
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
@@ -83,7 +81,7 @@ func (t *autoTraderComCommands) Init(ctx context.Context) error {
 
 func (t *autoTraderComCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"1001pneus": autoTraderComPlugin("1001pneus"), //OP
+		"autoTraderCom": autoTraderComPlugin("autoTraderCom"), //OP
 	}
 }
 
