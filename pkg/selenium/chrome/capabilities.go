@@ -14,7 +14,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/tebeka/selenium/internal/zip"
+	"github.com/lucmichalski/pkg/cars-dataset/internal/zip"
 )
 
 // CapabilitiesKey is the key in the top-level Capabilities map under which
