@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lucmichalski/pkg/cars-dataset"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 )
 
 // This example shows how to navigate to a http://play.golang.org page, input a
@@ -18,7 +18,7 @@ import (
 //   2. Remove the word "Example" from the comment at the bottom of the
 //      function.
 //   3. Run:
-//      go test -test.run=Example$ github.com/lucmichalski/pkg/cars-dataset
+//      go test -test.run=Example$ github.com/lucmichalski/cars-dataset/pkg/selenium
 func Example() {
 	// Start a Selenium WebDriver server instance (if one is not already
 	// running).

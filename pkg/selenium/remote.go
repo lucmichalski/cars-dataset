@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/blang/semver"
-	"github.com/lucmichalski/pkg/cars-dataset/firefox"
-	"github.com/lucmichalski/pkg/cars-dataset/log"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/firefox"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 )
 
 // Errors returned by Selenium server.

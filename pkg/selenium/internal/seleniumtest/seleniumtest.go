@@ -24,11 +24,11 @@ import (
 	socks5 "github.com/armon/go-socks5"
 	"github.com/blang/semver"
 	"github.com/google/go-cmp/cmp"
-	"github.com/lucmichalski/pkg/cars-dataset"
-	"github.com/lucmichalski/pkg/cars-dataset/chrome"
-	"github.com/lucmichalski/pkg/cars-dataset/firefox"
-	"github.com/lucmichalski/pkg/cars-dataset/log"
-	"github.com/lucmichalski/pkg/cars-dataset/sauce"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/firefox"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/log"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/sauce"
 )
 
 type Config struct {

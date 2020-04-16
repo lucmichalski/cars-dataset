@@ -14,8 +14,8 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/golang/glog"
-	"github.com/lucmichalski/pkg/cars-dataset"
-	"github.com/lucmichalski/pkg/cars-dataset/internal/seleniumtest"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/internal/seleniumtest"
 )
 
 var (

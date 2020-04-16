@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/base64"
 
-	"github.com/lucmichalski/pkg/cars-dataset/internal/zip"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/internal/zip"
 )
 
 // CapabilitiesKey is the name of the Firefox-specific key in the WebDriver

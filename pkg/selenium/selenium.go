@@ -3,9 +3,9 @@ package selenium
 import (
 	"time"
 
-	"github.com/lucmichalski/pkg/cars-dataset/chrome"
-	"github.com/lucmichalski/pkg/cars-dataset/firefox"
-	"github.com/lucmichalski/pkg/cars-dataset/log"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/firefox"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 )
 
 // TODO(minusnine): make an enum type called FindMethod.
