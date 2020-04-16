@@ -8,7 +8,7 @@ import (
 	"regexp"
 
 	"github.com/k0kubun/pp"
-	// "github.com/corpix/uarand"
+	"github.com/corpix/uarand"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
@@ -30,7 +30,7 @@ func Extract(cfg *config.Config) error {
 
 	// Instantiate default collector
 	c := colly.NewCollector(
-		// colly.UserAgent(uarand.GetRandom()),
+		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
 		colly.URLFilters(
 			regexp.MustCompile("https://www\\.classicdriver\\.com/en/car/(.*)"),
@@ -213,7 +213,9 @@ func Extract(cfg *config.Config) error {
 	// Start scraping on https://www.classicdriver.com
 	if cfg.IsSitemapIndex {
 		log.Infoln("extractSitemapIndex...")
+		pp.Println(cfg.URLs)
 		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
+		pp.Println(sitemaps)
 		if err != nil {
 			log.Fatal("ExtractSitemapIndex:", err)
 			return err
@@ -236,7 +238,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 				q.AddURL(sitemap)
 			}
-		}	
+		}
 	} else {
 		for _, u := range cfg.URLs {
 			q.AddURL(u)

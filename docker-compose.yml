@@ -77,6 +77,13 @@ services:
     - mysql:mysql
     command: ["cars-dataset", "--admin"]
 
+  selenium:
+    image: selenium/hub:latest
+    expose:
+    - 4444
+    networks:
+    - internal
+
   mysql:
     image: mysql:5.7
     container_name: ${NAMESPACE}-db

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"github.com/beevik/etree"
 	"github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
@@ -147,7 +148,9 @@ func ExtractSitemapIndex(url string) ([]string, error) {
 	}
 	var urls []string
 	index := doc.SelectElement("sitemapindex")
+	pp.Println(index)
 	sitemaps := index.SelectElements("sitemap")
+	pp.Println(sitemaps)
 	for _, sitemap := range sitemaps {
 	 	loc := sitemap.SelectElement("loc")
 	 	log.Infoln("loc:", loc.Text())

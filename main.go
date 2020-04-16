@@ -203,6 +203,7 @@ func main() {
 			c.DB = DB
 			cmd.Crawl(c)
 		}
+		os.Exit(1)
 	}
 
 	// import catalog

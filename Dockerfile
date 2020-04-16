@@ -8,7 +8,8 @@ WORKDIR /go/src/github.com/lucmichalski/cars-dataset
 
 RUN go install
 
-FROM alpine:3.11 AS runtime
+FROM zenika/alpine-chrome:latest AS runtime
+# FROM alpine:3.11 AS runtime
 MAINTAINER lucmichalski <michalski.luc@gmail.com>
 
 ARG TINI_VERSION=${TINI_VERSION:-"v0.18.0"}

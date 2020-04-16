@@ -6,6 +6,7 @@ go 1.14
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible // indirect
+	github.com/corpix/uarand v0.1.1
 	github.com/gocolly/colly/v2 v2.0.1
 	github.com/jinzhu/gorm v1.9.12
 	github.com/k0kubun/pp v3.0.1+incompatible
