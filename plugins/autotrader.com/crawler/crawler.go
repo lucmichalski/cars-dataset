@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	// "time"
 	"os"
 
 	"github.com/k0kubun/pp"
@@ -13,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
-	"github.com/nozzle/throttler"
+	// "github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -24,7 +23,6 @@ import (
 /*
 	- cd plugins/autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autotrader.com.so ; cd ../..
 */
-
 
 func Extract(cfg *config.Config) error {
 
@@ -57,7 +55,7 @@ func Extract(cfg *config.Config) error {
 		return err
 	}
 
-	t := throttler.New(4, 10000000)
+	//t := throttler.New(4, 10000000)
 
 	utils.Shuffle(sitemaps)
 	for _, sitemap := range sitemaps {
@@ -72,11 +70,12 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					go func(loc string) error {
-						defer t.Done(nil)
-						return scrapeSelenium(loc, cfg, wd)
-					}(loc)
-					t.Throttle()
+					//go func(loc string) error {
+					//	defer t.Done(nil)
+					//	return scrapeSelenium(loc, cfg, wd)
+					//}(loc)
+					//t.Throttle()
+					scrapeSelenium(loc, cfg, wd)
 				}
 			}
 		} else {
@@ -88,16 +87,18 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					go func(loc string) error {
-						defer t.Done(nil)
-						return scrapeSelenium(loc, cfg, wd)
-					}(loc)
-					t.Throttle()
+					//go func(loc string) error {
+					//	defer t.Done(nil)
+					//	return scrapeSelenium(loc, cfg, wd)
+					//}(loc)
+					//t.Throttle()
+					scrapeSelenium(loc, cfg, wd)
 				}
 			}				
 		}
 	}	
 
+	/*
 	// throttler errors iteration
 	if t.Err() != nil {
 		// Loop through the errors to see the details
@@ -106,6 +107,7 @@ func Extract(cfg *config.Config) error {
 		}
 		log.Fatal(t.Err())
 	}
+	*/
 	
 	// }
 
