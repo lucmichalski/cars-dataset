@@ -48,17 +48,6 @@ func Extract(cfg *config.Config) error {
 	}
 	defer wd.Quit()
 
-	urls := []string{
-		"https://motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678",
-		"https://motorcycles.autotrader.com/motorcycles/2012/bmw/k1300s/200853800",
-		"https://motorcycles.autotrader.com/motorcycles/2016/harley_davidson/trike/200618472",
-		"https://motorcycles.autotrader.com/motorcycles/2000/american_motorcycle/other_american_motorcycle_models/200887118",
-	}
-
-	for _, url := range urls {
-		scrapeSelenium(url, cfg, wd)
-	}
-
 	// if cfg.IsSitemapIndex {
 	log.Infoln("extractSitemapIndex...")
 	sitemaps, err := prefetch.ExtractSitemapIndex("https://motorcycles.autotrader.com/sitemap.xml")
@@ -116,8 +105,8 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	// create vehicle 
 	vehicle := &models.Vehicle{}
 	vehicle.URL = url
-	vehicle.Source = "autosphere.fr"	
-	vehicle.Class = "motorcycles"
+	vehicle.Source = "motorcycles.autotrader.com"
+	vehicle.Class = "motorcycle"
 
 	// write email
 	makeCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:first-child")
@@ -178,9 +167,9 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			continue
 		}
 
-		// proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", image)
-		// log.Println("proxyURL:", proxyURL)
-		if file, size, checksum, err := utils.OpenFileByURL(image); err != nil {
+		proxyURL := fmt.Sprintf("http://localhost:9003/crop?url=%s", image)
+		log.Println("proxyURL:", proxyURL)
+		if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 			fmt.Printf("open file failure, got err %v", err)
 		} else {
 			defer file.Close()
@@ -234,6 +223,10 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			}
 		}
 	}	
+
+	if len(vehicle.Images.Files) == 0 {
+		return nil
+	}
 
 	pp.Println(vehicle)
 

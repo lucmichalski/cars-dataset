@@ -157,8 +157,8 @@ services:
        DARKNET_PORT: 9003
     # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose    

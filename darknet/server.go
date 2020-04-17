@@ -320,7 +320,7 @@ func server() {
 						bBox.StartPoint.X, bBox.StartPoint.Y,
 						bBox.EndPoint.X, bBox.EndPoint.Y,
 					)
-					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
+					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
 							minX: bBox.StartPoint.X,
 							minY: bBox.StartPoint.Y,

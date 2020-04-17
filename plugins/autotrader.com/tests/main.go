@@ -41,7 +41,7 @@ func main() {
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
-		DryMode:         true,
+		DryMode:         false,
 		IsDebug:         true,
 	}
 

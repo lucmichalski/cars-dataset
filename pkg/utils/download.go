@@ -29,9 +29,17 @@ func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {
 		} else {
 			path := fileURL.Path
 			segments = strings.Split(path, "/")
-		} 
+		}
 
 		fileName := GetMD5Hash(rawURL) + "-" + segments[len(segments)-1]
+
+		if strings.Contains(fileName, "?") {
+                        // clean up query string
+                        fileParts := strings.Split(fileName, "?")
+                        if len(fileParts) > 0 {
+                                fileName = fileParts[0]
+                        }
+		}
 		filePath := filepath.Join(os.TempDir(), fileName)
 
 		file, err := os.Create(filePath)

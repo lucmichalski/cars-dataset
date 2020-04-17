@@ -127,7 +127,7 @@ func main() {
 	// migrate tables
 	DB.AutoMigrate(&vehicle{})
 	DB.AutoMigrate(&vehicleImage{})
-	DB.AutoMigrate(&media_library.MediaLibrary{})
+	// DB.AutoMigrate(&media_library.MediaLibrary{})
 
 	// load plugins
 	ptPlugins := plugins.New()
@@ -237,6 +237,9 @@ func main() {
 		})
 
 		Admin.AddMenu(&admin.Menu{Name: "Crawl Management", Priority: 1})
+
+		// Add media library
+		Admin.AddResource(&media_library.MediaLibrary{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})
 
 		// Add VehicleImage as Media Libraray
 		VehicleImagesResource := Admin.AddResource(&vehicleImage{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})

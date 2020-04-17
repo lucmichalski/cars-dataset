@@ -12,6 +12,8 @@ FROM zenika/alpine-chrome:latest AS runtime
 # FROM alpine:3.11 AS runtime
 MAINTAINER lucmichalski <michalski.luc@gmail.com>
 
+USER root
+
 ARG TINI_VERSION=${TINI_VERSION:-"v0.18.0"}
 
 # Install tini to /usr/local/sbin
@@ -29,8 +31,11 @@ WORKDIR /opt/lucmichalski/bin
 
 # copy executable
 COPY --from=builder /go/bin/cars-dataset /opt/lucmichalski/bin/cars-dataset
+# COPY --from=builder /go/src/github.com/lucmichalski/cars-dataset/release/* /opt/lucmichalski/bin/release/
 
 ENV PATH $PATH:/opt/lucmichalski/bin
+
+USER chrome
 
 # Container configuration
 EXPOSE 7000
