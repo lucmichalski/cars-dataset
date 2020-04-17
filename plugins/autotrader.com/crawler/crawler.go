@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -56,6 +57,8 @@ func Extract(cfg *config.Config) error {
 		return err
 	}
 
+	t := throttler.New(4, 10000000)
+
 	utils.Shuffle(sitemaps)
 	for _, sitemap := range sitemaps {
 		log.Infoln("processing ", sitemap)
@@ -69,7 +72,11 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					scrapeSelenium(loc, cfg, wd)
+					go func(loc string) error {
+						defer t.Done(nil)
+						return scrapeSelenium(loc, cfg, wd)
+					}(loc)
+					t.Throttle()
 				}
 			}
 		} else {
@@ -81,11 +88,25 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					scrapeSelenium(loc, cfg, wd)
+					go func(loc string) error {
+						defer t.Done(nil)
+						return scrapeSelenium(loc, cfg, wd)
+					}(loc)
+					t.Throttle()
 				}
 			}				
 		}
 	}	
+
+	// throttler errors iteration
+	if t.Err() != nil {
+		// Loop through the errors to see the details
+		for i, err := range t.Errs() {
+			log.Printf("error #%d: %s", i, err)
+		}
+		log.Fatal(t.Err())
+	}
+	
 	// }
 
 	return nil
