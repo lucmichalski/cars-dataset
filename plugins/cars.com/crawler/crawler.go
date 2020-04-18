@@ -14,8 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	// "github.com/PuerkitoBio/goquery"
-	
+	"github.com/tsak/concurrent-csv-writer"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
@@ -38,6 +38,15 @@ import (
 */
 
 func Extract(cfg *config.Config) error {
+
+	// save discovered links
+	csv, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
+	if err != nil {
+		panic("Could not open `sample.csv` for writing")
+	}
+
+	// Flush pending writes and close file upon exit of Sitemap()
+	defer csv.Close()
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -78,6 +87,8 @@ func Extract(cfg *config.Config) error {
 		if strings.Contains(link, "vehicledetail") {
 			// Print link
 			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
+			csv.Write([]string{e.Request.AbsoluteURL(link)})
+			csv.Flush()
 			q.AddURL(e.Request.AbsoluteURL(link))
 		}
 	})
@@ -249,6 +260,9 @@ func Extract(cfg *config.Config) error {
 			log.Fatal("ExtractSitemapIndex:", err)
 			return err
 		}
+
+		// read cache sitemap
+		// "shared/queue/cars.com_sitemap.txt"
 
 		// var links []string
 		utils.Shuffle(sitemaps)

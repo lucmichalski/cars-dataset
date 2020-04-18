@@ -19,5 +19,5 @@ require (
 	github.com/qor/media v0.0.0-20191022071353-19cf289e17d4
 	github.com/rychipman/easylex v0.0.0-20160129204217-49ee7767142f // indirect
 	github.com/sirupsen/logrus v1.5.0
-	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625 // indirect
+	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625
 )
