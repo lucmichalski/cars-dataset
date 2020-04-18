@@ -39,14 +39,6 @@ import (
 
 func Extract(cfg *config.Config) error {
 
-	// save discovered links
-	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
-	if err != nil {
-		panic("Could not open `csvSitemap.csv` for writing")
-	}
-
-	// Flush pending writes and close file upon exit of Sitemap()
-	defer csvSitemap.Close()
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -64,6 +56,33 @@ func Extract(cfg *config.Config) error {
 			MaxSize: cfg.QueueMaxSize,
 		},
 	)
+
+	// read cache sitemap
+    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
+    if err != nil {
+        return err
+    }
+
+	reader := csv.NewReader(file)
+	reader.Comma = ','
+	reader.LazyQuotes = true
+	data, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	for _, loc := range data {
+		q.AddURL(loc[0])
+	}
+
+	// save discovered links
+	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
+	if err != nil {
+		panic("Could not open `csvSitemap.csv` for writing")
+	}
+
+	// Flush pending writes and close file upon exit of Sitemap()
+	defer csvSitemap.Close()
 
 	// c.DisableCookies()
 
@@ -251,24 +270,6 @@ func Extract(cfg *config.Config) error {
 		//}
 		r.Ctx.Put("url", r.URL.String())
 	})
-
-	// read cache sitemap
-    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
-    if err != nil {
-        return err
-    }
-
-	reader := csv.NewReader(file)
-	reader.Comma = ','
-	reader.LazyQuotes = true
-	data, err := reader.ReadAll()
-	if err != nil {
-		return err
-	}
-
-	for _, loc := range data {
-		q.AddURL(loc[0])
-	}
 
 	// Start scraping on https://www.classicdriver.com
 	if cfg.IsSitemapIndex {
