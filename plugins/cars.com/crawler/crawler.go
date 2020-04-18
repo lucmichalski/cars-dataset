@@ -2,10 +2,10 @@ package crawler
 
 import (
 	"encoding/json"
+	"encoding/csv"
 	"fmt"
 	"strings"
 	"os"
-	// "regexp"
 	"strconv"
 
 	"github.com/k0kubun/pp"
@@ -40,13 +40,13 @@ import (
 func Extract(cfg *config.Config) error {
 
 	// save discovered links
-	csv, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
+	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
 	if err != nil {
-		panic("Could not open `sample.csv` for writing")
+		panic("Could not open `csvSitemap.csv` for writing")
 	}
 
 	// Flush pending writes and close file upon exit of Sitemap()
-	defer csv.Close()
+	defer csvSitemap.Close()
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -87,8 +87,8 @@ func Extract(cfg *config.Config) error {
 		if strings.Contains(link, "vehicledetail") {
 			// Print link
 			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-			csv.Write([]string{e.Request.AbsoluteURL(link)})
-			csv.Flush()
+			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
+			csvSitemap.Flush()
 			q.AddURL(e.Request.AbsoluteURL(link))
 		}
 	})
@@ -252,6 +252,24 @@ func Extract(cfg *config.Config) error {
 		r.Ctx.Put("url", r.URL.String())
 	})
 
+	// read cache sitemap
+    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
+    if err != nil {
+        return err
+    }
+
+	reader := csv.NewReader(file)
+	reader.Comma = ','
+	reader.LazyQuotes = true
+	data, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	for _, loc := range data {
+		q.AddURL(loc[0])
+	}
+
 	// Start scraping on https://www.classicdriver.com
 	if cfg.IsSitemapIndex {
 		log.Infoln("extractSitemapIndex...")
@@ -260,9 +278,6 @@ func Extract(cfg *config.Config) error {
 			log.Fatal("ExtractSitemapIndex:", err)
 			return err
 		}
-
-		// read cache sitemap
-		// "shared/queue/cars.com_sitemap.txt"
 
 		// var links []string
 		utils.Shuffle(sitemaps)
