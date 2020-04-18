@@ -7,6 +7,8 @@ import (
 	"os"
 	// "time"
 
+	// "github.com/qor/oss/filesystem"
+	// "github.com/qor/oss/s3"
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
 	"github.com/qor/media/media_library"
@@ -23,9 +25,22 @@ import (
 
 /*
 	- cd plugins/autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autotrader.com.so ; cd ../..
+	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 */
 
 func Extract(cfg *config.Config) error {
+
+	/*
+  	// OSS's default storage is directory `public`, change it to S3
+	oss.Storage = s3.New(&s3.Config{
+		AccessID: "access_id", 
+		AccessKey: "access_key", 
+		Region: "region", 
+		Bucket: "bucket", 
+		Endpoint: "cdn.getqor.com", 
+		ACL: awss3.BucketCannedACLPublicRead,
+	})
+	*/
 
 	caps := selenium.Capabilities{"browserName": "chrome"}
 	chromeCaps := chrome.Capabilities{
@@ -37,9 +52,11 @@ func Extract(cfg *config.Config) error {
 			"--disable-crash-reporter",
 			"--hide-scrollbars",
 			"--disable-gpu",
-			//"--user-agent="+uarand.GetRandom(),
-			//"--proxy-server=191.96.27.177:3129",
-			"--proxy-server=http://34.219.100.205:3128",
+	        "--disable-setuid-sandbox",
+	        "--disable-infobars",
+	        "--window-position=0,0",
+	        "--ignore-certifcate-errors",
+	        "--ignore-certifcate-errors-spki-list",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
 		},
 	}
@@ -100,10 +117,6 @@ func Extract(cfg *config.Config) error {
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
 					links = append(links, loc)
-					err := scrapeSelenium(loc, cfg, wd)
-					if err != nil {
-						log.Warnln(loc, err)
-					}
 				}
 			}
 		} else {
@@ -119,10 +132,6 @@ func Extract(cfg *config.Config) error {
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
 					links = append(links, loc)
-					err := scrapeSelenium(loc, cfg, wd)
-					if err != nil {
-						log.Warnln(loc, err)
-					}
 				}
 			}				
 		}
@@ -163,11 +172,13 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 		return err
 	}
 
+	/*
 	src, err := wd.PageSource()
 	if err != nil {
 		return err
 	}
 	fmt.Println("source", src)
+	*/
 
 	// check in the databse if exists
 	var vehicleExists models.Vehicle
@@ -241,7 +252,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			continue
 		}
 
-		proxyURL := fmt.Sprintf("http://localhost:9003/crop?url=%s", image)
+		proxyURL := fmt.Sprintf("http://35.179.44.166:9003/crop?url=%s", image)
 		log.Println("proxyURL:", proxyURL)
 		if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 			fmt.Printf("open file failure, got err %v", err)

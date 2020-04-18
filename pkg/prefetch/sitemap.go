@@ -151,8 +151,13 @@ func ExtractSitemapIndex(url string) ([]string, error) {
 	sitemaps := index.SelectElements("sitemap")
 	for _, sitemap := range sitemaps {
 	 	loc := sitemap.SelectElement("loc")
-	 	log.Infoln("loc:", loc.Text())
-	 	urls = append(urls, loc.Text())
+	 	l := loc.Text()
+		l = strings.TrimLeftFunc(l, func(c rune) bool {
+			return c == '\r' || c == '\n' || c == '\t'
+		})
+		l = strings.TrimSpace(l)
+	 	log.Infoln("loc:", l)
+	 	urls = append(urls,l)
 	}
 	return urls, nil
 }
@@ -188,8 +193,13 @@ func ExtractSitemapGZ(url string) ([]string, error) {
 	entries := urlset.SelectElements("url")
 	for _, entry := range entries {
 	 	loc := entry.SelectElement("loc")
-	 	log.Infoln("loc:", loc.Text())
-	 	urls = append(urls, loc.Text())
+	 	l := loc.Text()
+		l = strings.TrimLeftFunc(l, func(c rune) bool {
+			return c == '\r' || c == '\n' || c == '\t'
+		})
+		l = strings.TrimSpace(l)
+	 	log.Infoln("loc:", l)
+	 	urls = append(urls, l)
 	}
 	return urls, err
 }
@@ -218,8 +228,13 @@ func ExtractSitemap(url string) ([]string, error) {
 		entries := urlset.SelectElements("url")
 		for _, entry := range entries {
 		 	loc := entry.SelectElement("loc")
-		 	log.Infoln("loc:", loc.Text())
-		 	urls = append(urls, loc.Text())
+		 	l := loc.Text()
+			l = strings.TrimLeftFunc(l, func(c rune) bool {
+				return c == '\r' || c == '\n' || c == '\t'
+			})
+			l = strings.TrimSpace(l)
+		 	log.Infoln("loc:", l)
+		 	urls = append(urls, l)
 		}
 	}
 	return urls, err

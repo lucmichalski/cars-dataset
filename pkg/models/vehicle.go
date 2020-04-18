@@ -27,6 +27,8 @@ type Vehicle struct {
 	VehicleProperties VehicleProperties `sql:"type:text"`
 }
 
+// oss.OSS `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
+
 func (v Vehicle) MainImageURL(styles ...string) string {
 	style := "original"
 	if len(styles) > 0 {
