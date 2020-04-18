@@ -15,6 +15,7 @@ import (
 	"math"
 	"os"
 	"net/http"
+	"net/url"
 	"fmt"
 	"strings"
 	"sort"
@@ -25,9 +26,9 @@ import (
 	"github.com/h2non/filetype"
 	"github.com/cavaliercoder/grab"
 	"github.com/pkg/errors"
-	"github.com/k0kubun/pp"	
+	"github.com/k0kubun/pp"
 	"github.com/gin-gonic/gin"
-    "github.com/disintegration/imaging"
+    	"github.com/disintegration/imaging"
 	darknet "github.com/LdDl/go-darknet"
 )
 
@@ -237,12 +238,19 @@ func server() {
 
 		log.Println("crop start")
 
-		url := c.Query("url")
+		// url.QueryUnescape
+
+		var err error
+		u := c.Query("url")
+		u, err = url.QueryUnescape(u)
+
+		log.Println("url:", u)
+
 		classesStr := c.Query("classes")
 		classes := strings.Split(classesStr, ",")
 		thresholdStr := c.Query("threshold")
 		var threshold float64
-		var err error
+		//var err error
 		if thresholdStr != "" {
 			threshold, err = strconv.ParseFloat(thresholdStr, 64)
 			if err != nil {
@@ -255,8 +263,8 @@ func server() {
 
 		var file *os.File
 		var size int64
-		if url != "" && strings.HasPrefix(url, "http") {
-			file, size, err = grabFileByURL(url)
+		if u != "" && strings.HasPrefix(u, "http") {
+			file, size, err = grabFileByURL(u)
 		}
 
 		log.Println("file", file.Name())
@@ -294,7 +302,7 @@ func server() {
 				}
 			default:
 				c.String(200, "")
-				return		
+				return
 			}
 
 			imgDarknet, err := darknet.Image2Float32(src)
@@ -351,7 +359,7 @@ func server() {
 			    log.Println("src.Width:", imgWidth ,"src.Height:", imgHeight)
 			    if imgWidth > 700 {
 					src = imaging.Resize(src, 700, 0, imaging.Lanczos)
-			    }			  
+			    }
 				err = imaging.Encode(c.Writer, src, imaging.JPEG)
 			    if err != nil {
 			        log.Fatalf("failed to encode image: %v", err)
