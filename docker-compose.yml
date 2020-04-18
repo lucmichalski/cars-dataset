@@ -140,8 +140,8 @@ services:
   sidekiq: &darknet_base
     build:
       context: .docker/darknet
-      dockerfile: Dockerfile
-    image: go-darknet:cpu-latest
+      dockerfile: Dockerfile.gpu
+    image: go-darknet:gpu-latest
     working_dir: /darknet
     volumes:
     - ./darknet:/darknet
