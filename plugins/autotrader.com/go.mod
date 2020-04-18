@@ -7,6 +7,7 @@ go 1.14
 require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cavaliercoder/grab v2.0.0+incompatible // indirect
+	github.com/corpix/uarand v0.1.1
 	github.com/jinzhu/gorm v1.9.12
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/lucmichalski/cars-dataset v0.0.0-00010101000000-000000000000

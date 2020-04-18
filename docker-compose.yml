@@ -82,7 +82,6 @@ services:
     ports:
     - 4444:4444
     volumes:
-    # - ./selenium.json:/opt/selenium/config.json
     - /dev/shm:/dev/shm
     networks:
     - internal
@@ -141,8 +140,8 @@ services:
   sidekiq: &darknet_base
     build:
       context: .docker/darknet
-      dockerfile: Dockerfile.gpu
-    image: go-darknet:gpu-latest
+      dockerfile: Dockerfile
+    image: go-darknet:cpu-latest
     working_dir: /darknet
     volumes:
     - ./darknet:/darknet

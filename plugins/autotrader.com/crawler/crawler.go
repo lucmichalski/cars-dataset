@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"os"
+	// "time"
 
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
@@ -12,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
-	// "github.com/nozzle/throttler"
+	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -36,6 +37,9 @@ func Extract(cfg *config.Config) error {
 			"--disable-crash-reporter",
 			"--hide-scrollbars",
 			"--disable-gpu",
+			//"--user-agent="+uarand.GetRandom(),
+			//"--proxy-server=191.96.27.177:3129",
+			"--proxy-server=http://34.219.100.205:3128",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
 		},
 	}
@@ -47,6 +51,32 @@ func Extract(cfg *config.Config) error {
 	}
 	defer wd.Quit()
 
+	// wd.AddCookie()
+
+	err = wd.Get("https://arh.antoinevastel.com/bots/areyouheadless")
+	if err != nil {
+		return err
+	}
+
+	src, err := wd.PageSource()
+	if err != nil {
+		return err
+	}
+	fmt.Println("source", src)
+	// os.Exit(1)
+
+	/*
+	err = wd.SetImplicitWaitTimeout(time.Second * 2)
+	if err != nil {
+		return err
+	}	
+
+	err = wd.SetPageLoadTimeout(time.Second * 2)
+	if err != nil {
+		return err
+	}
+	*/
+
 	// if cfg.IsSitemapIndex {
 	log.Infoln("extractSitemapIndex...")
 	sitemaps, err := prefetch.ExtractSitemapIndex("https://motorcycles.autotrader.com/sitemap.xml")
@@ -55,8 +85,7 @@ func Extract(cfg *config.Config) error {
 		return err
 	}
 
-	//t := throttler.New(4, 10000000)
-
+	var links []string
 	utils.Shuffle(sitemaps)
 	for _, sitemap := range sitemaps {
 		log.Infoln("processing ", sitemap)
@@ -70,15 +99,17 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					//go func(loc string) error {
-					//	defer t.Done(nil)
-					//	return scrapeSelenium(loc, cfg, wd)
-					//}(loc)
-					//t.Throttle()
-					scrapeSelenium(loc, cfg, wd)
+					links = append(links, loc)
+					err := scrapeSelenium(loc, cfg, wd)
+					if err != nil {
+						log.Warnln(loc, err)
+					}
 				}
 			}
 		} else {
+			if !strings.Contains(sitemap, "sitemap_vehicles") {
+				continue
+			}
 			locs, err := prefetch.ExtractSitemap(sitemap)
 			if err != nil {
 				log.Fatal("ExtractSitemap", err)
@@ -87,18 +118,30 @@ func Extract(cfg *config.Config) error {
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					//go func(loc string) error {
-					//	defer t.Done(nil)
-					//	return scrapeSelenium(loc, cfg, wd)
-					//}(loc)
-					//t.Throttle()
-					scrapeSelenium(loc, cfg, wd)
+					links = append(links, loc)
+					err := scrapeSelenium(loc, cfg, wd)
+					if err != nil {
+						log.Warnln(loc, err)
+					}
 				}
 			}				
 		}
 	}	
 
-	/*
+	pp.Println("found:", len(links))
+
+	t := throttler.New(1, len(links))
+
+	utils.Shuffle(links)
+	for _, link := range links {
+		log.Println("processing link:", link)
+		go func(link string) error {
+			defer t.Done(nil)
+			return scrapeSelenium(link, cfg, wd)
+		}(link)
+		t.Throttle()
+	}
+
 	// throttler errors iteration
 	if t.Err() != nil {
 		// Loop through the errors to see the details
@@ -107,7 +150,6 @@ func Extract(cfg *config.Config) error {
 		}
 		log.Fatal(t.Err())
 	}
-	*/
 	
 	// }
 
@@ -116,7 +158,16 @@ func Extract(cfg *config.Config) error {
 
 func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (error) {
 
-	wd.Get(url)
+	err := wd.Get(url)
+	if err != nil {
+		return err
+	}
+
+	src, err := wd.PageSource()
+	if err != nil {
+		return err
+	}
+	fmt.Println("source", src)
 
 	// check in the databse if exists
 	var vehicleExists models.Vehicle
@@ -134,34 +185,34 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	// write email
 	makeCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:first-child")
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 
 	make, err := makeCnt.Text()
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 	pp.Println("make:", make)
 
 	modelCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:nth-of-type(n+2)")
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 
 	model, err := modelCnt.Text()
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 	pp.Println("model:", model)
 
 	yearCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:nth-of-type(n+3)")
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 
 	year, err := yearCnt.Text()
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 	pp.Println("year:", year)	
 
@@ -172,13 +223,13 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 
 	imagesCnt, err := wd.FindElements(selenium.ByCSSSelector, ".vdp-gallery-secondary-slides img")
 	if err != nil {
-		log.Warnln(err)
+		return err
 	}
 
 	for _ , imageCnt := range imagesCnt {
 		image, err := imageCnt.GetAttribute("src")
 		if err != nil {
-			log.Warnln(err)
+			continue
 		}
 		// https://0.cdn.autotraderspecialty.com/2019-BMW-C400X-motorcycle--Motorcycle-200865678-93f9b5e8be16c827321aff99dde0f97f.jpg?r=pad&w=735&h=551&c=%23f5f5f5
 		// https://0.cdn.autotraderspecialty.com/2019-BMW-C400X-motorcycle--Motorcycle-200865678-26a69225bdba04f38cfd5a234c03b6f4.jpg?r=pad&w=143&h=107&c=%23f5f5f5
