@@ -2,12 +2,13 @@ package crawler
 
 import (
 	"encoding/json"
+	"encoding/csv"
 	"fmt"
 	"strings"
 	"os"
-	// "regexp"
 	"net/url"
-	"strconv"
+	// "strconv"
+	"sort"
 
 	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
@@ -15,14 +16,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	// "github.com/PuerkitoBio/goquery"
+	"github.com/tsak/concurrent-csv-writer"
+	"github.com/astaxie/flatmap"
 	
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-
-	pmodels "github.com/lucmichalski/cars-contrib/carsdirect.com/models"	
 )
 
 /*
@@ -56,6 +56,37 @@ func Extract(cfg *config.Config) error {
 			MaxSize: cfg.QueueMaxSize,
 		},
 	)
+
+	// read cache sitemap
+	utils.EnsureDir("./shared/queue/")
+
+	if _, err := os.Stat("shared/queue/carsdirect.com_sitemap.txt"); !os.IsNotExist(err) {
+	    file, err := os.Open("shared/queue/carsdirect.com_sitemap.txt")
+	    if err != nil {
+	        return err
+	    }
+
+		reader := csv.NewReader(file)
+		reader.Comma = ','
+		reader.LazyQuotes = true
+		data, err := reader.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		for _, loc := range data {
+			q.AddURL(loc[0])
+		}
+	}
+
+	// save discovered links
+	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/carsdirect.com_sitemap.txt")
+	if err != nil {
+		panic("Could not open `csvSitemap.csv` for writing")
+	}
+
+	// Flush pending writes and close file upon exit of Sitemap()
+	defer csvSitemap.Close()
 
 	// c.DisableCookies()
 
@@ -91,7 +122,7 @@ func Extract(cfg *config.Config) error {
 		vehicle.Class = "car"
 
 		var make, model, year string
-		var carInfo *pmodels.JSONLD
+		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
 			jsonLdStr := strings.TrimSpace(el.Text)	
 			if cfg.IsDebug {
@@ -101,16 +132,57 @@ func Extract(cfg *config.Config) error {
 				log.Fatalln("unmarshal error, ", err)
 			}
 
-			pp.Println(carInfo)
-			vehicle.Manufacturer = carInfo.MainEntity.Brand.Name
-			vehicle.Year = carInfo.MainEntity.VehicleModelDate
-			vehicle.Modl = carInfo.MainEntity.Model
+			fm, err := flatmap.Flatten(carInfo)
+			if err != nil {
+				log.Fatal(err)
+			}
+			var ks []string
+			for k :=range fm {
+				ks = append(ks,k)		
+			}
+			sort.Strings(ks)
+
+			if cfg.IsDebug {			
+				for _, k :=range ks {
+					fmt.Println(k,":",fm[k])
+				}
+			}
+
+			if val, ok := fm["mainEntity.brand.name"]; ok {
+				vehicle.Manufacturer = val
+			}
+
+			if val, ok := fm["mainEntity.vehicleModelDate"]; ok {
+				vehicle.Year = val
+			}
+
+			if val, ok := fm["mainEntity.model"]; ok {
+				vehicle.Modl = val
+			}
+
 			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
-			// vehicle.Engine = carInfo.VehicleEngine.Name
-			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "HighPrice", Value: strconv.Itoa(carInfo.MainEntity.Offers.HighPrice)})
-			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "LowPrice", Value: strconv.Itoa(carInfo.MainEntity.Offers.LowPrice)})
-			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMax", Value: strconv.Itoa(carInfo.MainEntity.FuelEfficiency.MaxValue) + " "+ carInfo.MainEntity.FuelEfficiency.UnitText})
-			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMin", Value: strconv.Itoa(carInfo.MainEntity.FuelEfficiency.MinValue) + " "+ carInfo.MainEntity.FuelEfficiency.UnitText})
+
+			if val, ok := fm["mainEntity.offers.highPrice"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "HighPrice", Value: strings.Replace(val, ".000000", "", -1)})
+			}
+
+			if val, ok := fm["mainEntity.offers.lowPrice"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "LowPrice", Value: strings.Replace(val, ".000000", "", -1)})
+			}
+
+			var fuelEfficiencyUnit string
+			if val, ok := fm["mainEntity.fuelEfficiency.unitText"]; ok {
+				fuelEfficiencyUnit = val
+			}
+
+			if val, ok := fm["mainEntity.fuelEfficiency.maxValue"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMax", Value: strings.Replace(val, ".000000", "", -1) + " " + fuelEfficiencyUnit})
+			}
+
+			if val, ok := fm["mainEntity.fuelEfficiency.minValue"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMin", Value: strings.Replace(val, ".000000", "", -1) + " " + fuelEfficiencyUnit})
+			}
+
 		})
 
 		var carDataImage []string
