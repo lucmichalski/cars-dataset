@@ -43,3 +43,5 @@ dataset
 dataset/
 dataset/*
 dataset/**
+
+*.tar.gz*

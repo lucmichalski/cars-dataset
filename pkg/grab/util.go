@@ -69,7 +69,7 @@ func guessFilename(resp *http.Response) (string, error) {
 	// sanitize
 	if filename == "" || strings.HasSuffix(filename, "/") || strings.Contains(filename, "\x00") {
 		// generate one
-		return getMD5Hash(resp.Request.URL.String()), nil
+		return getMD5Hash(resp.Request.URL.String())+".jpg", nil
 	}
 
 	filename = filepath.Base(path.Clean("/" + filename))

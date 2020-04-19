@@ -7,7 +7,7 @@ import (
 	"strings"
 	"os"
 	"net/url"
-	// "strconv"
+	// "regexp"
 	"sort"
 
 	"github.com/k0kubun/pp"
@@ -27,6 +27,7 @@ import (
 
 /*
 	Refs:
+	- rsync -av -v --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 	- cd plugins/carsdirect.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carsdirect.com.so ; cd ../..
 	- good practices
 		- https://intoli.com/blog/making-chrome-headless-undetectable/
@@ -90,6 +91,8 @@ func Extract(cfg *config.Config) error {
 
 	// c.DisableCookies()
 
+	// `https://www.carsdirect.com/(\d{4})/([^\/]+)/([^\/]+)/pictures`
+
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
 		q.AddURL(e.Text)
@@ -97,7 +100,9 @@ func Extract(cfg *config.Config) error {
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//urlset/url/loc", func(e *colly.XMLElement) {
-		q.AddURL(e.Text)
+		if strings.Contains(e.Text, "/pictures") {
+			q.AddURL(e.Text)
+		}
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -186,7 +191,7 @@ func Extract(cfg *config.Config) error {
 		})
 
 		var carDataImage []string
-		e.ForEach(`div.photoCell img`, func(_ int, el *colly.HTMLElement) {
+		e.ForEach(`.photoCell img`, func(_ int, el *colly.HTMLElement) {
 			carImage := el.Attr("src")
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
@@ -200,6 +205,9 @@ func Extract(cfg *config.Config) error {
 			carImage = url.QueryEscape(carImage)
 			carDataImage = append(carDataImage, carImage)
 		})
+
+		pp.Println(carDataImage)
+		pp.Println(vehicle)
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
@@ -229,7 +237,7 @@ func Extract(cfg *config.Config) error {
 					}
 					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
 					continue
-				}
+				}				
 
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
 
@@ -242,7 +250,7 @@ func Extract(cfg *config.Config) error {
 				// transaction
 				if !cfg.DryMode {
 					if err := cfg.DB.Create(&image).Error; err != nil {
-						log.Fatalln("create image (%v) failure, got err %v\n", image, err)
+						log.Warnln("create image (%v) failure, got err %v\n", image, err)
 						continue
 					}
 				}
@@ -322,9 +330,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") {
-						links = append(links, loc)
-					}
+					links = append(links, loc)
 				}
 			} else {
 				locs, err := prefetch.ExtractSitemap(sitemap)
@@ -334,9 +340,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") {
-						links = append(links, loc)
-					}
+					links = append(links, loc)
 				}				
 			}
 		}

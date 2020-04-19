@@ -27,7 +27,14 @@ func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {
 		q := fileURL.Query()
 		var segments []string
 		if q.Get("url") != "" {
-			segments = strings.Split(q.Get("url"), "/")
+			// if 
+			if strings.Contains(strings.ToLower(q.Get("url")), "jpg") {
+				segments = append(segments, ".jpg")
+			} else if strings.Contains(strings.ToLower(q.Get("url")), "png") {
+				segments = append(segments, ".png")
+			} else {
+				segments = strings.Split(q.Get("url"), "/")
+			}
 		} else {
 			path := fileURL.Path
 			segments = strings.Split(path, "/")
