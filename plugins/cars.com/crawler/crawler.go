@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"os"
-	"strconv"
+	// "strconv"
+	"sort"
 
 	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
@@ -15,13 +16,13 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/tsak/concurrent-csv-writer"
+	"github.com/astaxie/flatmap"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-
-	pmodels "github.com/lucmichalski/cars-contrib/cars.com/models"	
+	// pmodels "github.com/lucmichalski/cars-contrib/cars.com/models"	
 )
 
 /*
@@ -58,22 +59,27 @@ func Extract(cfg *config.Config) error {
 	)
 
 	// read cache sitemap
-    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
-    if err != nil {
-        return err
-    }
+	utils.EnsureDir("./shared/queue/")
 
-	reader := csv.NewReader(file)
-	reader.Comma = ','
-	reader.LazyQuotes = true
-	data, err := reader.ReadAll()
-	if err != nil {
-		return err
-	}
+	if _, err := os.Stat("shared/queue/cars.com_sitemap.txt"); !os.IsNotExist(err) {
+	    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
+	    if err != nil {
+	        return err
+	    }
 
-	for _, loc := range data {
-		q.AddURL(loc[0])
-	}
+		reader := csv.NewReader(file)
+		reader.Comma = ','
+		reader.LazyQuotes = true
+		data, err := reader.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		for _, loc := range data {
+			q.AddURL(loc[0])
+		}
+	}	
+
 
 	// save discovered links
 	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
@@ -136,29 +142,83 @@ func Extract(cfg *config.Config) error {
 		vehicle.Class = "car"
 
 		var make, model, year string
-		var carInfo []*pmodels.JSONLD
+		// var carInfo []*pmodels.JSONLD
+		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
 			jsonLdStr := strings.TrimSpace(el.Text)	
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
+			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}" 
 			if err := json.Unmarshal([]byte(jsonLdStr), &carInfo); err != nil {
 				log.Fatalln("unmarshal error, ", err)
 			}
-			for _, info := range carInfo {
-				if info.AtType == "Car" {
-					vehicle.Manufacturer = info.Manufacturer.Name
-					vehicle.Year = strconv.Itoa(info.VehicleModelDate)
-					vehicle.Modl = strings.TrimSpace(strings.Replace(info.Model.Name, vehicle.Manufacturer, "", -1))
-					vehicle.Modl = strings.TrimSpace(strings.Replace(vehicle.Modl, vehicle.Year, "", -1))
-					vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
-					vehicle.Engine = info.VehicleEngine.Name
-					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: info.Color})
-					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: info.FuelType})
-					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value: strconv.Itoa(info.NumberOfDoors)})
-					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "SeatingCapacity", Value: info.VehicleSeatingCapacity})
-					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Transmission", Value: info.VehicleTransmission})
+
+			fm, err := flatmap.Flatten(carInfo)
+			if err != nil {
+				log.Fatal(err)
+			}
+			var ks []string
+			for k :=range fm {
+				ks = append(ks,k)		
+			}
+			sort.Strings(ks)
+
+			if cfg.IsDebug {			
+				for _, k :=range ks {
+					fmt.Println(k,":",fm[k])
 				}
+			}
+
+			if val, ok := fm["jsonld.0.manufacturer.name"]; ok {
+				vehicle.Manufacturer = val
+			}
+
+			if val, ok := fm["jsonld.0.vehicleModelDate"]; ok {
+				vehicle.Year = strings.Replace(val, ".000000", "", -1)
+			}
+
+			if val, ok := fm["jsonld.0.model.name"]; ok {
+				vehicle.Modl = strings.TrimSpace(strings.Replace(val, vehicle.Manufacturer, "", -1))
+				vehicle.Modl = strings.TrimSpace(strings.Replace(vehicle.Modl, vehicle.Year, "", -1))
+			}
+
+			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
+			if val, ok := fm["jsonld.0.vehicleEngine.name"]; ok {
+				vehicle.Engine = val
+			}
+
+			if val, ok := fm["jsonld.0.color"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: val})
+			}
+
+			if val, ok := fm["jsonld.0.fuelType"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: val})
+			}
+
+			if val, ok := fm["jsonld.0.numberOfDoors"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value:  strings.Replace(val, ".000000", "", -1)})
+			}
+
+			if val, ok := fm["jsonld.0.vehicleSeatingCapacity"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "SeatingCapacity", Value: val})
+			}
+
+			if val, ok := fm["jsonld.0.vehicleTransmission"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Transmission", Value: val})
+			}
+
+			if val, ok := fm["jsonld.0.offers.price"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value:  strings.Replace(val, ".000000", "", -1)})
+			}
+
+			if val, ok := fm["jsonld.0.offers.priceCurrency"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Currency", Value: val})
+			}
+
+			if val, ok := fm["jsonld.0.vehicleInteriorColor"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "InteriorColor", Value: val})
 			}
 
 		})

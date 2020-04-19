@@ -24,6 +24,17 @@ func Shuffle(slice interface{}) {
     }
 }
 
+func EnsureDir(path string) error {
+	d, err := os.Open(path)
+	if err != nil {
+		os.MkdirAll(path, os.FileMode(0755))
+	} else {
+		return err
+	}
+	d.Close()
+	return nil
+}
+
 func GetMD5File(filePath string) (result string, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
