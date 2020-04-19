@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cavaliercoder/grab/grabtest"
+	"github.com/lucmichalski/cars-dataset/pkg/grab/grabtest"
 )
 
 // TestFilenameResolutions tests that the destination filename for Requests can
@@ -292,7 +292,7 @@ func TestAutoResume(t *testing.T) {
 	})
 
 	t.Run("WithNoContentLengthHeaderAndChecksumFailure", func(t *testing.T) {
-		// ref: https://github.com/cavaliercoder/grab/pull/27
+		// ref: https://github.com/lucmichalski/cars-dataset/pkg/grab/pull/27
 		size := size * 2
 		grabtest.WithTestServer(t, func(url string) {
 			req := mustNewRequest(filename, url)
@@ -639,7 +639,7 @@ func TestAfterCopyHook(t *testing.T) {
 }
 
 func TestIssue37(t *testing.T) {
-	// ref: https://github.com/cavaliercoder/grab/issues/37
+	// ref: https://github.com/lucmichalski/cars-dataset/pkg/grab/issues/37
 	filename := "./.testIssue37"
 	largeSize := int64(2097152)
 	smallSize := int64(1048576)
@@ -680,7 +680,7 @@ func TestIssue37(t *testing.T) {
 // TestHeadBadStatus validates that HEAD requests that return non-200 can be
 // ignored and succeed if the GET requests succeeeds.
 //
-// Fixes: https://github.com/cavaliercoder/grab/issues/43
+// Fixes: https://github.com/lucmichalski/cars-dataset/pkg/grab/issues/43
 func TestHeadBadStatus(t *testing.T) {
 	expect := http.StatusOK
 	filename := ".testIssue43"
@@ -712,7 +712,7 @@ func TestHeadBadStatus(t *testing.T) {
 // TestAutoResume also covers cases with checksum validation.
 //
 // Kudos to Setnička Jiří <Jiri.Setnicka@ysoft.com> for identifying and raising
-// a solution to this issue. Ref: https://github.com/cavaliercoder/grab/pull/27
+// a solution to this issue. Ref: https://github.com/lucmichalski/cars-dataset/pkg/grab/pull/27
 func TestMissingContentLength(t *testing.T) {
 	// expectSize must be sufficiently large that DefaultClient.Do won't prefetch
 	// the entire body and compute ContentLength before returning a Response.
