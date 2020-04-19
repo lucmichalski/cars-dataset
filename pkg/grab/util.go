@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 // setLastModified sets the last modified timestamp of a local file according to
@@ -43,6 +45,11 @@ func mkdirp(path string) error {
 	return nil
 }
 
+func getMD5Hash(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
+}
+
 // guessFilename returns a filename for the given http.Response. If none can be
 // determined ErrNoFilename is returned.
 //
@@ -56,14 +63,18 @@ func guessFilename(resp *http.Response) (string, error) {
 			} // else filename directive is missing.. fallback to URL.Path
 		}
 	}
+	fmt.Println("Request.URL: ", resp.Request.URL.String())
+	fmt.Println("filename: ", filename)
 
 	// sanitize
 	if filename == "" || strings.HasSuffix(filename, "/") || strings.Contains(filename, "\x00") {
-		return "", ErrNoFilename
+		// generate one
+		return getMD5Hash(resp.Request.URL.String()), nil
 	}
 
 	filename = filepath.Base(path.Clean("/" + filename))
 	if filename == "" || filename == "." || filename == "/" {
+		fmt.Println("case#2, filename:", filename)
 		return "", ErrNoFilename
 	}
 
