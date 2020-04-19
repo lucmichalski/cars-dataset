@@ -50,8 +50,8 @@ func (o classicDriverPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.classicdriver.com", "classicdriver.com"},
 		URLs: []string{
-		     "https://www.classicdriver.com/en/sitemap.xml?page=1",
-		     // "https://www.classicdriver.com/en/sitemap.xml",
+		    //"https://www.classicdriver.com/en/sitemap.xml?page=1",
+		    "https://www.classicdriver.com/en/sitemap.xml",
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,

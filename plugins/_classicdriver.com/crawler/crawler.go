@@ -2,11 +2,15 @@ package crawler
 
 import (
 	"encoding/json"
+	// "encoding/xml"
 	"fmt"
-	"strings"
 	"os"
 	"regexp"
+	// "net/url"
+	"strings"
 
+	sitemapz "github.com/oxffaa/gopher-parse-sitemap"
+	"github.com/yterajima/go-sitemap"
 	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
 	"github.com/qor/media/media_library"
@@ -210,6 +214,26 @@ func Extract(cfg *config.Config) error {
 		r.Ctx.Put("url", r.URL.String())
 	})
 
+	log.Infoln("sitemapURL: ", cfg.URLs[0])
+
+	smap, err := sitemap.Get(cfg.URLs[0], nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// Print URL in sitemap.xml
+	for _, URL := range smap.URL {
+		fmt.Println(URL.Loc)
+	}
+
+	result := make([]string, 0, 0)
+	err = sitemapz.ParseFromSite(cfg.URLs[0], func(e sitemapz.Entry) error {
+	    result = append(result, e.GetLocation())
+	    return nil
+	})
+
+	pp.Println(result)
+
 	// Start scraping on https://www.classicdriver.com
 	if cfg.IsSitemapIndex {
 		log.Infoln("extractSitemapIndex...")
@@ -250,3 +274,6 @@ func Extract(cfg *config.Config) error {
 
 	return nil
 }
+
+
+

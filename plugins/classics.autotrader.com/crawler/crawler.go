@@ -24,7 +24,7 @@ import (
 )
 
 /*
-	- cd plugins/autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autotrader.com.so ; cd ../..
+	- cd plugins/classics.autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-classics.autotrader.com.so ; cd ../..
 	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 */
 
@@ -82,47 +82,50 @@ func Extract(cfg *config.Config) error {
 	}
 	*/
 
-	// if cfg.IsSitemapIndex {
-	log.Infoln("extractSitemapIndex...")
-	sitemaps, err := prefetch.ExtractSitemapIndex("https://motorcycles.autotrader.com/sitemap.xml")
-	if err != nil {
-		log.Fatal("ExtractSitemapIndex:", err)
-		return err
-	}
-
 	var links []string
-	utils.Shuffle(sitemaps)
-	for _, sitemap := range sitemaps {
-		log.Infoln("processing ", sitemap)
-		if strings.HasSuffix(sitemap, ".gz") {
-			log.Infoln("extract sitemap gz compressed...")
-			locs, err := prefetch.ExtractSitemapGZ(sitemap)
-			if err != nil {
-				log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
-				return err
-			}
-			utils.Shuffle(locs)
-			for _, loc := range locs {
-				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					links = append(links, loc)
-				}
-			}
-		} else {
-			if !strings.Contains(sitemap, "sitemap_vehicles") {
-				continue
-			}
-			locs, err := prefetch.ExtractSitemap(sitemap)
-			if err != nil {
-				log.Fatal("ExtractSitemap", err)
-				return err
-			}
-			utils.Shuffle(locs)
-			for _, loc := range locs {
-				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					links = append(links, loc)
-				}
-			}				
+	if cfg.IsSitemapIndex {
+		log.Infoln("extractSitemapIndex...")
+		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
+		if err != nil {
+			log.Fatal("ExtractSitemapIndex:", err)
+			return err
 		}
+
+		utils.Shuffle(sitemaps)
+		for _, sitemap := range sitemaps {
+			log.Infoln("processing ", sitemap)
+			if strings.HasSuffix(sitemap, ".gz") {
+				log.Infoln("extract sitemap gz compressed...")
+				locs, err := prefetch.ExtractSitemapGZ(sitemap)
+				if err != nil {
+					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+					return err
+				}
+				utils.Shuffle(locs)
+				for _, loc := range locs {
+					if strings.HasPrefix(loc, "https://classics.autotrader.com/classic-cars") {
+						links = append(links, loc)
+					}
+				}
+			} else {
+				if !strings.Contains(sitemap, "sitemap_vehicles") {
+					continue
+				}
+				locs, err := prefetch.ExtractSitemap(sitemap)
+				if err != nil {
+					log.Fatal("ExtractSitemap", err)
+					return err
+				}
+				utils.Shuffle(locs)
+				for _, loc := range locs {
+					if strings.HasPrefix(loc, "https://classics.autotrader.com/classic-cars") {
+						links = append(links, loc)
+					}
+				}				
+			}
+		}
+	} else {
+		links = append(links, cfg.URLs...)
 	}	
 
 	pp.Println("found:", len(links))
@@ -178,8 +181,8 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	// create vehicle 
 	vehicle := &models.Vehicle{}
 	vehicle.URL = url
-	vehicle.Source = "motorcycles.autotrader.com"
-	vehicle.Class = "motorcycle"
+	vehicle.Source = "classics.autotrader.com"
+	vehicle.Class = "car"
 
 	// write email
 	makeCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:first-child")
@@ -240,7 +243,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			continue
 		}
 
-		proxyURL := fmt.Sprintf("http://35.179.44.166:9003/crop?url=%s", image)
+		proxyURL := fmt.Sprintf("http://35.179.44.166:9005/crop?url=%s", image)
 		log.Println("proxyURL:", proxyURL)
 		if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 			fmt.Printf("open file failure, got err %v", err)

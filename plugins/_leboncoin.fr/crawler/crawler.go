@@ -1,17 +1,17 @@
 package crawler
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
-	"strings"
-	"os"
+	// "strings"
+	// "os"
 	// "time"
 
 	// "github.com/qor/oss/filesystem"
 	// "github.com/qor/oss/s3"
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
+	// "github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
@@ -20,32 +20,20 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
-	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	// "github.com/lucmichalski/cars-dataset/pkg/prefetch"
 )
 
 /*
-	- cd plugins/autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autotrader.com.so ; cd ../..
+	- cd plugins/leboncoin.fr && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-leboncoin.fr.so ; cd ../..
 	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 */
 
 func Extract(cfg *config.Config) error {
 
-	/*
-  	// OSS's default storage is directory `public`, change it to S3
-	oss.Storage = s3.New(&s3.Config{
-		AccessID: "access_id", 
-		AccessKey: "access_key", 
-		Region: "region", 
-		Bucket: "bucket", 
-		Endpoint: "cdn.getqor.com", 
-		ACL: awss3.BucketCannedACLPublicRead,
-	})
-	*/
-
+	// 4c4cb693aef7c0dbd7af6622e78ee5eb
 	caps := selenium.Capabilities{"browserName": "chrome"}
 	chromeCaps := chrome.Capabilities{
 		Args: []string{
-			"--headless",
 			"--no-sandbox",
 			"--start-maximized",
 			"--window-size=1024,768",
@@ -68,62 +56,9 @@ func Extract(cfg *config.Config) error {
 	}
 	defer wd.Quit()
 
-	// wd.AddCookie()
 
-	/*
-	err = wd.SetImplicitWaitTimeout(time.Second * 2)
-	if err != nil {
-		return err
-	}	
-
-	err = wd.SetPageLoadTimeout(time.Second * 2)
-	if err != nil {
-		return err
-	}
-	*/
-
-	// if cfg.IsSitemapIndex {
-	log.Infoln("extractSitemapIndex...")
-	sitemaps, err := prefetch.ExtractSitemapIndex("https://motorcycles.autotrader.com/sitemap.xml")
-	if err != nil {
-		log.Fatal("ExtractSitemapIndex:", err)
-		return err
-	}
-
-	var links []string
-	utils.Shuffle(sitemaps)
-	for _, sitemap := range sitemaps {
-		log.Infoln("processing ", sitemap)
-		if strings.HasSuffix(sitemap, ".gz") {
-			log.Infoln("extract sitemap gz compressed...")
-			locs, err := prefetch.ExtractSitemapGZ(sitemap)
-			if err != nil {
-				log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
-				return err
-			}
-			utils.Shuffle(locs)
-			for _, loc := range locs {
-				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					links = append(links, loc)
-				}
-			}
-		} else {
-			if !strings.Contains(sitemap, "sitemap_vehicles") {
-				continue
-			}
-			locs, err := prefetch.ExtractSitemap(sitemap)
-			if err != nil {
-				log.Fatal("ExtractSitemap", err)
-				return err
-			}
-			utils.Shuffle(locs)
-			for _, loc := range locs {
-				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
-					links = append(links, loc)
-				}
-			}				
-		}
-	}	
+	var links []string 
+	links = append(links, cfg.URLs[0])
 
 	pp.Println("found:", len(links))
 
@@ -160,13 +95,11 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 		return err
 	}
 
-	/*
 	src, err := wd.PageSource()
 	if err != nil {
 		return err
 	}
 	fmt.Println("source", src)
-	*/
 
 	// check in the databse if exists
 	var vehicleExists models.Vehicle
@@ -178,21 +111,22 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	// create vehicle 
 	vehicle := &models.Vehicle{}
 	vehicle.URL = url
-	vehicle.Source = "motorcycles.autotrader.com"
-	vehicle.Class = "motorcycle"
+	vehicle.Source = "leboncoin.fr"
+	vehicle.Class = "car"
 
 	// write email
-	makeCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:first-child")
+	jsonLdCnt, err := wd.FindElement(selenium.ByCSSSelector, "script[type=\"application/json\"]")
 	if err != nil {
 		return err
 	}
 
-	make, err := makeCnt.Text()
+	jsonLd, err := jsonLdCnt.Text()
 	if err != nil {
 		return err
 	}
-	pp.Println("make:", make)
+	pp.Println("jsonLd:", jsonLd)
 
+	/*
 	modelCnt, err := wd.FindElement(selenium.ByCSSSelector, "ol.breadcrumbs li:nth-of-type(n+2)")
 	if err != nil {
 		return err
@@ -300,6 +234,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	if len(vehicle.Images.Files) == 0 {
 		return nil
 	}
+	*/
 
 	pp.Println(vehicle)
 
