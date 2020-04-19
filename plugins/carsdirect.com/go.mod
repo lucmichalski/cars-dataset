@@ -5,6 +5,7 @@ replace github.com/lucmichalski/cars-dataset => ../..
 go 1.14
 
 require (
+	github.com/astaxie/flatmap v0.0.0-20160505145528-c0e84c00d8d5
 	github.com/cavaliercoder/grab v2.0.0+incompatible // indirect
 	github.com/corpix/uarand v0.1.1
 	github.com/daetal-us/getld v1.0.1
@@ -19,5 +20,5 @@ require (
 	github.com/qor/media v0.0.0-20191022071353-19cf289e17d4
 	github.com/rychipman/easylex v0.0.0-20160129204217-49ee7767142f // indirect
 	github.com/sirupsen/logrus v1.5.0
-	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625 // indirect
+	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625
 )

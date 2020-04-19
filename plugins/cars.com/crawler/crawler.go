@@ -229,7 +229,9 @@ func Extract(cfg *config.Config) error {
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
 			}
-			carDataImage = append(carDataImage, carImage)
+			if carImage != "https://www.cstatic-images.com/supersized/in/v1/2926059/3G1BE6SM7HS575075/ae93dbc72bb1283a87818cf822e81332.jpg" { 
+				carDataImage = append(carDataImage, carImage)
+			}
 		})
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
