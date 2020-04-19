@@ -14,8 +14,10 @@ import (
 
 	"github.com/k0kubun/pp"
 	"github.com/h2non/filetype"
-	"github.com/cavaliercoder/grab"
+	// "github.com/cavaliercoder/grab"
 	"github.com/pkg/errors"
+
+	"github.com/lucmichalski/cars-dataset/pkg/grab"
 )
 
 func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {

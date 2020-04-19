@@ -1,10 +1,10 @@
 # grab
 
-[![GoDoc](https://godoc.org/github.com/cavaliercoder/grab?status.svg)](https://godoc.org/github.com/cavaliercoder/grab) [![Build Status](https://travis-ci.org/cavaliercoder/grab.svg?branch=master)](https://travis-ci.org/cavaliercoder/grab) [![Go Report Card](https://goreportcard.com/badge/github.com/cavaliercoder/grab)](https://goreportcard.com/report/github.com/cavaliercoder/grab)
+[![GoDoc](https://godoc.org/github.com/lucmichalski/cars-dataset/pkg/grab?status.svg)](https://godoc.org/github.com/lucmichalski/cars-dataset/pkg/grab) [![Build Status](https://travis-ci.org/cavaliercoder/grab.svg?branch=master)](https://travis-ci.org/cavaliercoder/grab) [![Go Report Card](https://goreportcard.com/badge/github.com/lucmichalski/cars-dataset/pkg/grab)](https://goreportcard.com/report/github.com/lucmichalski/cars-dataset/pkg/grab)
 
 *Downloading the internet, one goroutine at a time!*
 
-	$ go get github.com/cavaliercoder/grab
+	$ go get github.com/lucmichalski/cars-dataset/pkg/grab
 
 Grab is a Go package for downloading files from the internet with the following
 rad features:
@@ -47,7 +47,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/lucmichalski/cars-dataset/pkg/grab"
 )
 
 func main() {

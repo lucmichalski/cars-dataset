@@ -3,7 +3,7 @@ package grabui
 import (
 	"context"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/lucmichalski/cars-dataset/pkg/grab"
 )
 
 func GetBatch(
