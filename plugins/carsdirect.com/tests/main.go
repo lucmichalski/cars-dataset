@@ -35,6 +35,7 @@ func main() {
 		AllowedDomains: []string{"www.carsdirect.com", "carsdirect.com"},
 		URLs: []string{
 			"https://www.carsdirect.com/2020/alfa-romeo/4c-spider/pictures",
+			"https://www.carsdirect.com/2001/acura/cl/pictures",
 		},
 		DB: 			 DB,
 		CacheDir:        "../../../shared/data",

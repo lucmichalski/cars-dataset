@@ -24,12 +24,14 @@ import (
 	"sync"
 
 	"github.com/h2non/filetype"
-	"github.com/cavaliercoder/grab"
+	// "github.com/cavaliercoder/grab"
 	"github.com/pkg/errors"
 	"github.com/k0kubun/pp"
 	"github.com/gin-gonic/gin"
     	"github.com/disintegration/imaging"
 	darknet "github.com/LdDl/go-darknet"
+
+	"github.com/lucmichalski/cars-dataset/pkg/grab"
 )
 
 /*

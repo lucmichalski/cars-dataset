@@ -56,7 +56,7 @@ func (o carsDirectPlugin) Config() *config.Config {
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
-		IsSitemapIndex: true,
+		IsSitemapIndex: false,
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
 	}
 	return cfg

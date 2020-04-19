@@ -7,7 +7,7 @@ import (
 	"strings"
 	"os"
 	"net/url"
-	// "strconv"
+	//"regexp"
 	"sort"
 
 	"github.com/k0kubun/pp"
@@ -97,7 +97,9 @@ func Extract(cfg *config.Config) error {
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//urlset/url/loc", func(e *colly.XMLElement) {
-		q.AddURL(e.Text)
+		if strings.Contains(e.Text, "/pictures") {
+			q.AddURL(e.Text)
+		}
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -186,7 +188,7 @@ func Extract(cfg *config.Config) error {
 		})
 
 		var carDataImage []string
-		e.ForEach(`div.photoCell img`, func(_ int, el *colly.HTMLElement) {
+		e.ForEach(`.photoCell img`, func(_ int, el *colly.HTMLElement) {
 			carImage := el.Attr("src")
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
@@ -200,6 +202,9 @@ func Extract(cfg *config.Config) error {
 			carImage = url.QueryEscape(carImage)
 			carDataImage = append(carDataImage, carImage)
 		})
+
+		pp.Println(carDataImage)
+		pp.Println(vehicle)
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
