@@ -50,9 +50,7 @@ func (o classicCarsPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.classiccars.com", "classiccars.com"},
 		URLs: []string{
-			"https://classiccars.com/sitemap.xml",
 			"https://classiccars.com/sitemap_index.xml",
-			"https://classiccars.com/sitemap_index.xml.gz",
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,

@@ -273,7 +273,6 @@ func Extract(cfg *config.Config) error {
 				return err
 			}
 
-			var links []string
 			utils.Shuffle(sitemaps)
 			for _, sitemap := range sitemaps {
 				log.Infoln("processing ", sitemap)
@@ -287,7 +286,7 @@ func Extract(cfg *config.Config) error {
 					utils.Shuffle(locs)
 					for _, loc := range locs {
 						if strings.Contains(loc, "listings/view") {
-							links = append(links, loc)
+							q.AddURL(loc)
 						}
 					}
 				} else {
@@ -299,7 +298,7 @@ func Extract(cfg *config.Config) error {
 					utils.Shuffle(locs)
 					for _, loc := range locs {
 						if strings.Contains(loc, "listings/view") {
-							links = append(links, loc)
+							q.AddURL(loc)
 						}
 					}				
 				}
