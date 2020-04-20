@@ -4,7 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type SettingAutoTraderCom struct {
+type SettingAutoTraderMotorcycles struct {
 	gorm.Model
 	Enabled         bool
 	SitemapURL      string

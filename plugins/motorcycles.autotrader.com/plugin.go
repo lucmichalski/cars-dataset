@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"errors"
 
-	adm "github.com/lucmichalski/cars-contrib/autotrader.com/admin"
-	"github.com/lucmichalski/cars-contrib/autotrader.com/crawler"
-	"github.com/lucmichalski/cars-contrib/autotrader.com/models"
+	adm "github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com/admin"
+	"github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com/crawler"
+	"github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com/models"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -15,40 +15,40 @@ import (
 )
 
 var Tables = []interface{}{
-	&models.SettingAutoTraderCom{},
+	&models.SettingAutoTraderMotorcycles{},
 }
 
 var Resources = []interface{}{
-	&models.SettingAutoTraderCom{},
+	&models.SettingAutoTraderMotorcycles{},
 }
 
-type autoTraderComPlugin string
+type autoTraderMotorcyclesPlugin string
 
-func (o autoTraderComPlugin) Name() string      { return string(o) }
-func (o autoTraderComPlugin) Section() string   { return `1001pneus.fr` }
-func (o autoTraderComPlugin) Usage() string     { return `hello` }
-func (o autoTraderComPlugin) ShortDesc() string { return `1001pneus.fr crawler"` }
-func (o autoTraderComPlugin) LongDesc() string  { return o.ShortDesc() }
+func (o autoTraderMotorcyclesPlugin) Name() string      { return string(o) }
+func (o autoTraderMotorcyclesPlugin) Section() string   { return `1001pneus.fr` }
+func (o autoTraderMotorcyclesPlugin) Usage() string     { return `hello` }
+func (o autoTraderMotorcyclesPlugin) ShortDesc() string { return `1001pneus.fr crawler"` }
+func (o autoTraderMotorcyclesPlugin) LongDesc() string  { return o.ShortDesc() }
 
-func (o autoTraderComPlugin) Migrate() []interface{} {
+func (o autoTraderMotorcyclesPlugin) Migrate() []interface{} {
 	return Tables
 }
 
-func (o autoTraderComPlugin) Resources(Admin *admin.Admin) {
+func (o autoTraderMotorcyclesPlugin) Resources(Admin *admin.Admin) {
 	adm.ConfigureAdmin(Admin)
 }
 
-func (o autoTraderComPlugin) Crawl(cfg *config.Config) error {
+func (o autoTraderMotorcyclesPlugin) Crawl(cfg *config.Config) error {
 	return crawler.Extract(cfg)
 }
 
-func (o autoTraderComPlugin) Catalog(cfg *config.Config) error {
+func (o autoTraderMotorcyclesPlugin) Catalog(cfg *config.Config) error {
 	return errors.New("Not Implemented")
 }
 
-func (o autoTraderComPlugin) Config() *config.Config {
+func (o autoTraderMotorcyclesPlugin) Config() *config.Config {
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.autotrader.com", "autotrader.com", "motorcycles.autotrader.com"},
+		AllowedDomains: []string{"autotrader.com", "motorcycles.autotrader.com"},
 		URLs: []string{
 			"https://motorcycles.autotrader.com/sitemap.xml",
 		},
@@ -60,9 +60,9 @@ func (o autoTraderComPlugin) Config() *config.Config {
 	return cfg
 }
 
-type autoTraderComCommands struct{}
+type autoTraderMotorcyclesCommands struct{}
 
-func (t *autoTraderComCommands) Init(ctx context.Context) error {
+func (t *autoTraderMotorcyclesCommands) Init(ctx context.Context) error {
 	// to set your splash, modify the text in the println statement below, multiline is supported
 	fmt.Println(`
 -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -88,10 +88,10 @@ func (t *autoTraderComCommands) Init(ctx context.Context) error {
 	return nil
 }
 
-func (t *autoTraderComCommands) Registry() map[string]plugins.Plugin {
+func (t *autoTraderMotorcyclesCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"autoTraderCom": autoTraderComPlugin("autoTraderCom"), //OP
+		"autoTraderMotorcycles": autoTraderMotorcyclesPlugin("autoTraderMotorcycles"), //OP
 	}
 }
 
-var Plugins autoTraderComCommands
+var Plugins autoTraderMotorcyclesCommands

@@ -41,11 +41,11 @@ plugin:
 
 ## plugins			:	Build all qorpress plugins
 plugins:
+	GOARCH=amd64 PLUGIN=motorcycles.autotrader.com make plugin
 	GOARCH=amd64 PLUGIN=classiccars.com make plugin
 	GOARCH=amd64 PLUGIN=classics.autotrader.com make plugin
 	# GOARCH=amd64 PLUGIN=carsdirect.com make plugin
 	# GOARCH=amd64 PLUGIN=cars.com make plugin
-	# GOARCH=amd64 PLUGIN=autotrader.com make plugin
 	# GOARCH=amd64 PLUGIN=stanford-cars make plugin
 	# GOARCH=amd64 PLUGIN=carvana-kaggle make plugin
 	# GOARCH=amd64 PLUGIN=autosphere.fr make plugin

@@ -1,4 +1,4 @@
-module github.com/lucmichalski/cars-contrib/autotrader.com
+module github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com
 
 replace github.com/lucmichalski/cars-dataset => ../..
 
