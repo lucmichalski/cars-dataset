@@ -6,6 +6,7 @@ go 1.14
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/astaxie/flatmap v0.0.0-20160505145528-c0e84c00d8d5
 	github.com/cavaliercoder/grab v2.0.0+incompatible // indirect
 	github.com/corpix/uarand v0.1.1
 	github.com/gocolly/colly/v2 v2.0.1
@@ -18,5 +19,5 @@ require (
 	github.com/qor/media v0.0.0-20191022071353-19cf289e17d4
 	github.com/qor/qor v0.0.0-20200224122013-457d2e3f50e1
 	github.com/sirupsen/logrus v1.5.0
-	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625 // indirect
+	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625
 )
