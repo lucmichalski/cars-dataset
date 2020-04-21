@@ -24,6 +24,71 @@ import (
 )
 
 /*
+
+curl --silent -X POST 'http://localhost:8089/predict' -d '{
+  "service": "detection_600",
+  "parameters": {
+    "output": {
+      "confidence_threshold": 0.3,
+      "bbox": true
+    },
+    "mllib": {
+      "gpu": true
+    }
+  },
+  "data": [
+    "/data/dash.jpg"
+  ]
+}' | jq .
+
+curl --silent -X PUT http://localhost:8089/services/squeezenet_ssd_voc -d '{
+ "description": "Squeezenet SSD",
+ "model": {
+  "repository": "/opt/models/squeezenet_ssd_voc",
+  "create_repository": true,
+  "init":"https://deepdetect.com/models/init/embedded/images/detection/squeezenet_ssd_voc.tar.gz"
+ },
+ "mllib": "caffe",
+ "type": "supervised",
+ "parameters": {
+  "input": {
+   "connector": "image"
+  }
+ }
+}' | jq .
+
+curl -X POST 'http://localhost:8089/predict' -d '{
+  "service": "generic_detect_v2",
+  "parameters": {
+    "input": {},
+    "output": {
+      "confidence_threshold": 0.5,
+      "bbox": true
+    },
+    "mllib": {
+      "gpu": true
+    }
+  },
+  "data": [
+    "/data/dash.jpg"
+  ]
+}' | jq .
+
+
+
+curl -X PUT http://localhost:8089/services/detection_600 -d '{
+ "description": "object detection service",
+ "model": {
+  "repository": "/opt/models/detection_600",
+  "create_repository": true,
+  "init":"https://deepdetect.com/models/init/desktop/images/detection/detection_600.tar.gz"
+ },
+ "parameters": {"input": {"connector":"image"}},
+ "mllib": "caffe",
+ "type": "supervised"
+}' | jq .
+
+	- docker run -ti -p 8089:8089 jolibrain/deepdetect_cpu -host 8089
 	- cd plugins/motorcycles.autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-motorcycles.autotrader.com.so ; cd ../..
 	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 */

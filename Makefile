@@ -41,6 +41,7 @@ plugin:
 
 ## plugins			:	Build all qorpress plugins
 plugins:
+	GOARCH=amd64 PLUGIN=yamaha-occasion.com make plugin
 	GOARCH=amd64 PLUGIN=motorcycles.autotrader.com make plugin
 	GOARCH=amd64 PLUGIN=classiccars.com make plugin
 	GOARCH=amd64 PLUGIN=classics.autotrader.com make plugin
