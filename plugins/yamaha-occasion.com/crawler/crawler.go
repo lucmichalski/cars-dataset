@@ -36,7 +36,6 @@ func Extract(cfg *config.Config) error {
 	)
 
 	// c.DisableCookies()
-
 	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if strings.Contains(link, "fiches/index") {
@@ -135,7 +134,7 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://localhost:9005/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://35.179.44.166:9006/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
