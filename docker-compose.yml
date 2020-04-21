@@ -148,6 +148,20 @@ services:
     - darknet-data:/darknet/models
     command: ./scripts/download_data.sh
 
+  darknet-test:
+    <<: *darknet_base
+    ports:
+    - "9006:9006"
+    environment:
+       DARKNET_PORT: 9006
+    # restart: unless-stopped
+    # command: ["/bin/bash"]
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    - internal
+    - web # for tests purpose
+
   darknet:
     <<: *darknet_base
     ports:
@@ -170,8 +184,8 @@ services:
        DARKNET_PORT: 9004
     # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose
@@ -184,8 +198,8 @@ services:
        DARKNET_PORT: 9005
     # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose
