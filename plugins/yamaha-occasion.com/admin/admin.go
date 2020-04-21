@@ -3,10 +3,10 @@ package admin
 import (
 	"github.com/qor/admin"
 
-	"github.com/lucmichalski/cars-contrib/classiccars.com/models"
+	"github.com/lucmichalski/cars-contrib/yamaha-occasion.com/models"
 )
 
-const menuName = "classiccars.com"
+const menuName = "yamaha-occasion.com"
 
 // ConfigureAdmin configure admin interface
 func ConfigureAdmin(Admin *admin.Admin) {
