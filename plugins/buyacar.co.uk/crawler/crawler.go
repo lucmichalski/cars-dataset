@@ -18,6 +18,7 @@ import (
 	"github.com/tsak/concurrent-csv-writer"
 	"github.com/astaxie/flatmap"
 
+	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
@@ -227,17 +228,29 @@ func Extract(cfg *config.Config) error {
 
 		})
 
+		p, err := pluck.New()
+		if err != nil {
+			return
+		}
+		c := pluck.Config{
+			Activators:  []string{"{\"stockItemImages\":"}, // must be found in order, before capturing commences
+			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
+			Deactivator: ",\"searchAutorefresh",   // restarts capturing
+			Limit:       1,      // specifies the number of times capturing can occur
+			Name: "images",   // the key in the returned map, after completion
+		}
+		p.Add(c)
+
+		p.PluckURL(e.Request.Ctx.Get("url"))
+		rev := p.Result()
+
 		var carDataImage []string
-		e.ForEach(`img[class="image-gallery-image"]`, func(_ int, el *colly.HTMLElement) {
-			carImage := el.Attr("src")
-			if cfg.IsDebug {
-				fmt.Println("carImage:", carImage)
+		switch v := rev["images"].(type) {
+		case string:
+			if err := json.Unmarshal([]byte(v), &carDataImage); err != nil {
+				log.Fatalln("unmarshal error, ", err)
 			}
-			if strings.HasPrefix(carImage, "//") {
-				carImage = "https:"+carImage
-			}
-			carDataImage = append(carDataImage, carImage)
-		})
+		}
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
@@ -245,9 +258,9 @@ func Extract(cfg *config.Config) error {
 
 		// http://35.179.44.166:8089/masks/result.jpg?imageurl=https://images.buyacar.co.uk/img/med/abarth_500_1_4_t-jet_turismo_3dr_hatchback_33681691.jpg
 
-		pp.Println(vehicle)
-		pp.Println(carDataImage)
-		os.Exit(1)
+		//pp.Println(vehicle)
+		//pp.Println(carDataImage)
+		//os.Exit(1)
 
 		// Pictures
 		for _, carImage := range carDataImage {
@@ -255,8 +268,12 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
+			if strings.HasPrefix(carImage, "//") {
+				carImage = "https:"+carImage
+			}
+
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://35.179.44.166:9004/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://35.179.44.166:9006/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)

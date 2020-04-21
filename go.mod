@@ -9,6 +9,7 @@ require (
 	github.com/daetal-us/getld v1.0.1 // indirect
 	github.com/dgraph-io/badger v1.6.1 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
+	github.com/gin-gonic/contrib v0.0.0-20191209060500-d6e26eeaa607 // indirect
 	github.com/gin-gonic/gin v1.6.2 // indirect
 	github.com/gocolly/colly/v2 v2.0.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect

@@ -17,7 +17,7 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/tsak/concurrent-csv-writer"
 	"github.com/astaxie/flatmap"
-	
+		
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
