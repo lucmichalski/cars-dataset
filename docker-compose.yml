@@ -28,6 +28,30 @@ services:
     - mysql:mysql
     command: ["cars-dataset", "--parallel-jobs", "1"]
 
+  crawler-mtbauto:
+    image: lucmichalski/car-crawler--mtbauto:latest
+    container_name: ${NAMESPACE}-crawler
+    build: .
+    networks:
+    - internal
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+    volumes:
+    - ./dataset:/opt/lucmichalski/bin/datasets
+    - ./tmp:/tmp
+    - cache-data:/opt/lucmichalski/bin/data
+    - public-data:/opt/lucmichalski/bin/public
+    restart: unless-stopped
+    depends_on:
+    - mysql
+    links:
+    - mysql:mysql
+    command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache"]
+
   dataset:
     image: lucmichalski/car-admin:latest
     container_name: ${NAMESPACE}-dataset
@@ -86,6 +110,7 @@ services:
     networks:
     - internal
     - web
+    restart: unless-stopped
 
   mysql:
     image: mysql:5.7

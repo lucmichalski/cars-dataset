@@ -146,7 +146,7 @@ func main() {
 		for _, p := range allPlugins {
 			for _, u := range usePlugins {
 				fmt.Println("usePlugin", u, "currentPlugin", p)
-				if strings.HasPrefix(p, "release/cars-dataset-"+u) {
+				if strings.HasPrefix(p, "release/cars-dataset-"+u+".so") {
 					loadPlugins = append(loadPlugins, p)
 				}
 			}

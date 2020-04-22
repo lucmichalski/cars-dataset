@@ -126,7 +126,7 @@ func Extract(cfg *config.Config) error {
 	}
 	caps.AddChrome(chromeCaps)
 
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", 4444))
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://selenium:%d/wd/hub", 4444))
 	if err != nil {
 		return err
 	}

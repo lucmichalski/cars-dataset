@@ -6,7 +6,8 @@ RUN apk add --no-cache make gcc g++ ca-certificates musl-dev make git
 COPY . /go/src/github.com/lucmichalski/cars-dataset
 WORKDIR /go/src/github.com/lucmichalski/cars-dataset
 
-RUN go install
+RUN make plugins && \
+    go install
 
 FROM zenika/alpine-chrome:latest AS runtime
 # FROM alpine:3.11 AS runtime
@@ -31,14 +32,14 @@ WORKDIR /opt/lucmichalski/bin
 
 # copy executable
 COPY --from=builder /go/bin/cars-dataset /opt/lucmichalski/bin/cars-dataset
-# COPY --from=builder /go/src/github.com/lucmichalski/cars-dataset/release/* /opt/lucmichalski/bin/release/
+COPY --from=builder /go/src/github.com/lucmichalski/cars-dataset/release/* /opt/lucmichalski/bin/release/
 
 ENV PATH $PATH:/opt/lucmichalski/bin
 
 USER chrome
 
 # Container configuration
-EXPOSE 7000
+EXPOSE 9000
 VOLUME ["/opt/lucmichalski/bin/public"]
 ENTRYPOINT ["tini", "-g", "--"]
 CMD ["/opt/lucmichalski/bin/cars-dataset"]
