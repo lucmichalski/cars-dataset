@@ -45,7 +45,7 @@ services:
 
   crawler-mtbauto:
     image: lucmichalski/car-crawler--mtbauto:latest
-    container_name: ${NAMESPACE}-crawler
+    container_name: ${NAMESPACE}-cwl-mtbauto
     build: .
     networks:
     - internal
@@ -66,6 +66,30 @@ services:
     links:
     - mysql:mysql
     command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache"]
+
+  crawler-clauto:
+    image: lucmichalski/car-crawler--clauto:latest
+    container_name: ${NAMESPACE}-cwl-clauto
+    build: .
+    networks:
+    - internal
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+    volumes:
+    - ./dataset:/opt/lucmichalski/bin/datasets
+    - ./tmp:/tmp
+    - cache-data:/opt/lucmichalski/bin/data
+    - public-data:/opt/lucmichalski/bin/public
+    restart: unless-stopped
+    depends_on:
+    - mysql
+    links:
+    - mysql:mysql
+    command: ["cars-dataset", "--plugins", "classics.autotrader.com", "--extract", "--no-cache"]
 
   dataset:
     image: lucmichalski/car-admin:latest
