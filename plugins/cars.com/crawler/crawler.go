@@ -116,7 +116,8 @@ func Extract(cfg *config.Config) error {
 			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
 			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
 			csvSitemap.Flush()
-			q.AddURL(e.Request.AbsoluteURL(link))
+			c.Visist(e.Request.AbsoluteURL(link))
+			// q.AddURL(e.Request.AbsoluteURL(link))
 		}
 	})
 

@@ -24,7 +24,6 @@ import (
 )
 
 /*
-
 curl --silent -X POST 'http://localhost:8089/predict' -d '{
   "service": "detection_600",
   "parameters": {

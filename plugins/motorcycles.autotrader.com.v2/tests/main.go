@@ -12,7 +12,7 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 
-	"github.com/lucmichalski/cars-contrib/buyacar.co.uk/crawler"
+	"github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com/crawler"
 )
 
 func main() {
@@ -32,16 +32,16 @@ func main() {
 	DB.AutoMigrate(&models.VehicleImage{})
 
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.buyacar.co.uk", "buyacar.co.uk"},
+		AllowedDomains: []string{"www.motorcycles.autotrader.com", "motorcycles.autotrader.com", "motorcycles.motorcycles.autotrader.com"},
 		URLs: []string{
-			// 
-			"https://www.buyacar.co.uk/abarth/595/595-hatchback/1-4-t-jet-180-competizione-3dr-75464/deal-3112001",
+			"https://motorcycles.motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678",
+			// "https://www.motorcycles.autotrader.com/cars-for-sale/vehicledetails.xhtml?listingId=523174395&referrer=%2Fcars-for-sale%2Fsearchresults.xhtml%3FlistingTypes%3DNEW%26startYear%3D2018%26sortBy%3DderivedpriceDESC%26incremental%3Dall%26firstRecord%3D0%26marketExtension%3Dinclude%26endYear%3D2021%26makeCodeList%3DBMW%26isNewSearch%3Dtrue&listingTypes=NEW&startYear=2018&numRecords=25&firstRecord=0&endYear=2021&makeCodeList=BMW&clickType=spotlight",
 		},
 		DB: 			 DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
-		DryMode:         true,
+		DryMode:         false,
 		IsDebug:         true,
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 
-	"github.com/lucmichalski/cars-contrib/buyacar.co.uk/crawler"
+	"github.com/lucmichalski/cars-contrib/classics.autotrader.com.v2/crawler"
 )
 
 func main() {
@@ -32,17 +32,17 @@ func main() {
 	DB.AutoMigrate(&models.VehicleImage{})
 
 	cfg := &config.Config{
-		AllowedDomains: []string{"www.buyacar.co.uk", "buyacar.co.uk"},
+		AllowedDomains: []string{"autotrader.com", "classics.autotrader.com"},
 		URLs: []string{
-			// 
-			"https://www.buyacar.co.uk/abarth/595/595-hatchback/1-4-t-jet-180-competizione-3dr-75464/deal-3112001",
+			"https://motorcycles.autotrader.com/motorcycles/2020/polaris/ranger_570/200835936",
 		},
 		DB: 			 DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
-		DryMode:         true,
+		DryMode:         false,
 		IsDebug:         true,
+		IsSitemapIndex:  false,
 	}
 
 	err = crawler.Extract(cfg)

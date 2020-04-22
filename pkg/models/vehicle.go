@@ -57,6 +57,7 @@ type VehicleImage struct {
 	gorm.Model
 	Title        string
 	Checksum     string
+	Source       string
 	SelectedType string
 	File         media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
 }
