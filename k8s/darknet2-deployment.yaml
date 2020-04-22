@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: darknet2
+  name: darknet2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: darknet2
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: darknet2
+    spec:
+      containers:
+      - args:
+        - go
+        - run
+        - server.go
+        - --configFile=models/yolov3.cfg
+        - --weightsFile=models/yolov3.weights
+        env:
+        - name: DARKNET_PORT
+          value: "9004"
+        image: go-darknet:gpu-latest
+        imagePullPolicy: ""
+        name: darknet2
+        ports:
+        - containerPort: 9004
+        resources: {}
+        volumeMounts:
+        - mountPath: /darknet
+          name: darknet2-claim0
+        - mountPath: /darknet/models
+          name: darknet-data
+        workingDir: /darknet
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: darknet2-claim0
+        persistentVolumeClaim:
+          claimName: darknet2-claim0
+      - name: darknet-data
+        persistentVolumeClaim:
+          claimName: darknet-data
+status: {}

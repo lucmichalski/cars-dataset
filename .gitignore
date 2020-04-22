@@ -45,3 +45,8 @@ dataset/*
 dataset/**
 
 *.tar.gz*
+
+shared/logs
+shared/logs/
+shared/logs/*
+shared/logs/**

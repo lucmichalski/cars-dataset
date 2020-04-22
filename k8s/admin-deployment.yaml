@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: admin
+  name: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: admin
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: admin
+    spec:
+      containers:
+      - args:
+        - cars-dataset
+        - --admin
+        env:
+        - name: MYSQL_DATABASE
+          value: dataset_cars
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PASSWORD
+          value: supercar
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: cars
+        image: lucmichalski/car-admin:latest
+        imagePullPolicy: ""
+        name: -admin
+        ports:
+        - containerPort: 9008
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/lucmichalski/bin/public
+          name: admin-claim0
+        - mountPath: /opt/lucmichalski/bin/templates
+          name: admin-claim1
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: admin-claim0
+        persistentVolumeClaim:
+          claimName: admin-claim0
+      - name: admin-claim1
+        persistentVolumeClaim:
+          claimName: admin-claim1
+status: {}

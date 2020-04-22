@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: find-object
+  name: find-object
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: find-object
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: find-object
+    spec:
+      containers:
+      - image: lucmichalski/find-object:alpine-cpu-latest
+        imagePullPolicy: ""
+        name: -findobj
+        ports:
+        - containerPort: 8100
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

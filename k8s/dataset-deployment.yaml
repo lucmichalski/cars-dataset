@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: dataset
+  name: dataset
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: dataset
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: dataset
+    spec:
+      containers:
+      - args:
+        - cars-dataset
+        - --dataset
+        env:
+        - name: MYSQL_DATABASE
+          value: dataset_cars
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PASSWORD
+          value: supercar
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: cars
+        image: lucmichalski/car-admin:latest
+        imagePullPolicy: ""
+        name: -dataset
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/lucmichalski/bin/public
+          name: dataset-claim0
+        - mountPath: /opt/lucmichalski/bin/templates
+          name: dataset-claim1
+        - mountPath: /opt/lucmichalski/bin/dataset
+          name: dataset-claim2
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: dataset-claim0
+        persistentVolumeClaim:
+          claimName: dataset-claim0
+      - name: dataset-claim1
+        persistentVolumeClaim:
+          claimName: dataset-claim1
+      - name: dataset-claim2
+        persistentVolumeClaim:
+          claimName: dataset-claim2
+status: {}

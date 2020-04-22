@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: imaginary
+  name: imaginary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: imaginary
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.service: imaginary
+    spec:
+      containers:
+      - args:
+        - -cors
+        - -gzip
+        - -enable-url-source
+        - -mount
+        - /mnt/data
+        env:
+        - name: PORT
+          value: "9002"
+        image: h2non/imaginary:latest
+        imagePullPolicy: ""
+        name: -imaginary
+        ports:
+        - containerPort: 9002
+        resources: {}
+        volumeMounts:
+        - mountPath: /mnt/data
+          name: imaginary-data
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: imaginary-data
+        persistentVolumeClaim:
+          claimName: imaginary-data
+status: {}

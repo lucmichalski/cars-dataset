@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: tor-privoxy
+  name: tor-privoxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: tor-privoxy
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: tor-privoxy
+    spec:
+      containers:
+      - image: dockage/tor-privoxy:latest
+        imagePullPolicy: ""
+        name: tor-privoxy
+        ports:
+        - containerPort: 9050
+        - containerPort: 9051
+        - containerPort: 8118
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

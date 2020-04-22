@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: find-object
+  name: find-object
+spec:
+  ports:
+  - name: "8100"
+    port: 8100
+    targetPort: 8100
+  selector:
+    io.kompose.service: find-object
+status:
+  loadBalancer: {}

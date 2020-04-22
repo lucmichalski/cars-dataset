@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: crawler-clauto
+  name: crawler-clauto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: crawler-clauto
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.service: crawler-clauto
+    spec:
+      containers:
+      - args:
+        - cars-dataset
+        - --plugins
+        - classics.autotrader.com
+        - --extract
+        - --no-cache
+        env:
+        - name: MYSQL_DATABASE
+          value: dataset_cars
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_PASSWORD
+          value: supercar
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_USER
+          value: cars
+        image: lucmichalski/car-crawler--clauto:latest
+        imagePullPolicy: ""
+        name: -cwl-clauto
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/lucmichalski/bin/datasets
+          name: crawler-clauto-claim0
+        - mountPath: /tmp
+          name: crawler-clauto-claim1
+        - mountPath: /opt/lucmichalski/bin/data
+          name: cache-data
+        - mountPath: /opt/lucmichalski/bin/public
+          name: public-data
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: crawler-clauto-claim0
+        persistentVolumeClaim:
+          claimName: crawler-clauto-claim0
+      - name: crawler-clauto-claim1
+        persistentVolumeClaim:
+          claimName: crawler-clauto-claim1
+      - name: cache-data
+        persistentVolumeClaim:
+          claimName: cache-data
+      - name: public-data
+        persistentVolumeClaim:
+          claimName: public-data
+status: {}

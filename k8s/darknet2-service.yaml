@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: darknet2
+  name: darknet2
+spec:
+  ports:
+  - name: "9004"
+    port: 9004
+    targetPort: 9004
+  selector:
+    io.kompose.service: darknet2
+status:
+  loadBalancer: {}
