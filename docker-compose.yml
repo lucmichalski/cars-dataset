@@ -2,6 +2,21 @@
 version: '3.7'
 services:
 
+  sandbox:
+    image: alpine:3.11
+    build:
+      context: .docker/sandbox
+      dockerfile: Dockerfile
+    networks:
+    - internal
+    depends_on:
+    - protonvpn
+    - tor-privoxy
+    links:
+    - protonvpn:protonvpn
+    - tor-privoxy:tor-privoxy
+    command: ["/bin/bash"]
+
   crawler:
     image: lucmichalski/car-crawler:latest
     container_name: ${NAMESPACE}-crawler  
@@ -111,6 +126,44 @@ services:
     - internal
     - web
     restart: unless-stopped
+
+  tor-privoxy:
+    restart: always
+    image: dockage/tor-privoxy:latest
+    networks:
+    - internal
+    - web
+    ports:
+    - "9050:9050" # Tor proxy
+    - "9051:9051" # Tor control port
+    - "8118:8118" # Privoxy
+
+  protonvpn:
+    image: protonvpn-docker
+    build:
+      context: .docker/protonvpn
+      dockerfile: Dockerfile
+      args:
+      - PROTONVPN_USER=${PROTONVPN_USER}
+      - PROTONVPN_PASSWORD=${PROTONVPN_PASSWORD} 
+    stdin_open: true
+    tty: true
+    environment:
+    - SOCKD_WORKERS=10
+    ports:
+    - "1080:1080"
+    cap_add:
+    - NET_ADMIN
+    devices:
+    - "/dev/net/tun:/dev/net/tun"
+    command: >
+      sh -c "protonvpn connect --cc US &&
+      sockd -N $$SOCKD_WORKERS"
+    networks:
+    - internal
+    - web
+    #volumes:
+    #- "./sockd.conf:/etc/sockd.conf"
 
   mysql:
     image: mysql:5.7

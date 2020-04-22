@@ -12,7 +12,7 @@ expect "Confirm your ProtonVPN OpenVPN password: "
 send -- "$env(PROTONVPN_PASSWORD)\r"
 # plan type
 expect ": "
-send -- "2\r"
+send -- "1\r"
 # UDP or TCP
 expect "Your choice: "
 send -- "1\r"
