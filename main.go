@@ -43,7 +43,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
-	// "github.com/lucmichalski/cars-dataset/pkg/models"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
 
@@ -125,8 +125,11 @@ func main() {
 	}
 
 	// migrate tables
-	DB.AutoMigrate(&vehicle{})
-	DB.AutoMigrate(&vehicleImage{})
+	// DB.AutoMigrate(&vehicle{})
+	// DB.AutoMigrate(&vehicleImage{})
+        DB.AutoMigrate(&models.Vehicle{})
+        DB.AutoMigrate(&models.VehicleImage{})
+
 	// DB.AutoMigrate(&media_library.MediaLibrary{})
 
 	// load plugins

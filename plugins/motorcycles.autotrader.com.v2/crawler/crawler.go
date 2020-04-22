@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/k0kubun/pp"
-	"github.com/corpix/uarand"
+	// "github.com/corpix/uarand"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
@@ -23,13 +23,14 @@ func Extract(cfg *config.Config) error {
 
 	// Instantiate default collector
 	c := colly.NewCollector(
-		colly.UserAgent(uarand.GetRandom()),
+		// colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
 	)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
-		cfg.ConsumerThreads,
+		1,
+		//cfg.ConsumerThreads,
 		&queue.InMemoryQueueStorage{
 			MaxSize: cfg.QueueMaxSize,
 		},
@@ -64,8 +65,8 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 
-		vehicle.Source = "classics.autotrader.com"
-		vehicle.Class = "car"
+		vehicle.Source = "motorcycles.autotrader.com"
+		vehicle.Class = "motorcycle"
 
 		make := e.ChildText(`ol.breadcrumbs li:first-child`)
 		model := e.ChildText(`ol.breadcrumbs li:nth-of-type(n+2)`)
@@ -109,7 +110,7 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://35.179.44.166:9003/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://localhost:9005/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
