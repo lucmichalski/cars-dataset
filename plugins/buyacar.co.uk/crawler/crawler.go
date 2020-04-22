@@ -27,6 +27,7 @@ import (
 
 /*
 	Refs:
+	- rsync -av -v —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public.tar.gz ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 	- rsync -av --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 	- scp -i ~/Downloads/ounsi.pem /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public/* ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/public/
 	- cd plugins/buyacar.co.uk && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-buyacar.co.uk.so ; cd ../..
