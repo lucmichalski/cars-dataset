@@ -23,7 +23,6 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-	// pmodels "github.com/lucmichalski/cars-contrib/buyacar.co.uk/models"	
 )
 
 /*
@@ -48,6 +47,7 @@ func Extract(cfg *config.Config) error {
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
+		colly.AllowedDomains(cfg.AllowedDomains...),
 		//colly.URLFilters(
 		//	regexp.MustCompile("https://www\\.cars\\.com/vehicledetail/(.*)"),
 		//),
@@ -55,7 +55,7 @@ func Extract(cfg *config.Config) error {
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
-		cfg.ConsumerThreads,
+		2,
 		&queue.InMemoryQueueStorage{
 			MaxSize: cfg.QueueMaxSize,
 		},
@@ -110,11 +110,9 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-	/*
-	if !cfg.DryMode {
 		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
 			link := e.Attr("href")
-			if strings.Contains(link, "deal") {
+			if strings.Contains(link, "/deal-") {
 				// Print link
 				fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
 				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
@@ -122,15 +120,13 @@ func Extract(cfg *config.Config) error {
 				q.AddURL(e.Request.AbsoluteURL(link))
 			}
 		})
-	}
-	*/
 
 	//c.OnHTML(`ul.page-list li:last-child`, func(e *colly.HTMLElement) {
 	//})
 
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 
-		if !strings.Contains(e.Request.Ctx.Get("url"), "deal") {
+		if !strings.Contains(e.Request.Ctx.Get("url"), "/deal-") {
 			return
 		}
 
@@ -158,7 +154,8 @@ func Extract(cfg *config.Config) error {
 			}
 			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}" 
 			if err := json.Unmarshal([]byte(jsonLdStr), &carInfo); err != nil {
-				log.Fatalln("unmarshal error, ", err)
+				log.Warnln("unmarshal error, ", err)
+				return
 			}
 
 			fm, err := flatmap.Flatten(carInfo)
@@ -249,7 +246,7 @@ func Extract(cfg *config.Config) error {
 		switch v := rev["images"].(type) {
 		case string:
 			if err := json.Unmarshal([]byte(v), &carDataImage); err != nil {
-				log.Fatalln("unmarshal error, ", err)
+				log.Warnln("unmarshal error, ", err)
 			}
 		}
 
@@ -274,7 +271,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://35.179.44.166:9006/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://localhost:9006/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)

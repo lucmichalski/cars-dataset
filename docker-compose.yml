@@ -148,19 +148,33 @@ services:
     - darknet-data:/darknet/models
     command: ./scripts/download_data.sh
 
+  darknet-test:
+    <<: *darknet_base
+    ports:
+    - "9006:9006"
+    environment:
+       DARKNET_PORT: 9006
+    # command: ["/bin/bash"]
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+
   darknet:
     <<: *darknet_base
     ports:
     - "9003:9003"
     environment:
        DARKNET_PORT: 9003
-    # restart: unless-stopped
     # command: ["/bin/bash"]
     # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
     command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose    
+    restart: unless-stopped
 
   darknet2:
     <<: *darknet_base
@@ -168,13 +182,13 @@ services:
     - "9004:9004"
     environment:
        DARKNET_PORT: 9004
-    # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose
+    restart: unless-stopped
 
   darknet3:
     <<: *darknet_base
@@ -182,13 +196,13 @@ services:
     - "9005:9005"
     environment:
        DARKNET_PORT: 9005
-    # restart: unless-stopped
     # command: ["/bin/bash"]
-    command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    # command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
     networks:
     - internal
     - web # for tests purpose
+    restart: unless-stopped
 
   gocv:
     image: lucmichalski/gocv:alpine-cpu-latest
