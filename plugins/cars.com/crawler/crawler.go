@@ -54,6 +54,7 @@ func Extract(cfg *config.Config) error {
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
+		//24,
 		cfg.ConsumerThreads,
 		&queue.InMemoryQueueStorage{
 			MaxSize: cfg.QueueMaxSize,
@@ -116,6 +117,7 @@ func Extract(cfg *config.Config) error {
 			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
 			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
 			csvSitemap.Flush()
+			// c.Visit(e.Request.AbsoluteURL(link))
 			q.AddURL(e.Request.AbsoluteURL(link))
 		}
 	})
@@ -247,7 +249,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9004/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://localhost:9006/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
