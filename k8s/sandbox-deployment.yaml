@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sandbox
+  name: sandbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: sandbox
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.service: sandbox
+    spec:
+      containers:
+      - args:
+        - /bin/bash
+        image: alpine:3.11
+        imagePullPolicy: ""
+        name: sandbox
+        resources: {}
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes: null
+status: {}

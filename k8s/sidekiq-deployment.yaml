@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: sidekiq
+  name: sidekiq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: sidekiq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: sidekiq
+    spec:
+      containers:
+      - args:
+        - ./scripts/download_data.sh
+        image: go-darknet:gpu-latest
+        imagePullPolicy: ""
+        name: sidekiq
+        resources: {}
+        volumeMounts:
+        - mountPath: /darknet
+          name: sidekiq-claim0
+        - mountPath: /darknet/models
+          name: darknet-data
+        workingDir: /darknet
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: sidekiq-claim0
+        persistentVolumeClaim:
+          claimName: sidekiq-claim0
+      - name: darknet-data
+        persistentVolumeClaim:
+          claimName: darknet-data
+status: {}

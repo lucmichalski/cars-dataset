@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: protonvpn
+  name: protonvpn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: protonvpn
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.21.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/internal: "true"
+        io.kompose.network/web: "true"
+        io.kompose.service: protonvpn
+    spec:
+      containers:
+      - args:
+        - sh
+        - -c
+        - protonvpn connect --cc US && sockd -N $SOCKD_WORKERS
+        env:
+        - name: SOCKD_WORKERS
+          value: "10"
+        image: protonvpn-docker
+        imagePullPolicy: ""
+        name: protonvpn
+        ports:
+        - containerPort: 1080
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        stdin: true
+        tty: true
+        volumeMounts:
+        - mountPath: /root/.pvpn-cli/pvpn-cli.log
+          name: protonvpn-claim0
+      restartPolicy: Always
+      serviceAccountName: ""
+      volumes:
+      - name: protonvpn-claim0
+        persistentVolumeClaim:
+          claimName: protonvpn-claim0
+status: {}

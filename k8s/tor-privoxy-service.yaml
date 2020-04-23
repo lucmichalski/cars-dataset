@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.21.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: tor-privoxy
+  name: tor-privoxy
+spec:
+  ports:
+  - name: "9050"
+    port: 9050
+    targetPort: 9050
+  - name: "9051"
+    port: 9051
+    targetPort: 9051
+  - name: "8118"
+    port: 8118
+    targetPort: 8118
+  selector:
+    io.kompose.service: tor-privoxy
+status:
+  loadBalancer: {}
