@@ -15,7 +15,7 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/tsak/concurrent-csv-writer"
 
-	"github.com/lucmichalski/cars-dataset/pkg/pluck"		
+	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
@@ -30,6 +30,7 @@ func Extract(cfg *config.Config) error {
 
 	// Instantiate default collector
 	c := colly.NewCollector(
+		colly.AllowedDomains(cfg.AllowedDomains...),
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
 	)
