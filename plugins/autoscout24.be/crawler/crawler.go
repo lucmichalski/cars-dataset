@@ -23,7 +23,7 @@ import (
 
 /*
 	Refs:
-	- cd plugins/autoscout24.fr && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autoscout24.fr.so ; cd ../..
+	- cd plugins/autoscout24.be && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-autoscout24.be.so ; cd ../..
 */
 
 func Extract(cfg *config.Config) error {
@@ -45,8 +45,8 @@ func Extract(cfg *config.Config) error {
 	// read cache sitemap
 	utils.EnsureDir("./shared/queue/")
 
-	if _, err := os.Stat("shared/queue/autoscout24.fr_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/autoscout24.fr_sitemap.txt")
+	if _, err := os.Stat("shared/queue/autoscout24.be_sitemap.txt"); !os.IsNotExist(err) {
+	    file, err := os.Open("shared/queue/autoscout24.be_sitemap.txt")
 	    if err != nil {
 	        return err
 	    }
@@ -65,7 +65,7 @@ func Extract(cfg *config.Config) error {
 	}
 
 	// save discovered links
-	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/autoscout24.fr_sitemap.txt")
+	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/autoscout24.be_sitemap.txt")
 	if err != nil {
 		panic("Could not open `csvSitemap.csv` for writing")
 	}
@@ -101,7 +101,7 @@ func Extract(cfg *config.Config) error {
 
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
-		vehicle.Source = "autoscout24.fr"
+		vehicle.Source = "autoscout24.be"
 
 		e.ForEach(`as24-tracking`, func(_ int, el *colly.HTMLElement) {
 			vehicleType := el.Attr("category")
