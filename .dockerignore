@@ -6,6 +6,10 @@
 .dockerignore
 *.yml
 *.md
+*.zip
+*.tar.gz
+*.out
+*.out*
 Dockerfile
 data
 data/

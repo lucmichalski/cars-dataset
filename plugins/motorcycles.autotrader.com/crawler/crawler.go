@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	slog "github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -122,9 +123,18 @@ func Extract(cfg *config.Config) error {
 	        "--ignore-certifcate-errors",
 	        "--ignore-certifcate-errors-spki-list",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
+                        "--proxy-server=http://tor-haproxy:8119",
+                        // "--host-resolver-rules=\"MAP * 0.0.0.0 , EXCLUDE localhost\"",
 		},
 	}
 	caps.AddChrome(chromeCaps)
+
+	caps.SetLogLevel(slog.Server, slog.Off)
+	caps.SetLogLevel(slog.Browser, slog.Off)
+	caps.SetLogLevel(slog.Client, slog.Off)
+	caps.SetLogLevel(slog.Driver, slog.Off)
+	caps.SetLogLevel(slog.Performance, slog.Off)
+	caps.SetLogLevel(slog.Profiler, slog.Off)
 
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://selenium:%d/wd/hub", 4444))
 	if err != nil {

@@ -205,7 +205,10 @@ func main() {
 			c.ConsumerThreads = 6
 			pp.Println(c)
 			c.DB = DB
-			cmd.Crawl(c)
+			err := cmd.Crawl(c)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		os.Exit(1)
 	}
