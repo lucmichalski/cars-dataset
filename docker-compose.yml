@@ -345,13 +345,37 @@ services:
     # command [""]
 
   dozzle:
-    container_name: dozzle
+    container_name: ${NAMESPACE}-dozzle
     image: amir20/dozzle:latest
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
     ports:
     - 9999:9999
     command: ["--addr", "0.0.0.0:9999"]
+    networks:
+    - web # for tests purpose
+    restart: unless-stopped  
+
+  digits:
+    container_name: ${NAMESPACE}-digits
+    image: nvidia/digits:latest
+    ports:
+    - 5000:5000
+    volumes:
+    - ./shared/data/digits:/data
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+
+  ybat:
+    image: abiosoft/caddy
+    container_name: caddy
+    ports:
+    - '8087:8087'
+    volumes:
+    - './.config/Caddyfile:/etc/Caddyfile'
+    - '/home/ubuntu/cars-dataset/shared/datasets/ybat:/srv'
 
 networks:
   internal:

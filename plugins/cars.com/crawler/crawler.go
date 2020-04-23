@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/gocolly/colly/v2/proxy"
 	"github.com/tsak/concurrent-csv-writer"
 	"github.com/astaxie/flatmap"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-	// pmodels "github.com/lucmichalski/cars-contrib/cars.com/models"	
 )
 
 /*
@@ -37,7 +37,7 @@ import (
 		- https://github.com/microsoft/playwright
 		- https://datadome.co/bot-detection/will-playwright-replace-puppeteer-for-bad-bot-play-acting/
 		- https://datadome.co/pricing/
-		- 
+		-
 */
 
 func Extract(cfg *config.Config) error {
@@ -51,6 +51,14 @@ func Extract(cfg *config.Config) error {
 		//	regexp.MustCompile("https://www\\.cars\\.com/vehicledetail/(.*)"),
 		//),
 	)
+
+	// Rotate two socks5 proxies
+	rp, err := proxy.RoundRobinProxySwitcher("http://localhost:8118")
+	// rp, err := proxy.RoundRobinProxySwitcher("socks5h://localhost:1080", "localhost:8118")
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.SetProxyFunc(rp)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
@@ -78,6 +86,7 @@ func Extract(cfg *config.Config) error {
 			return err
 		}
 
+		utils.Shuffle(data)
 		for _, loc := range data {
 			q.AddURL(loc[0])
 		}
