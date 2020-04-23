@@ -30,6 +30,7 @@ func Extract(cfg *config.Config) error {
 
 	// Instantiate default collector
 	c := colly.NewCollector(
+		colly.AllowedDomains(cfg.AllowedDomains...),
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
 	)
@@ -90,6 +91,11 @@ func Extract(cfg *config.Config) error {
 
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 
+		// filter offers
+		if !strings.Contains(e.Request.Ctx.Get("url"), "offres/") {
+			return
+		}
+
 		// check in the databse if exists
 		var vehicleExists models.Vehicle
 		if !cfg.DryMode {
@@ -102,17 +108,16 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 		vehicle.Source = "autoscout24.fr"
+		// vehicle.Class = "car"
 
 		e.ForEach(`as24-tracking`, func(_ int, el *colly.HTMLElement) {
 			vehicleType := el.Attr("category")
 			if vehicleType == "moto" {
 				vehicle.Class = "motorcycle"
 			} else {
-				vehicle.Class = "car"				
+				vehicle.Class = "car"
 			}
 		})
-
-		vehicle.Class = "car"
 
 		p, err := pluck.New()
 		if err != nil {
@@ -180,6 +185,10 @@ func Extract(cfg *config.Config) error {
 			vehicle.Year = utils.RemoveAllTags(v)
 		}
 
+                if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
+                        return
+                }
+
 		switch v := rev["color"].(type) {
 		case string:
 			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: utils.RemoveAllTags(v)})
@@ -225,7 +234,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://35.179.44.166:9004/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://localhost:9004/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
@@ -310,6 +319,9 @@ func Extract(cfg *config.Config) error {
 		//}
 		r.Ctx.Put("url", r.URL.String())
 	})
+
+
+
 
 	for _, u := range cfg.URLs {
 		q.AddURL(u)
