@@ -54,12 +54,14 @@ func Extract(cfg *config.Config) error {
 			"--disable-crash-reporter",
 			"--hide-scrollbars",
 			"--disable-gpu",
-	        "--disable-setuid-sandbox",
-	        "--disable-infobars",
-	        "--window-position=0,0",
-	        "--ignore-certifcate-errors",
-	        "--ignore-certifcate-errors-spki-list",
+	        	"--disable-setuid-sandbox",
+	        	"--disable-infobars",
+	        	"--window-position=0,0",
+	        	"--ignore-certifcate-errors",
+	        	"--ignore-certifcate-errors-spki-list",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
+			"--proxy-server=http://tor-haproxy:8119",
+    			// "--host-resolver-rules=\"MAP * 0.0.0.0 , EXCLUDE localhost\"",
 		},
 	}
 	caps.AddChrome(chromeCaps)
@@ -146,7 +148,11 @@ func Extract(cfg *config.Config) error {
 		log.Println("processing link:", link)
 		go func(link string) error {
 			defer t.Done(nil)
-			return scrapeSelenium(link, cfg, wd)
+			err := scrapeSelenium(link, cfg, wd)
+			if err != nil {
+				log.Warnln(err)
+			}
+			return err
 		}(link)
 		t.Throttle()
 	}

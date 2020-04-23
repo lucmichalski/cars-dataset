@@ -46,7 +46,7 @@ services:
 
   crawler-mtbauto:
     image: lucmichalski/car-crawler--mtbauto:latest
-    container_name: ${NAMESPACE}-cwl-mtbauto
+    # container_name: ${NAMESPACE}-cwl-mtbauto
     build: .
     networks:
     - internal
@@ -70,7 +70,7 @@ services:
 
   crawler-clauto:
     image: lucmichalski/car-crawler--clauto:latest
-    container_name: ${NAMESPACE}-cwl-clauto
+    # container_name: ${NAMESPACE}-cwl-clauto
     build: .
     networks:
     - internal

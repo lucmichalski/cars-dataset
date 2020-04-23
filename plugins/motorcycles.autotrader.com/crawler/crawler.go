@@ -123,6 +123,8 @@ func Extract(cfg *config.Config) error {
 	        "--ignore-certifcate-errors",
 	        "--ignore-certifcate-errors-spki-list",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
+                        "--proxy-server=http://tor-haproxy:8119",
+                        // "--host-resolver-rules=\"MAP * 0.0.0.0 , EXCLUDE localhost\"",
 		},
 	}
 	caps.AddChrome(chromeCaps)
