@@ -262,7 +262,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 				continue
 			}
 
-			image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
+			image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: image}
 
 			log.Println("----> Scanning file: ", file.Name(), "size: ", size)
 			if err := image.File.Scan(file); err != nil {
