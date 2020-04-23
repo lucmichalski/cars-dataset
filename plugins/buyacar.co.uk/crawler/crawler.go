@@ -28,7 +28,7 @@ import (
 /*
 	Refs:
 	- rsync -av -v —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public.tar.gz ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
-	- rsync -av --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
+	- rsync -av --compress --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 	- scp -i ~/Downloads/ounsi.pem /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public/* ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/public/
 	- cd plugins/buyacar.co.uk && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-buyacar.co.uk.so ; cd ../..
 	- good practices
@@ -110,16 +110,16 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
-			link := e.Attr("href")
-			if strings.Contains(link, "/deal-") {
-				// Print link
-				fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
-				csvSitemap.Flush()
-				q.AddURL(e.Request.AbsoluteURL(link))
-			}
-		})
+	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		if strings.Contains(link, "/deal-") {
+			// Print link
+			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
+			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
+			csvSitemap.Flush()
+			q.AddURL(e.Request.AbsoluteURL(link))
+		}
+	})
 
 	//c.OnHTML(`ul.page-list li:last-child`, func(e *colly.HTMLElement) {
 	//})
@@ -290,7 +290,7 @@ func Extract(cfg *config.Config) error {
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
 
 				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
 				if err := image.File.Scan(file); err != nil {

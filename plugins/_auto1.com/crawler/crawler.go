@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"os"
-	// "strconv"
+	"net/url"
 	"sort"
 
 	"github.com/k0kubun/pp"
@@ -17,19 +17,17 @@ import (
 	"github.com/gocolly/colly/v2/queue"
 	"github.com/tsak/concurrent-csv-writer"
 	"github.com/astaxie/flatmap"
-
+		
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-	// pmodels "github.com/lucmichalski/cars-contrib/cars.com/models"	
 )
 
 /*
 	Refs:
-	- rsync -av --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
-	- scp -i ~/Downloads/ounsi.pem /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public/* ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/public/
-	- cd plugins/cars.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-cars.com.so ; cd ../..
+	- rsync -av -v --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
+	- cd plugins/auto1.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-auto1.com.so ; cd ../..
 	- good practices
 		- https://intoli.com/blog/making-chrome-headless-undetectable/
 		- https://github.com/ridershow/scraping_toolbox
@@ -42,7 +40,6 @@ import (
 
 func Extract(cfg *config.Config) error {
 
-
 	// Instantiate default collector
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
@@ -54,7 +51,6 @@ func Extract(cfg *config.Config) error {
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
-		//24,
 		cfg.ConsumerThreads,
 		&queue.InMemoryQueueStorage{
 			MaxSize: cfg.QueueMaxSize,
@@ -64,8 +60,8 @@ func Extract(cfg *config.Config) error {
 	// read cache sitemap
 	utils.EnsureDir("./shared/queue/")
 
-	if _, err := os.Stat("shared/queue/cars.com_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
+	if _, err := os.Stat("shared/queue/auto1.com_sitemap.txt"); !os.IsNotExist(err) {
+	    file, err := os.Open("shared/queue/auto1.com_sitemap.txt")
 	    if err != nil {
 	        return err
 	    }
@@ -81,11 +77,10 @@ func Extract(cfg *config.Config) error {
 		for _, loc := range data {
 			q.AddURL(loc[0])
 		}
-	}	
-
+	}
 
 	// save discovered links
-	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
+	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/auto1.com_sitemap.txt")
 	if err != nil {
 		panic("Could not open `csvSitemap.csv` for writing")
 	}
@@ -95,6 +90,8 @@ func Extract(cfg *config.Config) error {
 
 	// c.DisableCookies()
 
+	// `https://www.auto1.com/(\d{4})/([^\/]+)/([^\/]+)/pictures`
+
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
 		q.AddURL(e.Text)
@@ -102,7 +99,9 @@ func Extract(cfg *config.Config) error {
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//urlset/url/loc", func(e *colly.XMLElement) {
-		q.AddURL(e.Text)
+		if strings.Contains(e.Text, "/pictures") {
+			q.AddURL(e.Text)
+		}
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -110,26 +109,7 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		if strings.Contains(link, "vehicledetail") {
-			// Print link
-			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
-			csvSitemap.Flush()
-			// c.Visit(e.Request.AbsoluteURL(link))
-			q.AddURL(e.Request.AbsoluteURL(link))
-		}
-	})
-
-	//c.OnHTML(`ul.page-list li:last-child`, func(e *colly.HTMLElement) {
-	//})
-
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
-
-		if !strings.Contains(e.Request.Ctx.Get("url"), "vehicledetail") {
-			return
-		}
 
 		// check in the databse if exists
 		var vehicleExists models.Vehicle
@@ -142,18 +122,16 @@ func Extract(cfg *config.Config) error {
 
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
-		vehicle.Source = "cars.com"
+		vehicle.Source = "auto1.com"
 		vehicle.Class = "car"
 
 		var make, model, year string
-		// var carInfo []*pmodels.JSONLD
 		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
 			jsonLdStr := strings.TrimSpace(el.Text)	
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
-			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}" 
 			if err := json.Unmarshal([]byte(jsonLdStr), &carInfo); err != nil {
 				log.Fatalln("unmarshal error, ", err)
 			}
@@ -174,69 +152,61 @@ func Extract(cfg *config.Config) error {
 				}
 			}
 
-			if val, ok := fm["jsonld.0.manufacturer.name"]; ok {
+			if val, ok := fm["mainEntity.brand.name"]; ok {
 				vehicle.Manufacturer = val
 			}
 
-			if val, ok := fm["jsonld.0.vehicleModelDate"]; ok {
-				vehicle.Year = strings.Replace(val, ".000000", "", -1)
+			if val, ok := fm["mainEntity.vehicleModelDate"]; ok {
+				vehicle.Year = val
 			}
 
-			if val, ok := fm["jsonld.0.model.name"]; ok {
-				vehicle.Modl = strings.TrimSpace(strings.Replace(val, vehicle.Manufacturer, "", -1))
-				vehicle.Modl = strings.TrimSpace(strings.Replace(vehicle.Modl, vehicle.Year, "", -1))
+			if val, ok := fm["mainEntity.model"]; ok {
+				vehicle.Modl = val
 			}
 
 			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
 
-			if val, ok := fm["jsonld.0.vehicleEngine.name"]; ok {
-				vehicle.Engine = val
+			if val, ok := fm["mainEntity.offers.highPrice"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "HighPrice", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
-			if val, ok := fm["jsonld.0.color"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: val})
+			if val, ok := fm["mainEntity.offers.lowPrice"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "LowPrice", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
-			if val, ok := fm["jsonld.0.fuelType"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: val})
+			var fuelEfficiencyUnit string
+			if val, ok := fm["mainEntity.fuelEfficiency.unitText"]; ok {
+				fuelEfficiencyUnit = val
 			}
 
-			if val, ok := fm["jsonld.0.numberOfDoors"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value:  strings.Replace(val, ".000000", "", -1)})
+			if val, ok := fm["mainEntity.fuelEfficiency.maxValue"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMax", Value: strings.Replace(val, ".000000", "", -1) + " " + fuelEfficiencyUnit})
 			}
 
-			if val, ok := fm["jsonld.0.vehicleSeatingCapacity"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "SeatingCapacity", Value: val})
-			}
-
-			if val, ok := fm["jsonld.0.vehicleTransmission"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Transmission", Value: val})
-			}
-
-			if val, ok := fm["jsonld.0.offers.price"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value:  strings.Replace(val, ".000000", "", -1)})
-			}
-
-			if val, ok := fm["jsonld.0.offers.priceCurrency"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Currency", Value: val})
-			}
-
-			if val, ok := fm["jsonld.0.vehicleInteriorColor"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "InteriorColor", Value: val})
+			if val, ok := fm["mainEntity.fuelEfficiency.minValue"]; ok {
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelEfficiencyMin", Value: strings.Replace(val, ".000000", "", -1) + " " + fuelEfficiencyUnit})
 			}
 
 		})
 
 		var carDataImage []string
-		e.ForEach(`div.gallery-controls__thumbnail-image`, func(_ int, el *colly.HTMLElement) {
-			carImage := el.Attr("data-image")
+		e.ForEach(`.photoCell img`, func(_ int, el *colly.HTMLElement) {
+			carImage := el.Attr("src")
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
 			}
-			if carImage != "https://www.cstatic-images.com/supersized/in/v1/2926059/3G1BE6SM7HS575075/ae93dbc72bb1283a87818cf822e81332.jpg" { 
-				carDataImage = append(carDataImage, carImage)
+			// https://cdcssl.ibsrv.net/autodata/images/?IMG=USC50ALC061A01308.JPG&width=1144
+			if strings.HasPrefix(carImage, "//") {
+				carImage = "https:" + carImage
+				carImage = strings.Replace(carImage, "&width=572", "", -1)
+				carImage = strings.Replace(carImage, "?IMG=", "?width=1144&IMG=", -1)
 			}
+			carImage = url.QueryEscape(carImage)
+			carDataImage = append(carDataImage, carImage)
 		})
+
+		pp.Println(carDataImage)
+		pp.Println(vehicle)
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
@@ -249,7 +219,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9006/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://35.179.44.166:9004/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
@@ -266,9 +236,9 @@ func Extract(cfg *config.Config) error {
 					}
 					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
 					continue
-				}
+				}				
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
 
 				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
 				if err := image.File.Scan(file); err != nil {
@@ -279,7 +249,7 @@ func Extract(cfg *config.Config) error {
 				// transaction
 				if !cfg.DryMode {
 					if err := cfg.DB.Create(&image).Error; err != nil {
-						log.Fatalln("create image (%v) failure, got err %v\n", image, err)
+						log.Warnln("create image (%v) failure, got err %v\n", image, err)
 						continue
 					}
 				}
@@ -346,7 +316,7 @@ func Extract(cfg *config.Config) error {
 			return err
 		}
 
-		// var links []string
+		var links []string
 		utils.Shuffle(sitemaps)
 		for _, sitemap := range sitemaps {
 			log.Infoln("processing ", sitemap)
@@ -359,13 +329,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") || strings.HasPrefix(loc, "https://www.cars.com/shopping") {
-						if strings.HasPrefix(loc, "https://www.cars.com/shopping") {
-							loc = loc + "?perPage=100"
-						}
-						// links = append(links, loc)
-						q.AddURL(loc)
-					}
+					links = append(links, loc)
 				}
 			} else {
 				locs, err := prefetch.ExtractSitemap(sitemap)
@@ -375,13 +339,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") || strings.HasPrefix(loc, "https://www.cars.com/shopping") {
-						if strings.HasPrefix(loc, "https://www.cars.com/shopping") {
-							loc = loc + "?perPage=100"
-						}
-						// links = append(links, loc)
-						q.AddURL(loc)
-					}
+					links = append(links, loc)
 				}				
 			}
 		}

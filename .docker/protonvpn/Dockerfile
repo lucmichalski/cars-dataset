@@ -13,5 +13,5 @@ RUN pacman -Sy && \
     pip install git+https://github.com/krey/protonvpn-cli-ng.git && \
     expect /tmp/vpn-setup.exp && \
     rm /tmp/vpn-setup.exp
-    
+
 COPY ./sockd.conf /etc/sockd.conf

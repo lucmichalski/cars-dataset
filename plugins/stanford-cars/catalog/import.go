@@ -187,7 +187,7 @@ func ImportFromURL(cfg *config.Config) error {
 						continue
 					}
 
-					image := models.VehicleImage{Title: row.name, SelectedType: "image", Checksum: checksum}
+					image := models.VehicleImage{Title: row.name, SelectedType: "image", Checksum: checksum, Source: imgSrc}
 
 					log.Println("----> Scanning file: ", file.Name())
 					image.File.Scan(file)
