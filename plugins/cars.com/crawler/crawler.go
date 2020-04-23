@@ -37,7 +37,6 @@ import (
 		- https://github.com/microsoft/playwright
 		- https://datadome.co/bot-detection/will-playwright-replace-puppeteer-for-bad-bot-play-acting/
 		- https://datadome.co/pricing/
-		- 
 */
 
 func Extract(cfg *config.Config) error {

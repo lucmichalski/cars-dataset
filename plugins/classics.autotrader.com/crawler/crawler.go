@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	slog "github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -26,6 +27,7 @@ import (
 /*
 	- cd plugins/classics.autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-classics.autotrader.com.so ; cd ../..
 	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
+	- https://github.com/jhaoheng/golang_selenium_training/blob/master/seleniumChromeDriver/chrome/chromeInit.go#L97
 */
 
 func Extract(cfg *config.Config) error {
@@ -61,6 +63,13 @@ func Extract(cfg *config.Config) error {
 		},
 	}
 	caps.AddChrome(chromeCaps)
+
+	caps.SetLogLevel(slog.Server, slog.Off)
+	caps.SetLogLevel(slog.Browser, slog.Off)
+	caps.SetLogLevel(slog.Client, slog.Off)
+	caps.SetLogLevel(slog.Driver, slog.Off)
+	caps.SetLogLevel(slog.Performance, slog.Off)
+	caps.SetLogLevel(slog.Profiler, slog.Off)
 
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://selenium:%d/wd/hub", 4444))
 	if err != nil {

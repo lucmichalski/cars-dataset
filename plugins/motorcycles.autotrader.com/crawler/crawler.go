@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	slog "github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -125,6 +126,13 @@ func Extract(cfg *config.Config) error {
 		},
 	}
 	caps.AddChrome(chromeCaps)
+
+	caps.SetLogLevel(slog.Server, slog.Off)
+	caps.SetLogLevel(slog.Browser, slog.Off)
+	caps.SetLogLevel(slog.Client, slog.Off)
+	caps.SetLogLevel(slog.Driver, slog.Off)
+	caps.SetLogLevel(slog.Performance, slog.Off)
+	caps.SetLogLevel(slog.Profiler, slog.Off)
 
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://selenium:%d/wd/hub", 4444))
 	if err != nil {
