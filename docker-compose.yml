@@ -336,6 +336,15 @@ services:
     restart: unless-stopped
     # command [""]
 
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+    - 9999:9999
+    command: ["--addr", "0.0.0.0:9999"]
+
 networks:
   internal:
   web:
