@@ -153,6 +153,25 @@ services:
     - web
     restart: unless-stopped
 
+  tor-haproxy:
+    restart: always
+    container_name: ${NAMESPACE}-tor-haproxy
+    image: lucmichalski/tor-haproxy:latest       
+    build:
+      context: .docker/tor-haproxy
+      dockerfile: Dockerfile
+    environment:
+    - privoxy=1
+    - privoxy_port=8119
+    - tors=25
+    networks:
+    - internal
+    - web
+    ports:
+    - 5566:5566
+    - 2090:2090
+    - 8119:8119
+
   tor-privoxy:
     restart: always
     container_name: ${NAMESPACE}-tor-privoxy
