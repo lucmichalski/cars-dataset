@@ -4,6 +4,7 @@ services:
 
   sandbox:
     image: alpine:3.11
+    container_name: ${NAMESPACE}-sandbox
     build:
       context: .docker/sandbox
       dockerfile: Dockerfile
@@ -142,6 +143,7 @@ services:
 
   selenium:
     image: selenium/standalone-chrome:latest
+    container_name: ${NAMESPACE}-selenium
     ports:
     - 4444:4444
     volumes:
@@ -153,6 +155,7 @@ services:
 
   tor-privoxy:
     restart: always
+    container_name: ${NAMESPACE}-tor-privoxy
     image: dockage/tor-privoxy:latest
     networks:
     - internal
@@ -164,6 +167,7 @@ services:
 
   protonvpn:
     image: protonvpn-docker
+    container_name: ${NAMESPACE}-protonvpn
     build:
       context: .docker/protonvpn
       dockerfile: Dockerfile
@@ -210,7 +214,7 @@ services:
 
   backup:
     image: zeenlym/mariadb-backup
-    container_name: ${NAMESPACE}_backup
+    container_name: ${NAMESPACE}-backup
     depends_on:
     - mysql
     restart: unless-stopped
@@ -230,7 +234,7 @@ services:
 
   imaginary:
     image: h2non/imaginary:latest
-    container_name: ${NAMESPACE}_imaginary
+    container_name: ${NAMESPACE}-imaginary
     volumes:
     - imaginary-data:/mnt/data
     environment:
@@ -255,6 +259,7 @@ services:
 
   darknet-test:
     <<: *darknet_base
+    container_name: ${NAMESPACE}-darknetdev
     ports:
     - "9006:9006"
     environment:
@@ -271,6 +276,7 @@ services:
     <<: *darknet_base
     ports:
     - "9003:9003"
+    container_name: ${NAMESPACE}-darknet1
     environment:
        DARKNET_PORT: 9003
     # command: ["/bin/bash"]
@@ -283,6 +289,7 @@ services:
 
   darknet2:
     <<: *darknet_base
+    container_name: ${NAMESPACE}-darknet2
     ports:
     - "9004:9004"
     environment:
@@ -297,6 +304,7 @@ services:
 
   darknet3:
     <<: *darknet_base
+    container_name: ${NAMESPACE}-darknet3
     ports:
     - "9005:9005"
     environment:
