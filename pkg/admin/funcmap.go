@@ -18,4 +18,3 @@ func renderLatestVehicles(context *admin.Context) template.HTML {
 	}
 	return template.HTML("")
 }
-

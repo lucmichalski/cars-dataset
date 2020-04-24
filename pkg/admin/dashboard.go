@@ -74,4 +74,3 @@ func SetupDashboard(db *gorm.DB, Admin *admin.Admin) {
 	Admin.GetRouter().Get("/reports", ReportsDataHandler)
 	initFuncMap(Admin)
 }
-

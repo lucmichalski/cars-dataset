@@ -43,7 +43,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
+<<<<<<< HEAD
 	padmin "github.com/lucmichalski/cars-dataset/pkg/admin"
+=======
+	padmin "github.com/lucmichalski/peaks-tires/pkg/admin"
+>>>>>>> 2fde3b40cf1e184e299de973b6eee5dde2c9d733
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
