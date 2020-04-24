@@ -20,6 +20,8 @@
 *.db-shm
 *.db*
 
+sharedyolo_train.txt
+
 data
 data/
 data/*

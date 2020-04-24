@@ -18,7 +18,8 @@ require (
 	github.com/gosimple/slug v1.9.0 // indirect
 	github.com/h2non/filetype v1.0.12 // indirect
 	github.com/jinzhu/gorm v1.9.12
-	github.com/k0kubun/pp v3.0.1+incompatible // indirect
+	github.com/jinzhu/now v1.0.1
+	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/qor/admin v0.0.0-20200315024928-877b98a68a6f
