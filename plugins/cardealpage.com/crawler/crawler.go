@@ -1,3 +1,5 @@
+
+
 package crawler
 
 import (
@@ -20,7 +22,6 @@ import (
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
-	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
 )
 
 /*
@@ -76,7 +77,7 @@ func Extract(cfg *config.Config) error {
 			q.AddURL(loc[0])
 		}
 
-	}	
+	}
 
 
 	// regex rules on vehicles url
@@ -100,7 +101,6 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-	if !cfg.DryMode {
 		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
 			link := e.Attr("href")
 			if vehicleURLRegexp.MatchString(link) {
@@ -109,12 +109,12 @@ func Extract(cfg *config.Config) error {
 				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
 				csvSitemap.Flush()
 				// c.Visit(e.Request.AbsoluteURL(link))
-				q.AddURL(e.Request.AbsoluteURL(link))
+				// q.AddURL(e.Request.AbsoluteURL(link))
 			}
+			q.AddURL(e.Request.AbsoluteURL(link))
 		})
-	}
 
-	c.OnHTML(`body`, func(e *colly.HTMLElement) {
+	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 
 		if !vehicleURLRegexp.MatchString(e.Request.Ctx.Get("url")) {
 			fmt.Println("vehicleURLRegexp failed for", e.Request.Ctx.Get("url"))
@@ -135,13 +135,15 @@ func Extract(cfg *config.Config) error {
 		vehicle.Source = "cardealpage.com"
 		vehicle.Class = "car"
 
-		carInfo := vehicleURLRegexp.FindAllString(e.Request.Ctx.Get("url"), -1)
-		if len(carInfo) < 2 {
+		carInfo := vehicleURLRegexp.FindAllStringSubmatch(e.Request.Ctx.Get("url"), -1)
+		if len(carInfo[0]) < 2 {
+			pp.Println(carInfo[0])
+			fmt.Println("carInfo.Lenght:", len(carInfo[0]))
 			return
 		}
 
-		vehicle.Manufacturer = carInfo[0]
-		vehicle.Modl = strings.Replace(carInfo[1], "%20", " ", -1)
+		vehicle.Manufacturer = carInfo[0][1]
+		vehicle.Modl = strings.Replace(carInfo[0][2], "%20", " ", -1)
 
 		e.ForEach(`table[id=specifications] tr`, func(_ int, el *colly.HTMLElement) {
 			var key, value string
@@ -163,6 +165,8 @@ func Extract(cfg *config.Config) error {
 				})				
 			})
 			switch key {
+                        case "Steering":
+                                vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
 			case "Fuel":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: value})
 			case "Transmission":
@@ -175,8 +179,12 @@ func Extract(cfg *config.Config) error {
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "No. of Seats", Value: value})
 			case "Colour":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: value})
+                        case "Reg.Year":
+				fallthrough
 			case "Reg.Year / Month":
 				vehicle.Year = value
+                        case "Engine":
+                                vehicle.Engine = value
 			}
 
 			if cfg.IsDebug {
@@ -185,19 +193,23 @@ func Extract(cfg *config.Config) error {
 
 		})
 
+		vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
 		var carDataImage []string
 		e.ForEach(`div.smallPhoto a:nth-child(-n+10)`, func(_ int, el *colly.HTMLElement) {
 			carImage := el.Attr("href")
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
 			}
+			carDataImage = append(carDataImage, carImage)
 		})
 
 		pp.Println(carDataImage)
 		pp.Println(vehicle)
-		os.Exit(1)
+		///os.Exit(1)
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
+			fmt.Println("incomplete")
 			return
 		}
 
@@ -208,7 +220,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9006/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://localhost:9005/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
@@ -296,58 +308,8 @@ func Extract(cfg *config.Config) error {
 		r.Ctx.Put("url", r.URL.String())
 	})
 
-	// Start scraping on https://www.classicdriver.com
-	if cfg.IsSitemapIndex {
-		log.Infoln("extractSitemapIndex...")
-		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
-		if err != nil {
-			log.Fatal("ExtractSitemapIndex:", err)
-			return err
-		}
-
-		// var links []string
-		utils.Shuffle(sitemaps)
-		for _, sitemap := range sitemaps {
-			log.Infoln("processing ", sitemap)
-			if strings.HasSuffix(sitemap, ".gz") {
-				log.Infoln("extract sitemap gz compressed...")
-				locs, err := prefetch.ExtractSitemapGZ(sitemap)
-				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
-					return err
-				}
-				utils.Shuffle(locs)
-				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") || strings.HasPrefix(loc, "https://www.cardealpage.com/shopping") {
-						if strings.HasPrefix(loc, "https://www.cardealpage.com/shopping") {
-							loc = loc + "?perPage=100"
-						}
-						// links = append(links, loc)
-						q.AddURL(loc)
-					}
-				}
-			} else {
-				locs, err := prefetch.ExtractSitemap(sitemap)
-				if err != nil {
-					log.Fatal("ExtractSitemap", err)
-					return err
-				}
-				utils.Shuffle(locs)
-				for _, loc := range locs {
-					if strings.Contains(loc, "vehicledetail") || strings.HasPrefix(loc, "https://www.cardealpage.com/shopping") {
-						if strings.HasPrefix(loc, "https://www.cardealpage.com/shopping") {
-							loc = loc + "?perPage=100"
-						}
-						// links = append(links, loc)
-						q.AddURL(loc)
-					}
-				}				
-			}
-		}
-	} else {
-		for _, u := range cfg.URLs {
-			q.AddURL(u)
-		}
+	for _, u := range cfg.URLs {
+		q.AddURL(u)
 	}
 
 	// Consume URLs
