@@ -1,4 +1,5 @@
 var VehiclesChart;
+
 function RenderChart(productsData, reviewsData, vehiclesData) {
     Chart.defaults.global.responsive = true;
 
