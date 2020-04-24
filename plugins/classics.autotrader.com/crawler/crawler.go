@@ -28,6 +28,11 @@ import (
 	- cd plugins/classics.autotrader.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-classics.autotrader.com.so ; cd ../..
 	- rsync -av —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
 	- https://github.com/jhaoheng/golang_selenium_training/blob/master/seleniumChromeDriver/chrome/chromeInit.go#L97
+	- find . -name "cache*.html" -print0 | xargs -0 rm
+	- for i in *.jpg; do rm "$i"; done
+	- yolo_mark train2017_set common.txt common.names
+	- find . -maxdepth 1 -type f | wc -l
+	- ls -F | grep -v / | wc -l
 */
 
 func Extract(cfg *config.Config) error {

@@ -30,6 +30,12 @@ tmp/
 tmp/*
 tmp/**
 
+shared/yolo_need
+shared/yolo_need/
+shared/yolo_need/*
+shared/yolo_need/**
+
+
 shared/datasets
 shared/datasets/
 shared/datasets/*
