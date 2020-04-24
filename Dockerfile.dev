@@ -1,0 +1,11 @@
+FROM golang:alpine3.11
+MAINTAINER lucmichalski <michalski.luc@gmail.com>
+
+RUN apk add --no-cache make gcc g++ ca-certificates musl-dev make git bash nano jq
+
+COPY . /go/src/github.com/lucmichalski/cars-dataset
+WORKDIR /go/src/github.com/lucmichalski/cars-dataset
+
+RUN make plugins
+
+EXPOSE 9018

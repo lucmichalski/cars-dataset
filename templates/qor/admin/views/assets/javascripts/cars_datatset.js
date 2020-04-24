@@ -1,20 +1,7 @@
-var ProductsChart,ReviewsChart,VehiclesChart;
+var VehiclesChart;
+
 function RenderChart(productsData, reviewsData, vehiclesData) {
     Chart.defaults.global.responsive = true;
-
-    // Products
-    var productDateLables = [];
-    var productCounts = [];
-    for (var i = 0; i < productsData.length; i++) {
-        productDateLables.push(productsData[i].Date.substring(5,10));
-        productCounts.push(productsData[i].Total)
-    }
-    if(ProductsChart){
-        ProductsChart.destroy();
-    }
-    var products_context = document.getElementById("products_report").getContext("2d");
-    var products_data = ChartData(productDateLables,productCounts);
-    ProductsChart = new Chart(products_context).Line(products_data, "");
 
     // Vehicles
     var vehicleDateLables = [];
@@ -29,20 +16,6 @@ function RenderChart(productsData, reviewsData, vehiclesData) {
     var vehicles_context = document.getElementById("vehicles_report").getContext("2d");
     var vehicles_data = ChartData(vehicleDateLables,vehicleCounts);
     VehiclesChart = new Chart(vehicles_context).Line(vehicles_data, "");
-
-    // Reviews
-    var reviewsDateLables = [];
-    var reviewsCounts = [];
-    for (var i = 0; i < reviewsData.length; i++) {
-        reviewsDateLables.push(reviewsData[i].Date.substring(5,10));
-        reviewsCounts.push(reviewsData[i].Total)
-    }
-    if(ReviewsChart){
-        ReviewsChart.destroy();
-    }
-    var reviews_context = document.getElementById("reviews_report").getContext("2d");
-    var reviews_data = ChartData(reviewsDateLables,reviewsCounts);
-    ReviewsChart = new Chart(reviews_context).Bar(reviews_data, "");
 
 }
 

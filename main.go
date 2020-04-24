@@ -43,6 +43,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
+	padmin "github.com/lucmichalski/cars-dataset/pkg/admin"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
@@ -242,6 +243,8 @@ func main() {
 			DB:       DB,
 			AssetFS:  AssetFS,
 		})
+
+		padmin.SetupDashboard(DB, Admin)
 
 		Admin.AddMenu(&admin.Menu{Name: "Crawl Management", Priority: 1})
 
