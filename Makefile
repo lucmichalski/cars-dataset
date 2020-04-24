@@ -44,6 +44,7 @@ plugins:
 	GOARCH=amd64 PLUGIN=cardealpage.com make plugin
 	GOARCH=amd64 PLUGIN=autoscout24.be make plugin
 	GOARCH=amd64 PLUGIN=autoscout24.fr make plugin
+	GOARCH=amd64 PLUGIN=thecarconnection.com make plugin
 	# GOARCH=amd64 PLUGIN=classics.autotrader.com.v2 make plugin
 	# GOARCH=amd64 PLUGIN=motorcycles.autotrader.com.v2 make plugin
 # 	GOARCH=amd64 PLUGIN=buyacar.co.uk make plugin

@@ -416,18 +416,6 @@ services:
     - web # for tests purpose
     restart: unless-stopped
 
-  deeepdetect:
-    image: jolibrain/deepdetect_cpu
-    ports:
-    - 5003:5003
-    #volumes:
-    #- ./shared/data/digits:/data
-    networks:
-    - internal
-    - web # for tests purpose
-    restart: unless-stopped
-    command: ["./dede", "-port", "5003", "-host", "0.0.0.0"]
-
   ybat:
     image: abiosoft/caddy
     container_name: caddy
@@ -446,7 +434,6 @@ volumes:
   db-data:
   cache-data:
   imaginary-data:
-  deepdetect-data:
   darknet-data:
     driver_opts:
       type: none

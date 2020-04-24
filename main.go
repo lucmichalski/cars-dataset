@@ -219,7 +219,8 @@ func main() {
 		for _, cmd := range ptPlugins.Commands {
 			c := cmd.Config()
 			c.DB = DB
-			c.DryMode = isDryMode			
+			c.DryMode = isDryMode
+			c.IsDebug = isVerbose			
 			err := cmd.Catalog(c)
 			if err != nil {
 				panic(err)

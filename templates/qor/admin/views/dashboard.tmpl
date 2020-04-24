@@ -33,15 +33,33 @@
     <script src="/public/vendors/Chart.min.js"></script>
     <div class="mdl-grid">
 
-      <div class="mdl-cell mdl-cell--4-col">
+      <div class="mdl-cell mdl-cell--6-col">
         <h4 class="qor-section-title">{{t "Vehicles Indexation"}}</h4>
         <img src="https://igsave.net/public/assets/images/loading.gif" id="vehicles_report_loader">
         <canvas id="vehicles_report"></canvas>
       </div>
 
+      <div class="mdl-cell mdl-cell--6-col">
+        <h4 class="qor-section-title">{{t "Vehicle Images Indexation"}}</h4>
+        <img src="https://igsave.net/public/assets/images/loading.gif" id="vehicle_images_report_loader">
+        <canvas id="vehicle_images_report"></canvas>
+      </div>
     </div>
-  </div>
 
+    <div class="mdl-grid">
+
+      <div class="mdl-cell mdl-cell--6-col">
+        <h4 class="qor-section-title">{{t "Source Counters"}}</h4>
+        <canvas id="sources_report"></canvas>
+      </div>
+
+      <div class="mdl-cell mdl-cell--6-col">
+        <h4 class="qor-section-title">{{t "Source Images Counters"}}</h4>
+      </div>
+    </div>
+
+
+  </div>
 
   <!-- if have table please add qor-section__table className -->
   <div class="qor-section qor-section__table qor-theme-slideout">

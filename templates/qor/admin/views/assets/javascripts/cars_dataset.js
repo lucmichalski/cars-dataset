@@ -1,5 +1,6 @@
-var VehiclesChart;
-function RenderChart(productsData, reviewsData, vehiclesData) {
+var VehiclesChart, VehicleImagesChart;
+
+function RenderChart(vehiclesData, vehiclesImagesData) {
     Chart.defaults.global.responsive = true;
 
     // Vehicles
@@ -15,6 +16,20 @@ function RenderChart(productsData, reviewsData, vehiclesData) {
     var vehicles_context = document.getElementById("vehicles_report").getContext("2d");
     var vehicles_data = ChartData(vehicleDateLables,vehicleCounts);
     VehiclesChart = new Chart(vehicles_context).Line(vehicles_data, "");
+
+    // Vehicles Images 
+    var vehicleImagesDateLables = [];
+    var vehicleImagesCounts = [];
+    for (var i = 0; i < vehiclesImagesData.length; i++) {
+        vehicleImagesDateLables.push(vehiclesImagesData[i].Date.substring(5,10));
+        vehicleImagesCounts.push(vehiclesImagesData[i].Total)
+    }
+    if(VehicleImagesChart){
+        VehicleImagesChart.destroy();
+    }
+    var vehicle_images_context = document.getElementById("vehicle_images_report").getContext("2d");
+    var vehicle_images_data = ChartData(vehicleImagesDateLables, vehicleImagesCounts);
+    VehicleImagesChart = new Chart(vehicle_images_context).Line(vehicle_images_data, "");
 
 }
 
@@ -68,10 +83,9 @@ $(document).ready(function() {
   $("#endDate").val(yesterday.Format("yyyy-MM-dd"));
   $(".j-update-record").click(function(){
     $.getJSON("/admin/reports.json",{startDate:$("#startDate").val(), endDate:$("#endDate").val()},function(jsonData){
-      RenderChart(jsonData.Products,jsonData.Reviews,jsonData.Vehicles);
-      $("#products_report_loader").hide();
-      $("#reviews_report_loader").hide();
+      RenderChart(jsonData.Vehicles, jsonData.VehicleImages);
       $("#vehicles_report_loader").hide();
+      $("#vehicle_images_report_loader").hide();
     });
   });
   $(".j-update-record").click();
