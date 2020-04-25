@@ -110,7 +110,7 @@ func Extract(cfg *config.Config) error {
 		vehicle.Source = "autoscout24.fr"
 		// vehicle.Class = "car"
 
-		e.ForEach(`as24-tracking`, func(_ int, el *colly.HTMLElement) {
+		e.ForEach(`as24-tracking[type="pagename"]`, func(_ int, el *colly.HTMLElement) {
 			vehicleType := el.Attr("category")
 			if vehicleType == "moto" {
 				vehicle.Class = "motorcycle"

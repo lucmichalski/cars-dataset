@@ -20,6 +20,7 @@ require (
 	github.com/jinzhu/gorm v1.9.12
 	github.com/jinzhu/now v1.0.1
 	github.com/k0kubun/pp v3.0.1+incompatible
+	github.com/karrick/godirwalk v1.15.6 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
 	github.com/qor/admin v0.0.0-20200315024928-877b98a68a6f

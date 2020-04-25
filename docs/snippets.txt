@@ -1,0 +1,190 @@
+Yolov3 retrain
+https://pjreddie.com/darknet/yolo/
+https://github.com/GabrielDeml/Yolo_mark_in_docker
+https://github.com/MrZander/YoloMarkNet
+https://github.com/drainingsun/ybat
+https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects
+https://github.com/x0rzkov/Yolo_mark
+
+## labelme
+https://github.com/wkentaro/labelme
+https://gist.github.com/x0rzkov/10e3ff0eae8d39aedbda77e175f0fb78 (Convert LabelMe Annotation Tool JSON format to YOLO text file format)
+
+## caffe
+https://github.com/x0rzkov/gpu-rest-engine
+https://github.com/aurotripathy/Caffe-ReST-APIs/blob/master/rest-server.py
+https://github.com/Xilinx/ml-suite/blob/master/examples/caffe/REST/app.py
+https://github.com/eric612/TensorRT-Yolov3-models (mobileNet-yolo
+https://github.com/eric612/MobilenetV3-Caffe (mobilenetv3-caffe))
+https://github.com/eric612/MobileNet-YOLO/tree/detection_with_segmentation/models/yolo_segmentation
+https://github.com/jolibrain/deepdetect/tree/master/docker
+
+000000000036.json
+
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave
+
+0 0.5 0.5 0.10 0.25
+represents an object of class 0, centered in the middle of the image, whose width is 10% of the image, and whose height is 25% of the image.
+
+
+
+def convert(size, box):
+    dw = 1./size[0]
+    dh = 1./size[1]
+    x = (box[0] + box[1])/2.0
+    y = (box[2] + box[3])/2.0
+    w = box[1] - box[0]
+    h = box[3] - box[2]
+    x = x*dw
+    w = w*dw
+    y = y*dh
+    h = h*dh
+    return (x,y,w,h)
+
+## gpu-server
+docker run --runtime=nvidia --name=server --net=host -p 8000:8000 inference_server 
+curl -XPOST --silent --data-binary @images/1.jpg http://127.0.0.1:8000/api/classify | jq .
+
+["caffe-server", "MobileNetV3.prototxt", "MobileNetV3.caffemodel", "imagenet_mean.binaryproto", "synset_words.txt"]
+
+-rw-r--r-- 1 root root 20694617 Apr 24 14:45 MobileNetV3.caffemodel
+-rw-r--r-- 1 root root    49613 Apr 24 14:45 MobileNetV3.prototxt
+-rw-r--r-- 1 root root    49478 Apr 24 14:45 MobileNetV3_std_conv.prototxt
+
+## yolo
+https://github.com/ivder/Yolo_MultiClass_LabelTool
+https://hub.docker.com/r/eric612/mobilenet-yolo/dockerfile
+
+## vehicl detection
+https://github.com/eric612/Vehicle-Detection
+
+# dotnet build project
+https://stackoverflow.com/questions/8264323/how-to-compile-a-visual-studio-c-sharp-project-with-mono
+
+OpenVPN
+https://gist.github.com/aioutecism/2638bb9eaf9ffc13348c
+https://github.com/kylemanna/docker-openvpn
+https://github.com/linuxserver/docker-openvpn-as
+https://github.com/dperson/openvpn-client
+https://blog.apify.com/how-to-make-headless-chrome-and-puppeteer-use-a-proxy-server-with-authentication-249a21a79212
+https://github.com/open-mmlab/mmdetection
+https://github.com/haugene/docker-transmission-openvpn/issues/271
+https://networkfilter.blogspot.com/2018/07/home-vpn-gateway-with-docker-and.html#protonvpn
+https://github.com/iam4x/bobarr/blob/master/docker-compose.yml
+https://github.com/chrisx8/docker-openvpn-alpine
+https://github.com/zzeneg/private-server-docker/blob/master/docker-compose.yml#L103
+https://github.com/indicolite/toolkit/blob/master/mac/docker-for-mac/docker-for-mac-openvpn/docker-compose.yml
+
+image.0 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/Tm-OI_L-QWKWF5rjQmY3Xg.jpg
+image.1 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/XohfQZ5VTnCRLBsofJXKnA.jpg
+image.2 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/1ik2ydZ1Tbe1qgYlj9pANw.jpg
+image.3 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/3lptrZRYTpKVCEQqYkUPZQ.jpg
+image.4 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/mCxNSfNnTS6pwFw6pI6y8w.jpg
+image.5 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/-M2HPkaxQV-tNz0M9ovcQg.jpg
+image.6 : https://d1zgdcrdir5wgt.cloudfront.net/media/vehicle/images/M3WbACJ4Q8i5cIh-qcu2Og.jpg
+aggregateRating.alternateName : Black Pony
+aggregateRating.bestRating : 5.000000
+aggregateRating.name : 2017 Ford Mustang
+aggregateRating.ratingCount : 34.000000
+aggregateRating.ratingValue : 5.000000
+aggregateRating.worstRating : 0.000000
+brand : Ford
+https://turo.com/sitemap-index.xml.gz
+
+8421 classiccars pid
+11312 classiccars.com
+
+https://github.com/zet4/alpine-tor
+
+https://github.com/GabrielDeml/Yolo_mark_in_docker/blob/master/run.sh#L4
+-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix
+
+
+curl --proxy localhost:8118 https://www.carvana.com
+curl --proxy localhost:8118 https://www.google.com
+curl --proxy tor-privoxy:8118 https://www.google.com
+curl -x socks5h://localhost:1080 https://www.google.com
+curl -x socks5h://protonvpn:1080 https://www.youtube.com
+
+{
+	"default-runtime": "nvidia",
+	"runtimes": {
+		"nvidia": {
+	 		"path": "/usr/bin/nvidia-container-runtime",
+ 			"runtimeArgs": []
+		}
+	}
+}
+
+export LDFLAGS="${LDFLAGS} -L/usr/local/opt/openblas/lib"
+export CPPFLAGS="${CPPFLAGS} -I/usr/local/opt/openblas/include"
+
+export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/openblas/lib/pkgconfig"
+
+git clone -b fix-build https://github.com/mattn/go-tensorflow-realtime-object-detection
+
+export CFLAGS="-I/usr/local/lib/python3.7/site-packages/numpy/core/include $CFLAGS"
+
+darknet_1      | runtime.throw(0xabcbeb, 0x2a)
+darknet_1      | 	/usr/local/go/src/runtime/panic.go:1114 +0x72
+darknet_1      | runtime.sigpanic()
+darknet_1      | 	/usr/local/go/src/runtime/signal_unix.go:679 +0x46a
+darknet_1      |
+darknet_1      | goroutine 11 [syscall]:
+darknet_1      | runtime.cgocall(0x977750, 0xc0000eb2e0, 0xc0002ae040)
+darknet_1      | 	/usr/local/go/src/runtime/cgocall.go:133 +0x5b fp=0xc0000eb2b0 sp=0xc0000eb278 pc=0x4057fb
+darknet_1      | github.com/LdDl/go-darknet._Cfunc_perform_network_detect(0x1674660, 0xc0002ae040, 0x3e80000000000005, 0x3ee666663f000000, 0xc000000000, 0x0, 0x0)
+darknet_1      | 	_cgo_gotypes.go:810 +0x4d fp=0xc0000eb2e0 sp=0xc0000eb2b0 pc=0x96f65d
+darknet_1      | github.com/LdDl/go-darknet.(*YOLONetwork).Detect.func1(0xf965a0, 0xc0002ae030, 0x0, 0x0)
+darknet_1      | 	/go/src/github.com/LdDl/go-darknet/network.go:72 +0x117 fp=0xc0000eb350 sp=0xc0000eb2e0 pc=0x971927
+darknet_1      | github.com/LdDl/go-darknet.(*YOLONetwork).Detect(0xf965a0, 0xc0002ae030, 0x0, 0x0, 0x0)
+darknet_1      | 	/go/src/github.com/LdDl/go-darknet/network.go:72 +0xb9 fp=0xc0000eb470 sp=0xc0000eb350 pc=0x970f69
+darknet_1      | main.server.func3(0xc0004c9260)
+
+find ./* -maxdepth 0 -type d | wc -l
+
+https://stackoverflow.com/questions/37458287/how-to-run-a-cron-job-inside-a-docker-container
+
+cd plugins/carvana-kaggle && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carvana-kaggle.so && cd ../.. && \
+cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-stanford-cars.so && cd ../..
+
+
+
+# Campaigns sender, runs each minute.
+* * * * * /usr/bin/php -q /var/www/web/apps/console/console.php send-campaigns >/dev/null 2>&1
+
+# Transactional email sender, runs once at 2 minutes.
+*/2 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php send-transactional-emails >/dev/null 2>&1
+
+# Bounce handler, runs once at 10 minutes.
+*/10 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php bounce-handler >/dev/null 2>&1
+
+# Feedback loop handler, runs once at 20 minutes.
+*/20 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php feedback-loop-handler >/dev/null 2>&1
+
+# Delivery/Bounce processor, runs once at 3 minutes.
+*/3 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php process-delivery-and-bounce-log >/dev/null 2>&1
+
+# Various tasks, runs each hour.
+0 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php hourly >/dev/null 2>&1
+
+# Daily cleaner, runs once a day.
+0 0 * * * /usr/bin/php -q /var/www/web/apps/console/console.php daily >/dev/null 2>&1
+
+# copy the current cron into a new file
+crontab -l > mwcron
+
+# add the new entries into the file
+echo "* * * * * /usr/bin/php -q /var/www/web/apps/console/console.php send-campaigns >/dev/null 2>&1" >> mwcron
+echo "*/2 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php send-transactional-emails >/dev/null 2>&1" >> mwcron
+echo "*/10 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php bounce-handler >/dev/null 2>&1" >> mwcron
+echo "*/20 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php feedback-loop-handler >/dev/null 2>&1" >> mwcron
+echo "*/3 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php process-delivery-and-bounce-log >/dev/null 2>&1" >> mwcron
+echo "0 * * * * /usr/bin/php -q /var/www/web/apps/console/console.php hourly >/dev/null 2>&1" >> mwcron
+echo "0 0 * * * /usr/bin/php -q /var/www/web/apps/console/console.php daily >/dev/null 2>&1" >> mwcron
+
+# install the new cron
+crontab mwcron
+
+# remove the crontab file since it has been installed and we don't use it anymore.
+rm mwcron

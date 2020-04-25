@@ -281,6 +281,10 @@ func Extract(cfg *config.Config) error {
 			fmt.Println("places:", places)
 		}
 
+		if len(vehicle.Images.Files) == 0 {
+			return
+		}
+
 		if !cfg.DryMode {
 			if err := cfg.DB.Create(&vehicle).Error; err != nil {
 				log.Fatalf("create vehicle (%v) failure, got err %v", vehicle, err)
