@@ -77,7 +77,7 @@ func main() {
 	var defaultPlugins []string
 	for _, p := range listPlugins {
 		p = strings.Replace(p, ".so", "", -1)
-		p = strings.Replace(p, "peaks-tires-", "", -1)
+		p = strings.Replace(p, "cars-dataset-", "", -1)
 		p = strings.Replace(p, "release/", "", -1)
 		defaultPlugins = append(defaultPlugins, p)
 	}
@@ -387,6 +387,15 @@ func main() {
 			pp.Println("prefixPath:", prefixPath)
 
 			for _, entry := range ep {
+
+	                        // get image Info (to test)
+	                        var vi *models.VehicleImage
+	                        err := DB.First(&vi, entry.ID).Error
+	                        if err != nil {
+	                                log.Fatal(err)
+	                        }
+	                        fmt.Println("image checksum", vi.Checksum)
+
 				sourceFile := filepath.Join("./", "public", entry.Url)
 				pp.Println("sourceFile:", sourceFile)
 
