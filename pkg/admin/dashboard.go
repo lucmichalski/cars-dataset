@@ -41,10 +41,11 @@ func GetChartData(table, start, end string) (res []Chart) {
 		Scan(&res)
 
 	return
-}
+} 
 
 type Charts struct {
 	Vehicles []Chart
+	VehicleImages []Chart
 }
 
 func ReportsDataHandler(context *admin.Context) {
@@ -56,7 +57,7 @@ func ReportsDataHandler(context *admin.Context) {
 	pp.Println("endDate",endDate)
 
 	charts.Vehicles = GetChartData("vehicles", startDate, endDate)
-
+	charts.VehicleImages = GetChartData("vehicle_images", startDate, endDate)
 	pp.Println(charts)
 
 	b, _ := json.Marshal(charts)

@@ -45,9 +45,8 @@
 }
 
 
-#reviews_report_loader,
 #vehicles_report_loader,
-#products_report_loader {
+#vehicle_images_report_loader {
   display: flex;
   position: absolute;
 }

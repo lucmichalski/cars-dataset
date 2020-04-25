@@ -101,18 +101,17 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
-			link := e.Attr("href")
-			if vehicleURLRegexp.MatchString(link) {
-				// Print link
-				fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
-				csvSitemap.Flush()
-				// c.Visit(e.Request.AbsoluteURL(link))
-				// q.AddURL(e.Request.AbsoluteURL(link))
-			}
+	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		if vehicleURLRegexp.MatchString(link) {
+			// Print link
+			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
+			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
+			csvSitemap.Flush()
 			q.AddURL(e.Request.AbsoluteURL(link))
-		})
+		}
+		// q.AddURL(e.Request.AbsoluteURL(link))
+	})
 
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 
@@ -145,6 +144,17 @@ func Extract(cfg *config.Config) error {
 		vehicle.Manufacturer = carInfo[0][1]
 		vehicle.Modl = strings.Replace(carInfo[0][2], "%20", " ", -1)
 
+		e.ForEach(`div.btn_next`, func(_ int, el *colly.HTMLElement) {
+			onclick := el.Attr("onclick")
+			onclick = strings.Replace(onclick, "loadContent('', '", "", -1)
+			onclick = strings.Replace(onclick, "', '');", "", -1)
+			absLink := e.Request.AbsoluteURL(onclick)
+			if cfg.IsDebug {
+				fmt.Println("absLink:", absLink)
+			}
+			q.AddURL(absLink)
+		})
+
 		e.ForEach(`table[id=specifications] tr`, func(_ int, el *colly.HTMLElement) {
 			var key, value string
 			el.ForEach(`td.td1`, func(_ int, eli *colly.HTMLElement) {
@@ -165,8 +175,8 @@ func Extract(cfg *config.Config) error {
 				})				
 			})
 			switch key {
-                        case "Steering":
-                                vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
+            case "Steering":
+                    vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
 			case "Fuel":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: value})
 			case "Transmission":
@@ -179,12 +189,12 @@ func Extract(cfg *config.Config) error {
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "No. of Seats", Value: value})
 			case "Colour":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: value})
-                        case "Reg.Year":
+            case "Reg.Year":
 				fallthrough
 			case "Reg.Year / Month":
 				vehicle.Year = value
-                        case "Engine":
-                                vehicle.Engine = value
+            case "Engine":
+                    vehicle.Engine = value
 			}
 
 			if cfg.IsDebug {
@@ -196,7 +206,8 @@ func Extract(cfg *config.Config) error {
 		vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
 
 		var carDataImage []string
-		e.ForEach(`div.smallPhoto a:nth-child(-n+10)`, func(_ int, el *colly.HTMLElement) {
+		// e.ForEach(`div.smallPhoto a:nth-child(-n+10)`, func(_ int, el *colly.HTMLElement) {
+		e.ForEach(`div.smallPhoto a`, func(_ int, el *colly.HTMLElement) {
 			carImage := el.Attr("href")
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)

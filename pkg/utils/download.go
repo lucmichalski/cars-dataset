@@ -57,6 +57,7 @@ func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {
 		}
 
 		check := http.Client{
+			// Timeout: 10 * time.Second,
 			CheckRedirect: func(r *http.Request, via []*http.Request) error {
 				r.URL.Opaque = r.URL.Path
 				return nil
