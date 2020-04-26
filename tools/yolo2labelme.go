@@ -20,10 +20,9 @@ import (
 
 // find -maxdepth 1 -type f -name *.jpg | wc -l
 
-const datasetAbsPath = `/Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set`
+const datasetAbsPath = `/home/ubuntu/cars-dataset/shared/datasets/train2017_set/`
 
 var (
-	cm cmap.ConcurrentMap
 	yoloClass = map[string]string{
 		"0": "person",
 		"1": "car",
@@ -35,10 +34,8 @@ var (
 
 
 func main() {
-
-	cm = cmap.New()
-
-	walkImages(".jpg", "/Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set/")
+	walkImages(".jpg", "/home/ubuntu/cars-dataset/tools/dataset/motorcycle/")
+	// walkImages(".jpg", "/home/ubuntu/cars-dataset/shared/datasets/train2017_set/")
 }
 
 type Labelme struct {
@@ -105,9 +102,9 @@ func convert(fp, fi string) error {
 
 		sc := Shape{}
 		sc.Label = className
-		if className == "car" {
-			m.Set(ImagePath, true)
-		}
+		//if className == "car" {
+		//	m.Set(ImagePath, true)
+		//}
 		sc.ShapeType = "rectangle"
 
 		// get the coordinates
@@ -156,9 +153,8 @@ func convert(fp, fi string) error {
 	f.Sync()
 
 	// dump image car dataset
-	m.IterCb(func(url string, v interface{}) {
-
-	})
+	//m.IterCb(func(url string, v interface{}) {
+	//})
 
 	return nil
 
