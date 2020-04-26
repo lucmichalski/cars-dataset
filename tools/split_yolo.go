@@ -5,8 +5,9 @@ import (
 	"strings"
 	"path/filepath"
 	"encoding/csv"
-    "os"
-    "path"
+    	"os"
+    	"path"
+	"io"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/karrick/godirwalk"
@@ -27,9 +28,16 @@ var (
 )
 
 
-const datasetAbsPath = `/Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2020_set/train2017_set`
+const (
+	datasetAbsPath = `/home/ubuntu/cars-dataset/shared/datasets/train2017_set/`
+	dataset4Classes = filepath.Join("dataset", "train2017_4classes")
+)
 
 func main() {
+
+	err := ensureDir(dataset4Classes)
+	checkErr(err)
+
 	for _, class := range yoloClass {
 		classDir := filepath.Join("dataset", class)
 		err := ensureDir(classDir)
@@ -64,13 +72,19 @@ func dispatch(fp string) error {
 			destFileNameIMG := filepath.Join("dataset", className, strings.Replace(path.Base(fp), ".txt", ".jpg", -1))
 			copy(fp, destFileNameTXT)
 			copy(srcFileNameIMG, destFileNameIMG)
-		}		
+			if classId != "0" {
+				destFileNameTXT = filepath.Join(dataset4Classes, path.Base(fp))
+				destFileNameIMG = filepath.Join(dataset4Classes, strings.Replace(path.Base(fp), ".txt", ".jpg", -1))
+				copy(fp, destFileNameTXT)
+				copy(srcFileNameIMG, destFileNameIMG)				
+			}
+		}
 	}
 
 	if isDeleteMode {
 		var isDelete bool
 		for _, row := range data {
-			if row[0] == 0 {
+			if row[0] == "0" {
 				isDelete = true
 				break
 			}
@@ -80,9 +94,9 @@ func dispatch(fp string) error {
 			if !isDryMode {
 				err := os.Remove(fp)
 				checkErr(err)
-				err := os.Remove(strings.Replace(fp, ".txt", ".jpg", -1)
+				err = os.Remove(strings.Replace(fp, ".txt", ".jpg", -1))
 				checkErr(err)
-				err := os.Remove(strings.Replace(fp, ".txt", ".json", -1)
+				err = os.Remove(strings.Replace(fp, ".txt", ".json", -1))
 				checkErr(err)
 			} else {
 				fmt.Println("should remove file=", fp)
