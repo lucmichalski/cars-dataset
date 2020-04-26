@@ -1,17 +1,28 @@
 # Build phase
 FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 as builder
 
-ENV darknet_commit=a234a5022333c930de08f2470184ef4e0c68356e
-
 WORKDIR /root/build
 COPY Makefile.gpu .
 RUN apt-get -y update && \
         apt-get -y install git build-essential nano bash && \
         git clone https://github.com/AlexeyAB/darknet.git && \
         cd darknet && \
-        git checkout $darknet_commit && \
         cp -f /root/build/Makefile.gpu Makefile && \
         make
+
+WORKDIR /tmp
+RUN cd /tmp \
+    && apt-get -y update \
+    && apt-get install -y wget git gcc \ 
+    && wget https://dl.google.com/go/go1.14.linux-amd64.tar.gz \
+    && tar -xvf go1.14.linux-amd64.tar.gz \
+    && mv go /usr/local
+
+RUN cp /usr/local/cuda-10.0/compat/* /usr/local/cuda-10.0/targets/x86_64-linux/lib/
+
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 CMD ["/bin/bash"]
 

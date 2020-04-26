@@ -2,6 +2,18 @@
 version: '3.7'
 services:
 
+  darknet-train:
+    image: lucmichalski/darknet-train:latest
+    build:
+      context: .docker/darknet
+      dockerfile: Dockerfile.dev    
+    networks:
+    - internal    
+    volumes:
+    - ./shared/datasets/stanford-cars/cars_train:/opt/cars_train
+    - ./models:/opt/models
+    command: ["/bin/bash"]
+
   sandbox:
     image: alpine:3.11
     container_name: ${NAMESPACE}-sandbox
@@ -315,6 +327,19 @@ services:
     # command: ["/bin/bash"]
     # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
     command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+
+  darknet-cars:
+    <<: *darknet_base
+    container_name: ${NAMESPACE}-darknetcar
+    ports:
+    - "9007:9007"
+    environment:
+       DARKNET_PORT: 9007
+    command: go run server.go --configFile=models/yolov4-cars.cfg --weightsFile=models/yolov4-cars.weights
     networks:
     - internal
     - web # for tests purpose
