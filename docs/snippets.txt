@@ -6,6 +6,28 @@ https://github.com/drainingsun/ybat
 https://github.com/AlexeyAB/darknet#how-to-train-to-detect-your-custom-objects
 https://github.com/x0rzkov/Yolo_mark
 
+# backhground mattting
+https://colab.research.google.com/gist/andreyryabtsev/243aa3eefa6e06891dda7b1583d1d08f/backmatting.ipynb
+https://gist.github.com/x0rzkov/5a4ce292a35198a5db994dc7ec5efd32
+
+## stanford cars
+https://gist.github.com/beeva-albertorincon/c2d9f7cc7a51a2d6506812d6f96a14ca
+https://github.com/tleyden/StanfordCars/blob/master/StanfordCars.ipynb
+https://stackoverflow.com/questions/874461/read-mat-files-in-python
+https://gist.github.com/val314159/bc616c64fc7590b425bd1f08f5c5f340
+https://github.com/apoorvavinod/YOLO_object_detection
+https://github.com/abhijithvnair94/Automated-car-surveillance-system
+https://github.com/abhijithvnair94/Category-Extraction-from-COCO
+https://github.com/Oskop/YoCol (color detection+make+model)
+https://github.com/tesaho/vehicle_tracking
+https://github.com/bpinaya/DetectNetCars
+https://github.com/StevieG47/Object-Detection-Classification
+https://medium.com/@manivannan_data/yolo-annotation-tool-new-18c7847a2186
+https://github.com/ManivannanMurugavel/Yolo-Annotation-Tool-New-
+
+
+https://github.com/ivder/LabelMeYoloConverter/blob/master/convert.py (converter labelme to yolo)
+
 ## labelme
 https://github.com/wkentaro/labelme
 https://gist.github.com/x0rzkov/10e3ff0eae8d39aedbda77e175f0fb78 (Convert LabelMe Annotation Tool JSON format to YOLO text file format)
@@ -22,11 +44,57 @@ https://github.com/jolibrain/deepdetect/tree/master/docker
 000000000036.json
 
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set/000000000036.jpg
+/Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set/000000000036.json
+
 
 0 0.5 0.5 0.10 0.25
 represents an object of class 0, centered in the middle of the image, whose width is 10% of the image, and whose height is 25% of the image.
 
+{
+  "version": "3.6.10",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "motocycle",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          0,
+          21
+        ],
+        [
+          564,
+          639
+        ]
+      ],
+      "shape_type": "rectangle"
+    }
+  ],
+  "lineColor": [
+    0,
+    255,
+    0,
+    128
+  ],
+  "fillColor": [
+    255,
+    0,
+    0,
+    128
+  ],
+  "imagePath": "000000000073.jpg",
+  "imageData": null,
+  "imageHeight": 640,
+  "imageWidth": 565
+}
 
+docker run --runtime=nvidia --name=server --net=host -p 8000:8000 inference_server 
+
+curl -XPOST --silent --data-binary @images/1.jpg http://127.0.0.1:8000/api/classify | jq .
+
+docker run -p 5000:5000 webapp-classify-mobilenet 
 
 def convert(size, box):
     dw = 1./size[0]
@@ -141,7 +209,9 @@ darknet_1      | github.com/LdDl/go-darknet.(*YOLONetwork).Detect(0xf965a0, 0xc0
 darknet_1      | 	/go/src/github.com/LdDl/go-darknet/network.go:72 +0xb9 fp=0xc0000eb470 sp=0xc0000eb350 pc=0x970f69
 darknet_1      | main.server.func3(0xc0004c9260)
 
-find ./* -maxdepth 0 -type d | wc -l
+/usr/local/share/android-sdk
+
+find . -maxdepth 1 -type f | wc -l
 
 https://stackoverflow.com/questions/37458287/how-to-run-a-cron-job-inside-a-docker-container
 

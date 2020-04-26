@@ -15,17 +15,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
-<<<<<<< HEAD
-	cmap "github.com/orcaman/concurrent-map"
 )
 
-=======
-
-)
-
-// find -maxdepth 1 -type f -name *.jpg | wc -l
-
->>>>>>> d19737bd74bd217251b589d6db8fed70da4b73db
 const datasetAbsPath = `/Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set`
 
 var (
@@ -111,12 +102,6 @@ func convert(fp, fi string) error {
 
 		sc := Shape{}
 		sc.Label = className
-<<<<<<< HEAD
-=======
-		if className == "car" {
-			m.Set(ImagePath, true)
-		}
->>>>>>> d19737bd74bd217251b589d6db8fed70da4b73db
 		sc.ShapeType = "rectangle"
 
 		// get the coordinates
@@ -210,8 +195,4 @@ func checkErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> d19737bd74bd217251b589d6db8fed70da4b73db

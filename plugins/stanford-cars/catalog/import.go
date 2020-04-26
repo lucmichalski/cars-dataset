@@ -30,6 +30,9 @@ import (
 	- snippets
 	  - cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-stanford-cars.so ; cd ../..
 
+	- converter
+	  - 
+
 	- CSV excerpt
 		"image_type","image_relpath","name"
 		TRAIN,./cars_train/02443.jpg,HUMMER H3T Crew Cab 2010
