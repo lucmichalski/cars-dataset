@@ -29,7 +29,6 @@ var (
 	}
 )
 
-
 func main() {
 	walkImages(".jpg", "/home/ubuntu/cars-dataset/tools/dataset/motorcycle/")
 	// walkImages(".jpg", "/home/ubuntu/cars-dataset/shared/datasets/train2017_set/")

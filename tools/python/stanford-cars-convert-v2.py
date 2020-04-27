@@ -30,6 +30,10 @@ TRAIN,data/train/cars_train/02450.jpg,51,99,595,382,Buick Verano Sedan 2012
 .
 .
 
+# yolo annotation
+0 0.5 0.5 0.10 0.25
+represents an object of class 0, centered in the middle of the image, whose width is 10% of the image, and whose height is 25% of the image.
+
 """
 
 # encoding:utf8
@@ -67,7 +71,7 @@ def convert(size, box):
 
 def yolo_annotation(img, bbox_x1, bbox_x2, bbox_y1, bbox_y2):
     w, h = image_size(img)
-    b = (bbox_x1, bbox_x2, bbox_y1, bbox_y2)
+    b = (bbox_x1, bbox_y1, bbox_x2, bbox_y2)
     bb = convert((w,h), b)
     print(bb)
     return bb

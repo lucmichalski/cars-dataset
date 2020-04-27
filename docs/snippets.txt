@@ -25,12 +25,14 @@ https://github.com/StevieG47/Object-Detection-Classification
 https://medium.com/@manivannan_data/yolo-annotation-tool-new-18c7847a2186
 https://github.com/ManivannanMurugavel/Yolo-Annotation-Tool-New-
 
+## tiny yolo
+https://github.com/ablacklama/Vehicle-Detection/blob/master/utils/utils.py
 
-https://github.com/ivder/LabelMeYoloConverter/blob/master/convert.py (converter labelme to yolo)
 
 ## labelme
 https://github.com/wkentaro/labelme
 https://gist.github.com/x0rzkov/10e3ff0eae8d39aedbda77e175f0fb78 (Convert LabelMe Annotation Tool JSON format to YOLO text file format)
+https://github.com/ivder/LabelMeYoloConverter/blob/master/convert.py (converter labelme to yolo)
 
 ## caffe
 https://github.com/x0rzkov/gpu-rest-engine
@@ -46,6 +48,28 @@ https://github.com/jolibrain/deepdetect/tree/master/docker
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set/000000000036.jpg
 /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/train2017_set/000000000036.json
+
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/stanford_train/04810.jpg
+
+docker-compose stop crawler-mtbauto
+docker-compose stop crawler-clauto
+
+docker-compose scale crawler-mtbauto=5
+docker-compose scale crawler-clauto=5
+
+find vendor -type f -name "*.json" -print0 | xargs -0 sed -i 's/person/car/g'
+
+gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
+
+gdrivedl https://drive.google.com/open?id=1JKF-bdIklxOOVy-2Cr5qdvjgGpmGfcbp yolov4.conv.137
+
+../../../darknet detector train data/obj.data yolo-obj.cfg yolov4.conv.137
+
+anton adventure
+
+/home/ubuntu/cars-dataset/shared/datasets/stanford-cars/cars_train
+/root/build/darknet/build/darknet/x64
+
 
 
 0 0.5 0.5 0.10 0.25
