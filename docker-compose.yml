@@ -2,6 +2,19 @@
 version: '3.7'
 services:
 
+  darknet-train:
+    image: lucmichalski/darknet-train:latest
+    container_name: ${NAMESPACE}-darknet-train
+    build:
+      context: .docker/darknet
+      dockerfile: Dockerfile.dev    
+    networks:
+    - internal    
+    volumes:
+    - ./shared/datasets/stanford-cars/cars_train:/opt/cars_train
+    - ./models:/opt/models
+    command: ["/bin/bash"]
+
   sandbox:
     image: alpine:3.11
     container_name: ${NAMESPACE}-sandbox
@@ -17,6 +30,19 @@ services:
     - protonvpn:protonvpn
     - tor-privoxy:tor-privoxy
     command: ["/bin/bash"]
+
+  jupyter:
+    image: lucmichalski/jupyter-notebook:latest-alpine3.11
+    build:
+      context: .docker/jupyter-notebook
+      dockerfile: Dockerfile
+    container_name: ${NAMESPACE}-jupyter
+    networks:
+    - internal
+    - web
+    ports:
+    - 8888:8888
+    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]    
 
   crawler:
     image: lucmichalski/car-crawler:latest
@@ -315,6 +341,19 @@ services:
     # command: ["/bin/bash"]
     # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
     command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    - internal
+    - web # for tests purpose
+    restart: unless-stopped
+
+  darknet-cars:
+    <<: *darknet_base
+    container_name: ${NAMESPACE}-darknetcar
+    ports:
+    - "9007:9007"
+    environment:
+       DARKNET_PORT: 9007
+    command: go run server.go --configFile=models/yolov4/yolov4.cfg --weightsFile=models/yolov4/yolov4.weights
     networks:
     - internal
     - web # for tests purpose

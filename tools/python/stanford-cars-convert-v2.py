@@ -72,6 +72,7 @@ def convert(size, box):
 def yolo_annotation(img, bbox_x1, bbox_x2, bbox_y1, bbox_y2):
     w, h = image_size(img)
     b = (bbox_x1, bbox_y1, bbox_x2, bbox_y2)
+    # b = (bbox_x1, bbox_x2, bbox_y1, bbox_y2)
     bb = convert((w,h), b)
     print(bb)
     return bb
