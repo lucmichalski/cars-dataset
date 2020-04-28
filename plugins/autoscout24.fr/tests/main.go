@@ -34,7 +34,8 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.autoscout24.fr", "autoscout24.fr"},
 		URLs: []string{
-			"https://www.autoscout24.fr/offres/citroen-c5-tourer-bluehdi-150-exclusive-shz-navi-eu6-diesel-noir-f373352a-9bcf-4efc-bf39-d7d366d229d0?cldtidx=1&cldtsrc=listPage",
+			// "https://www.autoscout24.fr/offres/citroen-c5-tourer-bluehdi-150-exclusive-shz-navi-eu6-diesel-noir-f373352a-9bcf-4efc-bf39-d7d366d229d0?cldtidx=1&cldtsrc=listPage",
+			"https://www.autoscout24.fr/offres/bmw-g-650-gs-abs-essence-noir-dfeb68e9-a8b3-44ef-aacd-66927d1c039b?cldtidx=1&cldtsrc=listPage",
 		},
 		DB: 			 DB,
 		CacheDir:        "../../../shared/data",
