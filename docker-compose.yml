@@ -347,6 +347,20 @@ services:
     - web # for tests purpose
     restart: unless-stopped
 
+  darknet-labelme:
+    <<: *darknet_base
+    container_name: ${NAMESPACE}-darknetlabelme
+    ports:
+    - "9009:9009"
+    environment:
+       DARKNET_PORT: 9009
+    # command: go run server.go --configFile=models/cars-yolo/yolo-obj.cfg --weightsFile=models/cars-yolo/test/yolo-obj_final.weights
+    # command: go run server.go --configFile=models/yolov4/yolov4.cfg --weightsFile=models/yolov4/yolov4.weights
+    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    networks:
+    - internal
+    - web # for tests purpose
+    # restart: unless-stopped
   
   darknet-cars:
     <<: *darknet_base

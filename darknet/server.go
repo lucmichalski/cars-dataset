@@ -22,6 +22,7 @@ import (
 	"time"
 	"io/ioutil"
 	"sync"
+	// "encoding/json"
 
 	"github.com/h2non/filetype"
 	// "github.com/cavaliercoder/grab"
@@ -35,6 +36,10 @@ import (
 )
 
 /*
+
+	To do:
+	- extract the biggest bbox for labelme
+	- encode as base64 ImageData for labelme
 
 	Snippets:
 	- gdrivedl
@@ -126,6 +131,29 @@ type bboxInfo struct {
 	surface int
 }
 
+type Labelme struct {
+	FillColor   []int       `json:"fillColor"`
+	Flags       Flags       `json:"flags"`
+	ImageData   interface{} `json:"imageData"`
+	ImageHeight int         `json:"imageHeight"`
+	ImagePath   string      `json:"imagePath"`
+	ImageWidth  int         `json:"imageWidth"`
+	LineColor   []int       `json:"lineColor"`
+	Shapes      []Shape     `json:"shapes"`
+	Version     string      `json:"version"`
+}
+
+type Flags struct {
+}
+
+type Shape struct {
+	FillColor []int 	  `json:"fill_color"`
+	Label     string      `json:"label"`
+	LineColor []int 	  `json:"line_color"`
+	Points    [][]int     `json:"points"`
+	ShapeType string      `json:"shape_type"`
+}
+
 func server() {
 	r := gin.Default()
 
@@ -133,104 +161,284 @@ func server() {
 		c.File("index.html")
 	})
 
-
-	r.POST("/bbox", func(c *gin.Context) {
+	r.GET("/labelme", func(c *gin.Context) {
 		m.l.Lock()
 		defer m.l.Unlock()
 
-		// Source
-		file, err := c.FormFile("file")
-		if err != nil {
-			c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-			return
-		}
+		var err error
+		u := c.Query("url")
+		u, err = url.QueryUnescape(u)
 
-		f, err := file.Open()
-		if err != nil {
-			panic(err.Error())
-		}
+		fmt.Println("url:", u)
 
-		buf := bytes.NewBuffer(nil)
-		if _, err := io.Copy(buf, f); err != nil {
-			panic(err.Error())
-		}
-
-		kind, _ := filetype.Match(buf.Bytes())
-		var src image.Image
-
-		log.Println("kind.MIME.Value:", kind.MIME.Value)
-
-		switch kind.MIME.Value {
-		case "image/jpeg":
-			src, err = jpeg.Decode(f)
+		classesStr := c.Query("classes")
+		classes := strings.Split(classesStr, ",")
+		thresholdStr := c.Query("threshold")
+		var threshold float64
+		//var err error
+		if thresholdStr != "" {
+			threshold, err = strconv.ParseFloat(thresholdStr, 64)
 			if err != nil {
 				panic(err.Error())
 			}
-		case "image/png":
-			src, err = png.Decode(f)
+		}
+
+		fmt.Println("classes", classes)
+		fmt.Println("threshold", threshold)
+
+		var file *os.File
+		var size int64
+		if u != "" && strings.HasPrefix(u, "http") {
+			file, size, err = grabFileByURL(u)
 			if err != nil {
 				panic(err.Error())
 			}
-		default:
-			c.String(200, "")
-			return		
 		}
 
-		imgDarknet, err := darknet.Image2Float32(src)
-		if err != nil {
-			panic(err.Error())
+		fmt.Println("file", file.Name())
+		fmt.Println("size", size)
+
+		if size > 0 {
+
+			/*
+			buf := bytes.NewBuffer(nil)
+			if _, err := io.Copy(buf, file); err != nil {
+				panic(err.Error())
+			}
+
+			kind, _ := filetype.Match(buf.Bytes())
+			*/
+
+			buf, _ := ioutil.ReadFile(file.Name())
+			kind, _ := filetype.Match(buf)
+
+			var src image.Image
+			log.Println("kind.MIME.Value:", kind.MIME.Value)
+
+			switch kind.MIME.Value {
+			case "image/jpeg":
+				src, err = jpeg.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			case "image/png":
+				src, err = png.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			default:
+				c.String(200, "")
+				return
+			}
+
+			imgDarknet, err := darknet.Image2Float32(src)
+			if err != nil {
+				panic(err.Error())
+			}
+			defer imgDarknet.Close()
+
+			dr, err := m.n.Detect(imgDarknet)
+			if err != nil {
+				printError(err)
+				return
+			}
+
+			lc := Labelme{}
+			lc.FillColor = []int{255, 0, 0, 128}
+			b := src.Bounds()
+
+			lc.ImageHeight = b.Max.Y
+			lc.ImageWidth = b.Max.X
+			// lc.ImagePath = filepath.Base(file.Name)
+		    // Encode as base64.
+		    // lc.ImageData := base64.StdEncoding.EncodeToString(buf)
+
+			lc.LineColor = []int{0, 255, 0, 128}
+			lc.Version = "3.6.10"
+
+			log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
+			log.Println("Overall time taken:", dr.OverallTimeTaken, len(dr.Detections))
+			for _, d := range dr.Detections {
+				for i := range d.ClassIDs {
+					bBox := d.BoundingBox
+					fmt.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
+						d.ClassNames[i], d.ClassIDs[i],
+						d.Probabilities[i],
+						bBox.StartPoint.X, bBox.StartPoint.Y,
+						bBox.EndPoint.X, bBox.EndPoint.Y,
+					)
+
+					minX, minY := float64(bBox.StartPoint.X-10), float64(bBox.StartPoint.Y-10)
+					maxX, maxY := float64(bBox.EndPoint.X+10), float64(bBox.EndPoint.Y+10)
+
+					sc := Shape{}
+					sc.Label = d.ClassNames[i]
+					sc.ShapeType = "rectangle"
+					fmt.Println("minX=",minX,"maxX=",maxX,"minY=",minY,"maxY=",maxY)
+
+					x := []int{int(maxX),int(maxY)}
+					y := []int{int(minX),int(minY)}
+
+					points := [][]int{x, y}
+					sc.Points = append(sc.Points, points...)
+					lc.Shapes = append(lc.Shapes, sc)
+				}
+			}
+
+			// slcB, err := json.MarshalIndent(&lc, "", "\t")
+			// if err != nil {
+			// 	log.Fatal(err)
+			// }
+			c.IndentedJSON(200, &lc)
+
+		} else {
+			c.String(200, "Nothing")
 		}
-		defer imgDarknet.Close()
 
-		dr, err := m.n.Detect(imgDarknet)
-		if err != nil {
-			printError(err)
-			return
-		}
+		log.Println("crop end")
 
-		// Use same size as source image has
-		b := src.Bounds()
-		m := image.NewRGBA(b)
+	})
 
-		// offset := image.Pt(0, 0)
+	r.GET("/bbox", func(c *gin.Context) {
+		m.l.Lock()
+		defer m.l.Unlock()
 
-		// Draw source
-		draw.Draw(m, b, src, image.ZP, draw.Src)
+		var err error
+		u := c.Query("url")
+		u, err = url.QueryUnescape(u)
 
-		log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
-		log.Println("Overall time taken:", dr.OverallTimeTaken, len(dr.Detections))
-		for _, d := range dr.Detections {
-			for i := range d.ClassIDs {
-				bBox := d.BoundingBox
-				fmt.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
-					d.ClassNames[i], d.ClassIDs[i],
-					d.Probabilities[i],
-					bBox.StartPoint.X, bBox.StartPoint.Y,
-					bBox.EndPoint.X, bBox.EndPoint.Y,
-				)
-				minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
-				maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
-				// rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
-				// img, err := drawableJPEGImage(f)
-				// fmt.Println(rect)
-				// Draw watermark
-				// draw.Draw(m, watermarkImage.Bounds().Add(offset), watermarkImage, image.ZP, draw.Over)
-				// draw.Draw(image3, src.Bounds(), src, image.ZP, draw.Src)
-				drawBbox(round(minX), round(minY), round(maxX), round(maxY), 10, m)
-				draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
+		fmt.Println("url:", u)
 
+		classesStr := c.Query("classes")
+		classes := strings.Split(classesStr, ",")
+		thresholdStr := c.Query("threshold")
+		var threshold float64
+		//var err error
+		if thresholdStr != "" {
+			threshold, err = strconv.ParseFloat(thresholdStr, 64)
+			if err != nil {
+				panic(err.Error())
 			}
 		}
-		// Specify the quality, between 0-100
-		// Higher is better
-		opt := jpeg.Options{
-		    Quality: 100,
+
+		fmt.Println("classes", classes)
+		fmt.Println("threshold", threshold)
+
+		var file *os.File
+		var size int64
+		if u != "" && strings.HasPrefix(u, "http") {
+			file, size, err = grabFileByURL(u)
+			if err != nil {
+				panic(err.Error())
+			}
 		}
-		err = jpeg.Encode(c.Writer, m, &opt)
-		if err != nil {
-		    // Handle error
-			panic(err.Error())
+
+		fmt.Println("file", file.Name())
+		fmt.Println("size", size)
+
+		if size > 0 {
+
+			/*
+			buf := bytes.NewBuffer(nil)
+			if _, err := io.Copy(buf, file); err != nil {
+				panic(err.Error())
+			}
+
+			kind, _ := filetype.Match(buf.Bytes())
+			*/
+
+			buf, _ := ioutil.ReadFile(file.Name())
+			kind, _ := filetype.Match(buf)
+
+			var src image.Image
+			log.Println("kind.MIME.Value:", kind.MIME.Value)
+
+			switch kind.MIME.Value {
+			case "image/jpeg":
+				src, err = jpeg.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			case "image/png":
+				src, err = png.Decode(file)
+				if err != nil {
+					panic(err.Error())
+				}
+			default:
+				c.String(200, "")
+				return
+			}
+
+			imgDarknet, err := darknet.Image2Float32(src)
+			if err != nil {
+				panic(err.Error())
+			}
+			defer imgDarknet.Close()
+
+			dr, err := m.n.Detect(imgDarknet)
+			if err != nil {
+				printError(err)
+				return
+			}
+
+			// Use same size as source image has
+			b := src.Bounds()
+			m := image.NewRGBA(b)
+
+			// offset := image.Pt(0, 0)
+
+			// Draw source
+			draw.Draw(m, b, src, image.ZP, draw.Src)
+
+			log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
+			log.Println("Overall time taken:", dr.OverallTimeTaken, len(dr.Detections))
+			for _, d := range dr.Detections {
+				for i := range d.ClassIDs {
+					bBox := d.BoundingBox
+					fmt.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
+						d.ClassNames[i], d.ClassIDs[i],
+						d.Probabilities[i],
+						bBox.StartPoint.X, bBox.StartPoint.Y,
+						bBox.EndPoint.X, bBox.EndPoint.Y,
+					)
+
+					minX, minY := float64(bBox.StartPoint.X-10), float64(bBox.StartPoint.Y-10)
+					maxX, maxY := float64(bBox.EndPoint.X+10), float64(bBox.EndPoint.Y+10)
+					// rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
+					// img, err := drawableJPEGImage(f)
+					// fmt.Println(rect)
+					// Draw watermark
+					// draw.Draw(m, watermarkImage.Bounds().Add(offset), watermarkImage, image.ZP, draw.Over)
+					// draw.Draw(image3, src.Bounds(), src, image.ZP, draw.Src)
+					draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
+					drawBbox(round(minX), round(minY), round(maxX), round(maxY), 1, m)
+
+					/*
+					red_rect := image.Rect(60, 80, 120, 160) //  geometry of 2nd rectangle
+					myred := color.RGBA{200, 0, 0, 255}
+
+					// create a red rectangle atop the green surface
+					draw.Draw(m, red_rect, &image.Uniform{myred}, image.ZP, draw.Src)
+					*/
+
+				}
+			}
+			// Specify the quality, between 0-100
+			// Higher is better
+			opt := jpeg.Options{
+			    Quality: 100,
+			}
+			err = jpeg.Encode(c.Writer, m, &opt)
+			if err != nil {
+			    // Handle error
+				panic(err.Error())
+			}
+
+		} else {
+			c.String(200, "Nothing")
 		}
+
+		log.Println("crop end")
 
 	})
 
@@ -510,7 +718,7 @@ func drawableJPEGImage(r io.Reader) (draw.Image, error) {
 }
 
 func drawBbox(x1, y1, x2, y2, thickness int, img *image.RGBA) {
-    col := color.RGBA{0, 0, 0, 255}
+    col := color.RGBA{0, 255, 0, 128}
     for t:=0; t<thickness; t++ {
         // draw horizontal lines
         for x := x1; x<= x2; x++ {
