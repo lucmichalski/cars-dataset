@@ -23,6 +23,7 @@ require (
 	github.com/karrick/godirwalk v1.15.6 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
+	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/qor/admin v0.0.0-20200315024928-877b98a68a6f
 	github.com/qor/assetfs v0.0.0-20170713023933-ff57fdc13a14 // indirect
 	github.com/qor/media v0.0.0-20191022071353-19cf289e17d4
@@ -38,4 +39,5 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/thanhhh/gin-gonic-realip v0.0.0-20180527053022-1a91c06e8abf // indirect
 	github.com/theplant/cldr v0.0.0-20190423050709-9f76f7ce4ee8 // indirect
+	github.com/tsak/concurrent-csv-writer v0.0.0-20200206204244-84054e222625 // indirect
 )
