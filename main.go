@@ -389,7 +389,7 @@ func main() {
 		DB.Raw("select count(id) as count FROM vehicles WHERE class='car'").Scan(&count)
 
         // instanciate throttler
-       	t := throttler.New(16, count.Count)
+       	t := throttler.New(48, count.Count)
 
        	counter := 0
        	imgCounter := 0
@@ -427,7 +427,8 @@ func main() {
 	                var vi models.VehicleImage
 	    	        err := DB.First(&vi, entry.ID).Error
 	            	if err != nil {
-	            	    log.Fatal("VehicleImage", err)
+	            	    log.Warnln("VehicleImage", err)
+						continue
 	            	}
 	            	// fmt.Println("image checksum", vi.Checksum)
 
