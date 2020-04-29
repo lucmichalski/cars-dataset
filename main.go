@@ -16,7 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
+	//"strconv"
 	"strings"
 	"plugin"
 	"bytes"
@@ -382,17 +382,18 @@ func main() {
 				continue
 			}
 
-			prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
+                        // prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
+			prefixPath := filepath.Join("./", "datasets", "cars", strings.ToUpper(result.Make), strings.ToUpper(result.Modl), result.Year)
 			os.MkdirAll(prefixPath, 0755)
 			pp.Println("prefixPath:", prefixPath)
 
 			for _, entry := range ep {
 
 	                        // get image Info (to test)
-	                        var vi *models.VehicleImage
+	                        var vi models.VehicleImage
 	                        err := DB.First(&vi, entry.ID).Error
 	                        if err != nil {
-	                                log.Fatal(err)
+	                                log.Fatal("VehicleImage", err)
 	                        }
 	                        fmt.Println("image checksum", vi.Checksum)
 
@@ -405,7 +406,8 @@ func main() {
 					continue
 				}
 
-				destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
+				destinationFile := filepath.Join(prefixPath, vi.Checksum + filepath.Ext(entry.Url))
+				// destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
 				err = ioutil.WriteFile(destinationFile, input, 0644)
 				if err != nil {
 					log.Fatalln("creating file error, ", err)
