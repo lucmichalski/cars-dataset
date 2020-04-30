@@ -1,2 +1,6 @@
 *
 !.gitignore
+!vendors
+!vendors/
+!vendors/*
+!vendors/**

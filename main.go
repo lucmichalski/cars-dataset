@@ -137,10 +137,9 @@ func main() {
 	// migrate tables
 	// DB.AutoMigrate(&vehicle{})
 	// DB.AutoMigrate(&vehicleImage{})
-        DB.AutoMigrate(&models.Vehicle{})
-        DB.AutoMigrate(&models.VehicleImage{})
-
-	// DB.AutoMigrate(&media_library.MediaLibrary{})
+    DB.AutoMigrate(&models.Vehicle{})
+    DB.AutoMigrate(&models.VehicleImage{})
+	DB.AutoMigrate(&media_library.MediaLibrary{})
 
 	// load plugins
 	ptPlugins := plugins.New()

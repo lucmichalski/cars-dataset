@@ -14,6 +14,7 @@ require (
 	github.com/gocolly/colly/v2 v2.0.1
 	github.com/jeremywohl/flatten v1.0.1 // indirect
 	github.com/jinzhu/gorm v1.9.12
+	github.com/pkg/errors v0.9.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/linkeddata/gojsonld v0.0.0-20170418210642-4f5db6791326 // indirect
 	github.com/lucmichalski/cars-dataset v0.0.0-00010101000000-000000000000
