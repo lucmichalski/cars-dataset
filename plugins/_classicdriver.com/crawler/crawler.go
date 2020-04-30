@@ -145,7 +145,7 @@ func Extract(cfg *config.Config) error {
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum}
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
 
 				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
 				if err := image.File.Scan(file); err != nil {

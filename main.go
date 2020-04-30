@@ -1,21 +1,21 @@
 package main
 
 import (
-	"compress/gzip"
-	"crypto/md5"
-	"database/sql/driver"
-	"encoding/hex"
+	// "compress/gzip"
+	// "crypto/md5"
+	// "database/sql/driver"
+	// "encoding/hex"
 	"encoding/json"
-	"errors"
+	// "errors"
 	"fmt"
-	"io"
+	// "io"
 	"io/ioutil"
-	"math/rand"
+	// "math/rand"
 	"net/http"
-	"net/url"
+	// "net/url"
 	"os"
 	"path/filepath"
-	"reflect"
+	// "reflect"
 	//"strconv"
 	"strings"
 	"plugin"
@@ -28,12 +28,12 @@ import (
 	"github.com/qor/admin"
 	"github.com/qor/qor"
 	"github.com/qor/assetfs"
-	"github.com/h2non/filetype"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/beevik/etree"
-	"github.com/corpix/uarand"
-	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/queue"
+	// "github.com/h2non/filetype"
+	// "github.com/PuerkitoBio/goquery"
+	// "github.com/beevik/etree"
+	// "github.com/corpix/uarand"
+	// "github.com/gocolly/colly/v2"
+	// "github.com/gocolly/colly/v2/queue"
 	"github.com/jinzhu/gorm"
 	"github.com/k0kubun/pp"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -44,8 +44,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/nozzle/throttler"
 	"github.com/tsak/concurrent-csv-writer"
+	"github.com/oschwald/geoip2-golang"
 
 	padmin "github.com/lucmichalski/cars-dataset/pkg/admin"
+	"github.com/lucmichalski/cars-dataset/pkg/middlewares"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
@@ -63,9 +65,11 @@ var (
 	isNoCache     bool
 	isExtract     bool
 	parallelJobs  int
+	geoIpFile     string
 	pluginDir     string
 	cacheDir      string
 	usePlugins    []string
+	geo           *geoip2.Reader
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
 )
@@ -87,6 +91,7 @@ func main() {
 	pflag.BoolVarP(&isDryMode, "dry-mode", "", false, "do not insert data into database tables.")
 	pflag.BoolVarP(&isCatalog, "catalog", "", false, "import datasets/catalogs.")
 	pflag.StringVarP(&pluginDir, "plugin-dir", "", "./release", "plugins directory.")
+	pflag.StringVarP(&geoIpFile, "geoip-db", "", "./shared/geoip2/GeoLite2-City.mmdb", "geoip filepath.")
 	pflag.StringSliceVarP(&usePlugins, "plugins", "", defaultPlugins, "plugins to load.")
 	pflag.IntVarP(&parallelJobs, "parallel-jobs", "j", 35, "parallel jobs.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
@@ -105,8 +110,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Instanciate the sqlite3 client
+	// Instanciate geoip2 database 
+	geo = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
 
+	// Instanciate the mysql client
 	DB, err := gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
 	if err != nil {
 		log.Fatal(err)
@@ -119,10 +126,10 @@ func main() {
 
 	// truncate table
 	if isTruncate {
-		if err := DB.DropTableIfExists(&vehicle{}).Error; err != nil {
+		if err := DB.DropTableIfExists(&models.Vehicle{}).Error; err != nil {
 			panic(err)
 		}
-		if err := DB.DropTableIfExists(&vehicleImage{}).Error; err != nil {
+		if err := DB.DropTableIfExists(&models.VehicleImage{}).Error; err != nil {
 			panic(err)
 		}
 	}
@@ -254,8 +261,8 @@ func main() {
 		// Add media library
 		Admin.AddResource(&media_library.MediaLibrary{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})
 
-		// Add VehicleImage as Media Libraray
-		VehicleImagesResource := Admin.AddResource(&vehicleImage{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})
+		// Add VehicleImage as Media Librairy
+		VehicleImagesResource := Admin.AddResource(&models.VehicleImage{}, &admin.Config{Menu: []string{"Crawl Management"}, Priority: -1})
 
 		VehicleImagesResource.Filter(&admin.Filter{
 			Name:       "SelectedType",
@@ -267,7 +274,7 @@ func main() {
  
 		VehicleImagesResource.UseTheme("grid")
 
-		cars := Admin.AddResource(&vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
+		cars := Admin.AddResource(&models.Vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
 		cars.IndexAttrs("ID", "Name", "Modl", "Engine", "Year", "Source", "Manufacturer", "MainImage", "Images")
 
 		cars.Meta(&admin.Meta{Name: "MainImage", Config: &media_library.MediaBoxConfig{
@@ -278,7 +285,7 @@ func main() {
 			//},
 		}})
 		cars.Meta(&admin.Meta{Name: "MainImageURL", Valuer: func(record interface{}, context *qor.Context) interface{} {
-			if p, ok := record.(*vehicle); ok {
+			if p, ok := record.(*models.Vehicle); ok {
 				result := bytes.NewBufferString("")
 				tmpl, _ := template.New("").Parse("<img src='{{.image}}'></img>")
 				tmpl.Execute(result, map[string]string{"image": p.MainImageURL()})
@@ -318,7 +325,15 @@ func main() {
 
 		router := gin.Default()
 
-		router.Use(realip.RealIP())
+		// router.Use(realip.RealIP())
+		// globally use middlewares
+		router.Use(
+			realip.RealIP(),
+			middlewares.RecoveryWithWriter(os.Stderr),
+			middlewares.Logger(geo),
+			middlewares.CORS(),
+			gin.ErrorLogger(),
+		)
 
 		// add basic auth
 		admin := router.Group("/admin", gin.BasicAuth(gin.Accounts{"cars": "cars"}))
@@ -487,16 +502,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	/*
 	// Instantiate default collector
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cachePath),
-		/*
-			colly.URLFilters(
-				regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
-				regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
-			),
-		*/
 	)
 
 	// create a request queue with 1 consumer thread
@@ -795,9 +805,11 @@ func main() {
 
 	// Consume URLs
 	q.Run(c)
+	*/
 
 }
 
+/*
 type vehicle struct {
 	gorm.Model
 	URL               string `gorm:"index:url"`
@@ -922,17 +934,6 @@ func openFileByURL(rawURL string) (*os.File, int64, string, error) {
 
 		fileName := getMD5Hash(rawURL) + "-" + segments[len(segments)-1]
 		filePath := filepath.Join(os.TempDir(), fileName)
-
-		/*
-		if fi, err := os.Stat(filePath); err == nil {
-			file, err := os.Open(filePath)
-			checksum, err := getMD5File(filePath)
-			if err != nil {
-				return file, 0, "", err
-			}
-			return file, fi.Size(), checksum, err
-		}
-		*/
 
 		file, err := os.Create(filePath)
 		if err != nil {
@@ -1092,5 +1093,15 @@ func removeDuplicates(elements []string) []string {
 	}
 	// Return the new slice.
 	return result
+}
+*/
+
+// fail fast on initialization
+func must(i interface{}, err error) interface{} {
+	if err != nil {
+		panic(err)
+	}
+
+	return i
 }
 

@@ -23,8 +23,11 @@ aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
 aws s3 cp --recursive . s3://sniperkit-cars
 
 
-aws s3 cp sniperkit-cars.tar.gz s3://sniperkit-cars/datasets
-aws s3 cp ./stanford_train_bbfixed.tar.gz s3://sniperkit-cars/datasets
+aws s3 cp --recursive . s3://sniperkit-cars/queue
+
+aws s3 cp dataset-motorcycle.txt s3://sniperkit-cars/datasets/
+aws s3 cp dataset-car.txt s3://sniperkit-cars/datasets/
+aws s3 cp ./stanford_train_bbfixed.tar.gz s3://sniperkit-cars/datasets/
 
 aws s3 cp --recursive . s3://eedama/videos/
 
@@ -33,6 +36,7 @@ https://github.com/convox/geoip/blob/master/geoip.go
 https://github.com/solefaucet/sole-server/tree/master/middlewares
 https://github.com/solefaucet/sole-server/blob/master/middlewares/logger.go#L16 (geoip + logger + gin)
 https://github.com/x0rzkov/geoip2-rest-api-golang/blob/master/main.go#L9-L13
+https://github.com/x0rzkov/gin-gonic-realip/blob/master/realip.go
 
 create a middleware to log geoip data
 

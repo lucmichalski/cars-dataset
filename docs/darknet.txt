@@ -1,0 +1,22 @@
+Loading weights from backup/yolo-obj_final.weights...
+ seen 64, trained: 128 K-images (2 Kilo-batches_64)
+Done! Loaded 162 layers from weights-file
+
+ calculation mAP (mean average precision)...
+5704
+ detections_count = 13376, unique_truth_count = 5702
+class_id = 0, name = car, ap = 88.75%   	 (TP = 4993, FP = 687)
+
+ for conf_thresh = 0.25, precision = 0.88, recall = 0.88, F1-score = 0.88
+ for conf_thresh = 0.25, TP = 4993, FP = 687, FN = 709, average IoU = 80.33 %
+
+ IoU threshold = 50 %, used Area-Under-Curve for each unique Recall
+ mean average precision (mAP@0.50) = 0.887503, or 88.75 %
+Total Detection Time: 220 Seconds
+
+Set -points flag:
+ `-points 101` for MS COCO
+ `-points 11` for PascalVOC 2007 (uncomment `difficult` in voc.data)
+ `-points 0` (AUC) for ImageNet, PascalVOC 2010-2012, your custom dataset
+
+ 

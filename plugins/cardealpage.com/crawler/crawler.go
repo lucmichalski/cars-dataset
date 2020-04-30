@@ -176,7 +176,7 @@ func Extract(cfg *config.Config) error {
 			})
 			switch key {
             case "Steering":
-                    vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
+                vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
 			case "Fuel":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: value})
 			case "Transmission":
