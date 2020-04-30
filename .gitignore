@@ -1,3 +1,20 @@
+dataset.txt
+
+backup
+backup/
+backup/*
+backup/**
+
+datasets
+datasets/
+datasets/*
+datasets/**
+
+tools/test_negative
+tools/test_negative/
+tools/test_negative/*
+tools/test_negative/**
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

@@ -16,7 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
+	//"strconv"
 	"strings"
 	"plugin"
 	"bytes"
@@ -42,6 +42,8 @@ import (
 	"github.com/qor/validations"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/nozzle/throttler"
+	"github.com/tsak/concurrent-csv-writer"
 
 	padmin "github.com/lucmichalski/cars-dataset/pkg/admin"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -335,19 +337,38 @@ func main() {
 
 	if isDataset {
 
+		csvDataset, err := ccsv.NewCsvWriter("dataset.txt")
+		if err != nil {
+			panic("Could not open `dataset.txt` for writing")
+		}
+
+		// Flush pending writes and close file upon exit of Sitemap()
+		defer csvDataset.Close()
+
+		/*
 		sName := "dataset.txt"
 		sfile, err := os.Create(sName)
 		if err != nil {
 			log.Fatalf("Cannot create file %q: %s\n", sName, err)
 		}
 		defer sfile.Close()
+		*/
 
+		csvDataset.Write([]string{"name","make","model","year","image_path"})
+		csvDataset.Flush()
+
+		/*
 		_, err = sfile.WriteString("name;make;model;year;image_path\n")
 		if err != nil {
 			log.Fatal(err)
 		}
+		*/
 
 		// Scan
+		type cnt struct {
+			Count int
+		}
+
 		type res struct {
 			Name   string
 			Make   string
@@ -364,60 +385,105 @@ func main() {
 			Description string
 		}
 
+		var count cnt
+		DB.Raw("select count(id) as count FROM vehicles WHERE class='car'").Scan(&count)
+
+        // instanciate throttler
+       	t := throttler.New(48, count.Count)
+
+       	counter := 0
+       	imgCounter := 0
+
 		var results []res
-		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles").Scan(&results)
+		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles WHERE class='car'").Scan(&results)
 		for _, result := range results {
-			if result.Images == "" {
-				continue
-			}
 
-			var ep []entryProperty
-			fmt.Println(result.Images)
-			if err := json.Unmarshal([]byte(result.Images), &ep); err != nil {
-				log.Fatalln("unmarshal error, ", err)
-			}
-			pp.Println(ep)
+			go func(r res) error {
+				defer t.Done(nil)
 
-			if len(ep) < 2 {
-				continue
-			}
-
-			prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
-			os.MkdirAll(prefixPath, 0755)
-			pp.Println("prefixPath:", prefixPath)
-
-			for _, entry := range ep {
-
-	                        // get image Info (to test)
-	                        var vi *models.VehicleImage
-	                        err := DB.First(&vi, entry.ID).Error
-	                        if err != nil {
-	                                log.Fatal(err)
-	                        }
-	                        fmt.Println("image checksum", vi.Checksum)
-
-				sourceFile := filepath.Join("./", "public", entry.Url)
-				pp.Println("sourceFile:", sourceFile)
-
-				input, err := ioutil.ReadFile(sourceFile)
-				if err != nil {
-					log.Warnln("reading file error, ", err)
-					continue
+				if r.Images == "" {
+					return nil
 				}
 
-				destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
-				err = ioutil.WriteFile(destinationFile, input, 0644)
-				if err != nil {
-					log.Fatalln("creating file error, ", err)
+				var ep []entryProperty
+				// fmt.Println(result.Images)
+				if err := json.Unmarshal([]byte(r.Images), &ep); err != nil {
+					log.Fatalln("unmarshal error, ", err)
 				}
-				pp.Println("destinationFile:", destinationFile)
-				_, err = sfile.WriteString(fmt.Sprintf("%s;%s;%s;%s;%s\n", result.Name, result.Make, result.Modl, result.Year,  destinationFile))
-				if err != nil {
-					log.Fatal(err)
+				// pp.Println(ep)
+
+				//if len(ep) < 2 {
+				//	return nil
+				//}
+
+	        	// prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
+				prefixPath := filepath.Join("./", "datasets", "cars", strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year)
+				os.MkdirAll(prefixPath, 0755)
+				// pp.Println("prefixPath:", prefixPath)
+
+				for _, entry := range ep {
+
+	                // get image Info (to test)
+	                var vi models.VehicleImage
+	    	        err := DB.First(&vi, entry.ID).Error
+	            	if err != nil {
+	            	    log.Warnln("VehicleImage", err)
+						continue
+	            	}
+	            	// fmt.Println("image checksum", vi.Checksum)
+
+					sourceFile := filepath.Join("./", "public", entry.Url)
+					// pp.Println("sourceFile:", sourceFile)
+
+					input, err := ioutil.ReadFile(sourceFile)
+					if err != nil {
+						log.Warnln("reading file error, ", err)
+						continue
+					}
+
+					destinationFile := filepath.Join(prefixPath, vi.Checksum + filepath.Ext(entry.Url))
+					// destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
+					err = ioutil.WriteFile(destinationFile, input, 0644)
+					if err != nil {
+						// return err
+						log.Fatalln("creating file error, ", err)
+					}
+					// pp.Println("destinationFile:", destinationFile)
+
+					csvDataset.Write([]string{r.Name, strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year, destinationFile})
+					csvDataset.Flush()
+
+					/*
+					_, err = sfile.WriteString(fmt.Sprintf("%s;%s;%s;%s;%s\n", r.Name, strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year, destinationFile))
+					if err != nil {
+						// return err
+						log.Fatal(err)
+					}
+					sfile.Sync()
+					*/
+					imgCounter++
 				}
-				sfile.Sync()
-			}
+
+				fmt.Printf("REF COUNTER=%d/%d, IMG COUNTER=%d\n", counter, count, imgCounter)
+				counter++
+			
+				return nil
+
+			}(result)
+
+	        t.Throttle()
+
 		}
+
+		// throttler errors iteration
+		if t.Err() != nil {
+			// Loop through the errors to see the details
+			for i, err := range t.Errs() {
+				log.Printf("error #%d: %s", i, err)
+			}
+			log.Fatal(t.Err())
+		}
+
 		os.Exit(0)
 	}
 

@@ -3,8 +3,13 @@ FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 as builder
 
 WORKDIR /root/build
 COPY Makefile.gpu .
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN sed -i 's/OPENCV=0/OPENCV=1/g' Makefile.gpu
+
 RUN apt-get -y update && \
-        apt-get -y install git build-essential nano bash && \
+        apt-get -y install --no-install-recommends git build-essential nano bash libopencv-dev pkg-config && \
         git clone https://github.com/AlexeyAB/darknet.git && \
         cd darknet && \
         cp -f /root/build/Makefile.gpu Makefile && \

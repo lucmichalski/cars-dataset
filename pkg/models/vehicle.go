@@ -58,6 +58,8 @@ type VehicleImage struct {
 	Title        string
 	Checksum     string
 	Source       string
+	BBox 		 string
+	Labelme 	 string
 	SelectedType string
 	File         media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
 }

@@ -101,6 +101,7 @@ func Extract(cfg *config.Config) error {
 		vehicle.Modl = model
 		vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
 		vehicle.Source = "classiccars.com"
+		vehicle.Class = "car"
 		vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value: formattedPrice})
 
 		// modele := e.ChildText("span[class=modele]")
