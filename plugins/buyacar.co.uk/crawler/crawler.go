@@ -27,9 +27,9 @@ import (
 
 /*
 	Refs:
-	- rsync -av -v —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public.tar.gz ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
-	- rsync -av --compress --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
-	- scp -i ~/Downloads/ounsi.pem /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public/* ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/public/
+	- rsync -av -v —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public.tar.gz ubuntu@51.91.21.67:/home/ubuntu/cars-dataset/
+	- rsync -av --compress --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@51.91.21.67:/home/ubuntu/cars-dataset/
+	- scp -i ~/Downloads/ounsi.pem /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public/* ubuntu@51.91.21.67:/home/ubuntu/cars-dataset/public/
 	- cd plugins/buyacar.co.uk && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-buyacar.co.uk.so ; cd ../..
 	- good practices
 		- https://intoli.com/blog/making-chrome-headless-undetectable/
@@ -254,7 +254,7 @@ func Extract(cfg *config.Config) error {
 			return
 		}
 
-		// http://35.179.44.166:8089/masks/result.jpg?imageurl=https://images.buyacar.co.uk/img/med/abarth_500_1_4_t-jet_turismo_3dr_hatchback_33681691.jpg
+		// http://51.91.21.67:8089/masks/result.jpg?imageurl=https://images.buyacar.co.uk/img/med/abarth_500_1_4_t-jet_turismo_3dr_hatchback_33681691.jpg
 
 		//pp.Println(vehicle)
 		//pp.Println(carDataImage)

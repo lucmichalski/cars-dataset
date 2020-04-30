@@ -60,6 +60,7 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./dataset:/opt/lucmichalski/bin/datasets
     - ./tmp:/tmp
     - cache-data:/opt/lucmichalski/bin/data
@@ -84,6 +85,7 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./dataset:/opt/lucmichalski/bin/datasets
     - ./tmp:/tmp
     - cache-data:/opt/lucmichalski/bin/data
@@ -91,6 +93,8 @@ services:
     restart: unless-stopped
     depends_on:
     - mysql
+    - tor-haproxy
+    - selenium
     links:
     - mysql:mysql
     command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache"]
@@ -108,6 +112,7 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       MYSQL_HOST: ${MYSQL_HOST}
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./dataset:/opt/lucmichalski/bin/datasets
     - ./tmp:/tmp
     - cache-data:/opt/lucmichalski/bin/data
@@ -115,6 +120,8 @@ services:
     restart: unless-stopped
     depends_on:
     - mysql
+    - tor-haproxy
+    - selenium
     links:
     - mysql:mysql
     command: ["cars-dataset", "--plugins", "classics.autotrader.com", "--extract", "--no-cache"]
@@ -134,11 +141,14 @@ services:
       MYSQL_HOST: ${MYSQL_HOST}
     restart: unless-stopped
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./public:/opt/lucmichalski/bin/public
     - ./templates:/opt/lucmichalski/bin/templates
     - ./shared/datatset:/opt/lucmichalski/bin/dataset
     depends_on:
     - mysql
+    - selenium
+    - tor-haproxy
     links:
     - mysql:mysql
     command: ["cars-dataset", "--dataset"]
@@ -160,6 +170,7 @@ services:
       MYSQL_HOST: ${MYSQL_HOST}
     restart: unless-stopped
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./public:/opt/lucmichalski/bin/public
     - ./templates:/opt/lucmichalski/bin/templates
     depends_on:
@@ -187,6 +198,7 @@ services:
       MYSQL_HOST: ${MYSQL_HOST}
     restart: unless-stopped
     volumes:
+    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
     - ./:/go/src/github.com/lucmichalski/cars-dataset
     #- ./public:/opt/lucmichalski/bin/public
     #- ./templates:/opt/lucmichalski/bin/templates
@@ -200,13 +212,17 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: ${NAMESPACE}-selenium
-    ports:
-    - 4444:4444
+    environment:
+    - PORT=4445
+    expose:
+    - 4444
+    # ports:
+    #- 4445:4444
     volumes:
     - /dev/shm:/dev/shm
     networks:
     - internal
-    - web
+    # - web
     restart: unless-stopped
 
   tor-haproxy:
@@ -389,7 +405,7 @@ services:
     networks:
     - internal
     - web # for tests purpose    
-    restart: unless-stopped
+    # restart: unless-stopped
 
   darknet2:
     <<: *darknet_base
@@ -404,7 +420,7 @@ services:
     networks:
     - internal
     - web # for tests purpose
-    restart: unless-stopped
+    # restart: unless-stopped
 
   darknet3:
     <<: *darknet_base
@@ -419,7 +435,7 @@ services:
     networks:
     - internal
     - web # for tests purpose
-    restart: unless-stopped
+    # restart: unless-stopped
 
   gocv:
     image: lucmichalski/gocv:alpine-cpu-latest
