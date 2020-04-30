@@ -1,4 +1,49 @@
-Yolov3 retrain
+## github issue
+------------------------------------------------------------------------------------------------------
+Hi,
+
+Hope you are all well !
+
+[text]
+
+Thanks in advance for any insights or inputs on that topic.
+
+Cheers,
+X
+
+------------------------------------------------------------------------------------------------------
+
+# wordpress upload
+wp media import ~/Pictures/**\/*.jpg
+wp media import 'samah nurturing.mp4'
+wp media import 'samah nurturing.mp4' --post_id=1968 --title="Video Samah"
+
+# aws-cli
+aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+aws s3 cp --recursive . s3://sniperkit-cars
+
+
+aws s3 cp sniperkit-cars.tar.gz s3://sniperkit-cars/datasets
+aws s3 cp ./stanford_train_bbfixed.tar.gz s3://sniperkit-cars/datasets
+
+aws s3 cp --recursive . s3://eedama/videos/
+
+# gin + geoip
+https://github.com/convox/geoip/blob/master/geoip.go
+https://github.com/solefaucet/sole-server/tree/master/middlewares
+https://github.com/solefaucet/sole-server/blob/master/middlewares/logger.go#L16 (geoip + logger + gin)
+https://github.com/x0rzkov/geoip2-rest-api-golang/blob/master/main.go#L9-L13
+
+create a middleware to log geoip data
+
+
+# eedama video
+https://eedama.s3.eu-west-2.amazonaws.com/videos/samah-nurturing.mp4
+
+# copy n files
+find . -maxdepth 1 -type f | head -1000 | xargs cp -t "$destdir"
+
+# Yolov3 retrain
 https://pjreddie.com/darknet/yolo/
 https://github.com/GabrielDeml/Yolo_mark_in_docker
 https://github.com/MrZander/YoloMarkNet
@@ -28,6 +73,54 @@ https://github.com/ManivannanMurugavel/Yolo-Annotation-Tool-New-
 ## tiny yolo
 https://github.com/ablacklama/Vehicle-Detection/blob/master/utils/utils.py
 
+-rw-r--r-- 1 root root        98 Apr 27 12:09 obj.data
+-rw-r--r-- 1 root root         4 Apr 27 12:10 obj.names
+-rw-r--r-- 1 root root         0 Apr 27 12:09 tmp.txt
+-rw-r--r-- 1 root root     12195 Apr 27 12:09 yolo-obj.cfg
+-rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_1000.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_2000.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_final.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_last.weights
+
+# mailwizz
+https://www.mailwizz.com/frontend/files/Mailwizz-Customer-Manual.pdf
+https://www.youtube.com/watch?v=gol9NaRWqSs
+
+## launchers
+docker compose up crawler-mtbauto
+docker compose up crawler-clauto
+docker-compose stop crawler-mtbauto
+docker-compose stop crawler-clauto
+
+docker-compose scale crawler-mtbauto=5
+docker-compose scale crawler-clauto=5
+
+-rw-r--r-- 1 root   root   2143946486 Apr 25 17:50 car.tar.gz
+-rw-r--r-- 1 root   root           98 Apr 27 08:43 cars.data
+-rw-r--r-- 1 root   root            4 Apr 27 08:44 cars.names
+-rw-r--r-- 1 root   root    688950217 Apr 27 08:25 cars_train.tar.gz
+-rw-r--r-- 1 root   root    688913295 Apr 27 15:30 data.tar.gz
+drwxr-xr-x 2 ubuntu ubuntu     397312 Apr 25 17:39 motorcycle
+drwxr-xr-x 2 ubuntu ubuntu    4501504 Apr 25 17:05 person
+-rw-r--r-- 1 root   root    980878838 Apr 26 10:19 stanford.tar.gz
+-rw-r--r-- 1 root   root        85530 Apr 27 15:34 train.txt
+drwxr-xr-x 2 ubuntu ubuntu     684032 Apr 25 17:35 truck
+drwxr-xr-x 2 root   root         4096 Apr 27 06:48 yolo-cars-opencv
+-rw-r--r-- 1 root   root        12195 Apr 27 15:35 yolo-obj.cfg
+-rw-r--r-- 1 root   root    170038676 Apr 27 15:35 yolov4.conv.137
+
+
+./darknet detector map data/obj.data yolo-obj.cfg backup/yolo-obj_final.weights
+
+../../../darknet detector map data/obj.data yolo-obj.cfg backup/yolo-obj_final.weights
+
+find . -maxdepth 1 -type f -name *.jpg | head -2000 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
+
+/home/ubuntu/cars-dataset/shared/datasets/stanford-cars/cars_train
+
+# install apk to device
+adb devices
+adb -s a3b09a6e install  example.apk
 
 ## labelme
 https://github.com/wkentaro/labelme
@@ -51,28 +144,113 @@ https://github.com/jolibrain/deepdetect/tree/master/docker
 
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/stanford_train/04810.jpg
 
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/stanford_train/
+
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/car/
+
+## cuda + pytorch
+https://discuss.pytorch.org/t/docker-torch-cuda-is-available-returns-false/47282
+https://github.com/anibali/docker-pytorch/blob/master/dockerfiles/1.5.0-cuda10.2-ubuntu18.04/Dockerfile
+
+./darknet detector test data/obj.data yolo-obj.cfg yolo-obj_2000.weights
+
+docker-compose up crawler-mtbauto
+docker-compose up crawler-clauto
+
 docker-compose stop crawler-mtbauto
 docker-compose stop crawler-clauto
 
-docker-compose scale crawler-mtbauto=5
-docker-compose scale crawler-clauto=5
+docker-compose scale crawler-mtbauto=4
+docker-compose scale crawler-clauto=4
 
-find vendor -type f -name "*.json" -print0 | xargs -0 sed -i 's/person/car/g'
+find . -type f -name "*.txt" -print0 | xargs -0 sed -i 's/%!s(int=1)/1/g'
+
+find . -type f -name "*.json" -print0 | xargs -0 sed -i 's/person/car/g'
+
+gdrivedl https://drive.google.com/open?id=1Cfnykelzf8n_Ct-8NMAkcpYgQYL6c10V val2017_coco.zip
+gdrivedl drive.google.com/open?id=1PTA24UTZcsnzXPN1gmV0_lRg3lMHqwp6 
 
 gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
 
 gdrivedl https://drive.google.com/open?id=1JKF-bdIklxOOVy-2Cr5qdvjgGpmGfcbp yolov4.conv.137
 
-../../../darknet detector train data/obj.data yolo-obj.cfg yolov4.conv.137
+../../../darknet detector train -dont_show data/obj.data yolo-obj.cfg yolov4.conv.137
+
+
+../../../darknet detector test data/obj.data yolo-obj.cfg backup/yolo-obj_2000.weights
+
+Train on Amazon EC2, to see mAP & Loss-chart using URL like: http://ec2-35-160-228-91.us-west-2.compute.amazonaws.com:8090 in the Chrome/Firefox (Darknet should be compiled with OpenCV): 
+../../../darknet detector train cfg/obj.data yolov4.cfg yolov4.conv.137 -dont_show -mjpeg_port 8090 -map
+
+To process a list of images data/train.txt and save results of detection to result.txt use:
+../../../darknet detector test cfg/coco.data cfg/yolov4.cfg yolov4.weights -dont_show -ext_output < data/train.txt > result.txt
+
+for i in *.jpg; do rm "$i"; done
+
+
+curl -o data/1532726.jpg http://35.179.44.166:9008/system/vehicle_images/1532726/file.jpg
+curl -o data/1532720.jpg http://35.179.44.166:9008/system/vehicle_images/1532720/file.jpg
+curl -o data/1532710.jpg http://35.179.44.166:9008/system/vehicle_images/1532710/file.jpg
+curl -o data/1532676.jpg http://35.179.44.166:9008/system/vehicle_images/1532676/file.jpg
+
+http://35.179.44.166:8888/cars_train.tar.gz
+curl -o cfg/obj.names http://35.179.44.166:8888/yolo-cars-opencv/obj.names
+curl -o cfg/yolo-cars.cfg http://35.179.44.166:8888/yolo-cars-opencv/yolo-cars-opencv.cfg
+curl -o cars_train.tar.gz http://35.179.44.166:8888/cars_train.tar.gz
+curl -o yolov4.conv.137 http://35.179.44.166:8888/yolov4.conv.137
+curl -o data/cars.data http://35.179.44.166:8888/cars.data
+
+data/obj.data
+cars_train
+
+darknet detector train data/cars.data cfg/yolo-cars.cfg yolov4.conv.137
+
+http://35.179.44.166:8888/yolo-cars-opencv/yolo-cars-opencv_last.weights
+
+!wget http://35.179.44.166:8888/yolo-cars-opencv/obj.names
+!wget http://35.179.44.166:8888/yolo-cars-opencv/yolo-cars-opencv.cfg
+!wget http://35.179.44.166:8888/yolo-cars-opencv/yolo-cars-opencv_last.weights
+
+-rw-r--r-- 1 root root         4 Apr 27 06:48 obj.names
+-rw-r--r-- 1 root root     12220 Apr 27 06:46 yolo-cars-opencv.cfg
+-rw-r--r-- 1 root root 256015980 Apr 27 06:46 yolo-cars-opencv_1000.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 06:47 yolo-cars-opencv_2000.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 06:47 yolo-cars-opencv_final.weights
+-rw-r--r-- 1 root root 256015980 Apr 27 06:47 yolo-cars-opencv_last.weights
 
 anton adventure
 
 /home/ubuntu/cars-dataset/shared/datasets/stanford-cars/cars_train
 /root/build/darknet/build/darknet/x64
+/opt/cars_train/
 
+-rw-r--r-- 1 root root       625 Apr 27 05:05 coco.names
+-rw-r--r-- 1 root root     12208 Apr 27 05:04 yolov4.cfg
+-rw-r--r-- 1 root root 257717640 Apr 27 05:03 yolov4.weights
 
+-rw-r--r-- 1 ubuntu ubuntu       625 Apr  8 10:07 coco.names
+-rw-r--r-- 1 ubuntu ubuntu      8363 Apr 10 10:10 common.cfg
+-rw-r--r-- 1 ubuntu ubuntu        31 Apr 10 09:59 common.names
+-rw-r--r-- 1 ubuntu ubuntu 246391548 Apr 10 09:59 common_220000.weights
+-rw-r--r-- 1 ubuntu ubuntu      8369 Apr 10 11:40 common_inference.cfg
+-rw-r--r-- 1 root   root          98 Apr 26 15:06 obj.data
+-rw-r--r-- 1 root   root           4 Apr 26 15:06 obj.names
+-rw-r--r-- 1 ubuntu ubuntu     12195 Apr 26 15:05 yolo-obj.cfg
+-rw-r--r-- 1 root   root   256015980 Apr 27 01:52 yolo-obj_1000.weights
+-rw-r--r-- 1 root   root   256015980 Apr 27 01:52 yolo-obj_2000.weights
+-rw-r--r-- 1 root   root   256015980 Apr 27 01:52 yolo-obj_final.weights
+-rw-r--r-- 1 root   root   256015980 Apr 27 01:52 yolo-obj_last.weights
+-rw-r--r-- 1 ubuntu ubuntu      2726 Apr 10 15:47 yolo.cfg
+-rw-r--r-- 1 ubuntu ubuntu 203934260 Mar 27  2017 yolo.weights
+-rw-r--r-- 1 ubuntu ubuntu      2726 Apr 10 15:47 yolov2.cfg
+-rw-r--r-- 1 ubuntu ubuntu 203934260 Mar 25  2018 yolov2.weights
+-rw-r--r-- 1 ubuntu ubuntu      8391 Apr 10 10:00 yolov3.cfg
+-rw-r--r-- 1 ubuntu ubuntu 248007048 Mar 25  2018 yolov3.weights
+-rw-r--r-- 1 ubuntu ubuntu      3106 Apr  8 10:07 yolov4-tiny-1cls.cfg
+-rw-r--r-- 1 ubuntu ubuntu      3112 Apr  8 10:07 yolov4-tiny.cfg
+-rw-rw-r-- 1 ubuntu ubuntu 170038676 Apr 26 12:59 yolov4.conv.137
 
-0 0.5 0.5 0.10 0.25
+0 0.5 0.5 0.10 0.25 centerX, centerY, width, height
 represents an object of class 0, centered in the middle of the image, whose width is 10% of the image, and whose height is 25% of the image.
 
 {
@@ -235,7 +413,8 @@ darknet_1      | main.server.func3(0xc0004c9260)
 
 /usr/local/share/android-sdk
 
-find . -maxdepth 1 -type f | wc -l
+find . -maxdepth 1 -type f -name *.jpg | head -5702 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
+find . -maxdepth 1 -type f -name *.jpg | wc -l
 
 https://stackoverflow.com/questions/37458287/how-to-run-a-cron-job-inside-a-docker-container
 

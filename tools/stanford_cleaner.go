@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	isDryMode = true
+	isDryMode = false
 	counter = 0
 	total = 0
 )
 
 func main() {
-	walkImages(".jpg", "../shared/datasets/stanford-cars/cars_train/")
+	walkImages(".jpg", "../shared/dataset/stanford_train/")
 	fmt.Println("purged ", counter, "files over ", total, "files")
 }
 
@@ -27,7 +27,7 @@ func walkImages(extension string, dirnames ...string) (err error ){
 				if !de.IsDir() {
 					if strings.Contains(osPathname, extension) {
 						fmt.Println("found ", osPathname, "extension", extension)
-						annotationFile := strings.Replace(osPathname, ".jpg", ".txt", -1)
+						annotationFile := strings.Replace(osPathname, ".jpg", ".json", -1)
 						fmt.Println("checking if annotation file exists, ", annotationFile)
 						if _, err := os.Stat(annotationFile); err != nil {
 							if !isDryMode {
