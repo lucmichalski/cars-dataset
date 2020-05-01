@@ -110,7 +110,7 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 		vehicle.Source = "autoscout24.fr"
-		// vehicle.Class = "car"
+		vehicle.Class = "car"
 
 		e.ForEach(`as24-tracking[type="pagename"]`, func(_ int, el *colly.HTMLElement) {
 			vehicleType := el.Attr("category")
@@ -268,7 +268,7 @@ func Extract(cfg *config.Config) error {
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
 				minY := detection.Shapes[0].Points[1][1]
-			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 				log.Println("----> Scanning file: ", file.Name())

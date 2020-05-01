@@ -46,11 +46,11 @@ plugins:
 	GOARCH=amd64 PLUGIN=autosphere.fr make plugin
 	GOARCH=amd64 PLUGIN=autoscout24.be make plugin
 	GOARCH=amd64 PLUGIN=autoscout24.fr make plugin
+	GOARCH=amd64 PLUGIN=classiccars.com make plugin
 	#GOARCH=amd64 PLUGIN=thecarconnection.com make plugin
 	#GOARCH=amd64 PLUGIN=buyacar.co.uk make plugin
 	#GOARCH=amd64 PLUGIN=yamaha-occasion.com make plugin
 	#GOARCH=amd64 PLUGIN=motorcycles.autotrader.com make plugin
-	#GOARCH=amd64 PLUGIN=classiccars.com make plugin
 	#GOARCH=amd64 PLUGIN=classics.autotrader.com make plugin
 	#GOARCH=amd64 PLUGIN=carsdirect.com make plugin
 	#GOARCH=amd64 PLUGIN=stanford-cars make plugin

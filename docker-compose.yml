@@ -16,6 +16,18 @@ services:
     - ./models:/opt/models
     command: ["/bin/bash"]
 
+  kaggle:
+    image: lucmichalski/kaggle:py3-alpine3.11
+    container_name: ${NAMESPACE}-kaggle
+    build:
+      context: .docker/kaggle
+      dockerfile: Dockerfile
+    networks:
+    - internal
+    volumes:
+    - ./shared/datasets/kaggle:/opt/kaggle
+    command: ["/bin/bash"]
+
   sandbox:
     image: alpine:3.11
     container_name: ${NAMESPACE}-sandbox
@@ -29,7 +41,7 @@ services:
     - tor-haproxy
     links:
     - protonvpn:protonvpn
-    - tor-proxy:tor-haproxy
+    - tor-haproxy:tor-haproxy
     command: ["/bin/bash"]
 
   #jupyter:
