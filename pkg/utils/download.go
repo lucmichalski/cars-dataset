@@ -144,3 +144,29 @@ Loop:
 
 	return file, fi.Size(), nil
 }
+
+func GetJSON(rawURL string) ([]byte, error) {
+	check := http.Client{
+		// Timeout: 10 * time.Second,
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			r.URL.Opaque = r.URL.Path
+			return nil
+		},
+	}
+	resp, err := check.Get(rawURL) // add a filter to check redirect
+	if err != nil {
+		return []byte{}, err
+	}
+	defer resp.Body.Close()
+	fmt.Printf("----> Downloaded %v\n", rawURL)
+
+	fmt.Println("Content-Length:", resp.Header.Get("Content-Length"))
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		// warn(w, log, "Error while reading response from yake service: %+v", err)
+		return []byte{}, err
+	}
+
+	return body, err
+}

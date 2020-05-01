@@ -1,22 +1,12 @@
 package main
 
 import (
-	// "compress/gzip"
-	// "crypto/md5"
-	// "database/sql/driver"
-	// "encoding/hex"
 	"encoding/json"
-	// "errors"
 	"fmt"
-	// "io"
 	"io/ioutil"
-	// "math/rand"
 	"net/http"
-	// "net/url"
 	"os"
 	"path/filepath"
-	// "reflect"
-	//"strconv"
 	"strings"
 	"plugin"
 	"bytes"
@@ -28,12 +18,6 @@ import (
 	"github.com/qor/admin"
 	"github.com/qor/qor"
 	"github.com/qor/assetfs"
-	// "github.com/h2non/filetype"
-	// "github.com/PuerkitoBio/goquery"
-	// "github.com/beevik/etree"
-	// "github.com/corpix/uarand"
-	// "github.com/gocolly/colly/v2"
-	// "github.com/gocolly/colly/v2/queue"
 	"github.com/jinzhu/gorm"
 	"github.com/k0kubun/pp"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -211,6 +195,7 @@ func main() {
 				c.CacheDir = cacheDir
 			}
 			c.IsDebug = true
+			c.IsClean = isClean
 			c.ConsumerThreads = 6
 			pp.Println(c)
 			c.DB = DB

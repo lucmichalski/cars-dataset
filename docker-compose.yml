@@ -97,7 +97,7 @@ services:
     - selenium
     links:
     - mysql:mysql
-    command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache"]
+    command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache", "--clean", "--verbose"]
 
   crawler-clauto:
     image: lucmichalski/car-crawler--clauto:latest
@@ -124,7 +124,7 @@ services:
     - selenium
     links:
     - mysql:mysql
-    command: ["cars-dataset", "--plugins", "classics.autotrader.com", "--extract", "--no-cache"]
+    command: ["cars-dataset", "--plugins", "classics.autotrader.com", "--extract", "--no-cache", "--clean", "--verbose"]
 
   dataset:
     image: lucmichalski/car-admin:latest
@@ -291,7 +291,7 @@ services:
     image: mysql:5.7
     container_name: ${NAMESPACE}-db
     ports:
-    - 13306:3306
+    - 3306:3306
     volumes:
     - db-data:/var/lib/mysql
     networks:
@@ -399,9 +399,10 @@ services:
     container_name: ${NAMESPACE}-darknet1
     environment:
        DARKNET_PORT: 9003
+       NVIDIA_VISIBLE_DEVICES: all
     # command: ["/bin/bash"]
     # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    command: go run server.go --configFile=models/yolov4.cfg --weightsFile=models/yolov4.weights
     networks:
     - internal
     - web # for tests purpose    

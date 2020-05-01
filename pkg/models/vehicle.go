@@ -59,7 +59,7 @@ type VehicleImage struct {
 	Checksum     string
 	Source       string
 	BBox 		 string
-	Labelme 	 string
+	Labelme 	 string `gorm:"type:text" sql:"type:text"`
 	SelectedType string
 	File         media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
 }

@@ -1,3 +1,76 @@
+/*
+
+	To do:
+	- extract the biggest bbox for labelme
+
+	Snippets:
+	- gdrivedl
+		- !sudo wget -O /usr/sbin/gdrivedl 'https://f.mjh.nz/gdrivedl'
+		- !sudo chmod +x /usr/sbin/gdrivedl
+		- !gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
+		- !tar xf camembert_sentiment.tar.xz
+	- find-object
+		- apk add --no-cache qt5-qtbase-dev cmake
+		- cmake -DCMAKE_BUILD_TYPE=Release ..
+	- nvidia-docker
+		- distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+		- curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+		- curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+		- sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+		- sudo systemctl restart docker
+		- docker run --gpus all nvidia/cuda:10.0-base nvidia-smi
+	- docker-compose gpu
+        - sudo apt-get install nvidia-container-runtime
+        - ~$ sudo vim /etc/docker/daemon.json
+        - then , in this daemon.json file, add this content:
+        - {
+        - "default-runtime": "nvidia"
+        - "runtimes": {
+        - "nvidia": {
+        - "path": "/usr/bin/nvidia-container-runtime",
+        - "runtimeArgs": []
+        - }
+        - }
+        - }
+        - ~$ sudo systemctl daemon-reload
+        - ~$ sudo systemctl restart docker
+    - remove files
+    	- find ./ -type f -size 0 -exec rm -f {} \;
+
+	Todo:
+	- https://www.lacentrale.fr/robots.txt
+	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-annonce.xml.gz
+	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-cotft.xml.gz
+	- https://vitux.com/install-and-deploy-kubernetes-on-ubuntu/
+
+	Examples:
+	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQD.jpg (utilitaire)
+	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQC.jpg (utilitaire)
+	- https://cdn-photos.autosphere.fr/media/FL/FL-823-GFF.jpg
+	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
+	- https://i.pinimg.com/originals/28/1b/ed/281bed127dae148b0e0536ea611e5e67.jpg
+	- https://www.lambocars.com/images/lambonews/production_numbers.jpg
+	- https://i.pinimg.com/originals/7e/fc/ab/7efcabaff4c082e99955b7b555b8b3da.png
+
+	Refs:
+	- https://hackernoon.com/docker-compose-gpu-tensorflow-%EF%B8%8F-a0e2011d36
+	- https://github.com/eywalker/nvidia-docker-compose
+	- https://github.com/NVIDIA/nvidia-docker
+	- https://github.com/dbolya/yolact
+	- https://github.com/Jonarod/tensorflow_lite_alpine
+	- https://github.com/tinrab/go-tensorflow-image-recognition
+	- https://github.com/dereklstinson/coco
+	- https://github.com/chtorr/go-tensorflow-realtime-object-detection/blob/master/src/main.go
+	- https://github.com/codegangsta/gin
+	- https://github.com/shunk031/libtorch-gin-api-server/blob/master/docker/Dockerfile.api
+	- https://github.com/tinrab/go-tensorflow-image-recognition/blob/master/main.go
+	- https://github.com/x0rzkov/gocv-alpine (runtime,builder)
+	- https://stackoverflow.com/questions/15341538/numpy-opencv-2-how-do-i-crop-non-rectangular-region
+	- https://www.pyimagesearch.com/2018/11/19/mask-r-cnn-with-opencv/
+	- https://note.nkmk.me/en/python-opencv-numpy-alpha-blend-mask/
+*/
+
+
 Loading weights from backup/yolo-obj_final.weights...
  seen 64, trained: 128 K-images (2 Kilo-batches_64)
 Done! Loaded 162 layers from weights-file

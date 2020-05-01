@@ -263,7 +263,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			continue
 		}
 
-		proxyURL := fmt.Sprintf("http://51.91.21.67:9005/crop?url=%s", image)
+		proxyURL := fmt.Sprintf("http://51.91.21.67:9003/crop?url=%s", image)
 		log.Println("proxyURL:", proxyURL)
 		if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 			fmt.Printf("open file failure, got err %v", err)

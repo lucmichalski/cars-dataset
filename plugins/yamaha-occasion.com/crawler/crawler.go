@@ -134,7 +134,7 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://51.91.21.67:9006/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9003/crop?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
