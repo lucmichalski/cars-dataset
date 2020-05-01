@@ -77,8 +77,8 @@ func main() {
 
 	// Define cli flag parameters
 	pflag.StringVarP(&weightsFile, "weights-file", "w", "./models/yolov4.cfg", "Path to weights file. Example: yolov4.weights")
-	pflag.StringVarP(&configFile, "config-gile", "c", "./models/yolov4.cfg", "Path to network layer configuration file. Example: cfg/yolov4.cfg")
-	pflag.StringVarP(&geoIpFile, "geoip-db", "", "../shared/geoip2/GeoLite2-City.mmdb", "geoip filepath.")
+	pflag.StringVarP(&configFile, "config-file", "c", "./models/yolov4.cfg", "Path to network layer configuration file. Example: cfg/yolov4.cfg")
+	pflag.StringVarP(&geoIpFile, "geoip-db", "", "./geoip2/GeoLite2-City.mmdb", "geoip filepath.")
 	pflag.StringVarP(&labelmeVer, "labelme-ver", "", "3.6.10", "labelme version JSON format.")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
@@ -227,12 +227,21 @@ func server() {
 
 			b := src.Bounds()
 
+			if isVerbose {
+				pp.Println("Original Height:", b.Max.Y)
+				pp.Println("Original Width:", b.Max.X)
+			}
+
 		    if b.Max.X > 700 {
 				src = imaging.Resize(src, 700, 0, imaging.Lanczos)
 		    }
 
 		    // Ge the new bounds ? shall we reload the object ?
 			b = src.Bounds()
+			if isVerbose {
+				pp.Println("Height post resing:", b.Max.Y)
+				pp.Println("Width post resing:", b.Max.X)
+			}
 
 			imgDarknet, err := darknet.Image2Float32(src)
 			if err != nil {
@@ -256,7 +265,7 @@ func server() {
 		    lc.ImageData = base64.StdEncoding.EncodeToString(buf)
 
 			lc.LineColor = []int{0, 255, 0, 128}
-			lc.Version = "3.6.10"
+			lc.Version = labelmeVer
 
 			if isVerbose {
 				log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
@@ -296,11 +305,27 @@ func server() {
 				pp.Println("bboxInfos:", bboxInfos)
 			}
 
-			minX, minY := float64(bboxInfos[0].minX-20), float64(bboxInfos[0].minY-20)
-			maxX, maxY := float64(bboxInfos[0].maxX+20), float64(bboxInfos[0].maxY+20)
-			/*
+			minX, minY := bboxInfos[0].minX, bboxInfos[0].minY
+			maxX, maxY := bboxInfos[0].maxX, bboxInfos[0].maxY
+
+			if minX < 0 {
+				minX = 0
+			}
+
+			if minY < 0 {
+				minY = 0
+			}
+
+			if maxX > b.Max.X {
+				maxX = b.Max.X
+			}
+
+			if maxY > b.Max.Y {
+				maxY = b.Max.Y
+			}
+
 			sc := models.Shape{}
-			sc.Label = d.ClassNames[i]
+			sc.Label = bboxInfos[0].class
 			sc.ShapeType = "rectangle"
 			if isVerbose {
 				fmt.Println("minX=", minX ,"maxX=", maxX ,"minY=", minY ,"maxY=", maxY)
@@ -311,7 +336,6 @@ func server() {
 			points := [][]int{x, y}
 			sc.Points = append(sc.Points, points...)
 			lc.Shapes = append(lc.Shapes, sc)
-			*/
 
 			c.JSON(200, &lc)
 		} else {
@@ -423,8 +447,25 @@ func server() {
 							surface: (bBox.EndPoint.X-bBox.StartPoint.X)*(bBox.EndPoint.Y-bBox.StartPoint.Y),
 						})
 					}
-					minX, minY := float64(bBox.StartPoint.X-10), float64(bBox.StartPoint.Y-10)
-					maxX, maxY := float64(bBox.EndPoint.X+10), float64(bBox.EndPoint.Y+10)
+					minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
+					maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
+
+					if minX < 0 {
+						minX = 0
+					}
+
+					if minY < 0 {
+						minY = 0
+					}
+
+					if maxX > float64(b.Max.X) {
+						maxX = float64(b.Max.X)
+					}
+
+					if maxY > float64(b.Max.Y) {
+						maxY = float64(b.Max.Y)
+					}
+
 					draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
 					drawBbox(round(minX), round(minY), round(maxX), round(maxY), 1, m)
 				}

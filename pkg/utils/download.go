@@ -159,9 +159,6 @@ func GetJSON(rawURL string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	fmt.Printf("----> Downloaded %v\n", rawURL)
-
-	fmt.Println("Content-Length:", resp.Header.Get("Content-Length"))
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		// warn(w, log, "Error while reading response from yake service: %+v", err)

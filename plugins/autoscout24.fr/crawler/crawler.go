@@ -237,17 +237,21 @@ func Extract(cfg *config.Config) error {
 
 			// TODO: 
 			// - use gRPC instead on serialize/unserilize JSON file
-			//   - eg. https://github.com/LdDl/license_plate_recognition    
-			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://51.91.21.67:9005/labelme?url=%s", carImage)
+			//   - eg. https://github.com/LdDl/license_plate_recognition
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
 			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
 
+				if string(content) == "" {
+					continue					
+				}
+
 				var detection *models.Labelme
 				if err := json.Unmarshal(content, &detection); err != nil {
-					log.Fatalln("unmarshal error, ", err)
+					log.Warnln("unmarshal error, ", err)
+					continue
 				}
 
 				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
@@ -255,10 +259,11 @@ func Extract(cfg *config.Config) error {
 					log.Fatalln("decodeToFile error, ", err)					
 				}
 
-				if len(detection.Shapes) < 1 {
+				if len(detection.Shapes) != 1 {
 					continue
 				}
 
+				// we expect online one focused image
 				maxX := detection.Shapes[0].Points[0][0]
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
@@ -266,7 +271,7 @@ func Extract(cfg *config.Config) error {
 			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
-				// log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue

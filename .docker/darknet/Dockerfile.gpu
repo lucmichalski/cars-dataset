@@ -54,7 +54,6 @@ RUN \
     && go get -u github.com/cavaliercoder/grab \
     && go get -u github.com/pkg/errors \
     && go get -u github.com/h2non/filetype \
-    \
     && go get -u github.com/lucmichalski/cars-dataset/pkg/middlewares \
     && go get -u github.com/lucmichalski/cars-dataset/pkg/models \
     && go get -u github.com/lucmichalski/cars-dataset/pkg/grab \
