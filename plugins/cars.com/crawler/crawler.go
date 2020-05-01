@@ -52,7 +52,7 @@ func Extract(cfg *config.Config) error {
 	)
 
 	// Rotate two socks5 proxies
-	rp, err := proxy.RoundRobinProxySwitcher("http://localhost:8118")
+	rp, err := proxy.RoundRobinProxySwitcher("http://localhost:8119")
 	// rp, err := proxy.RoundRobinProxySwitcher("socks5h://localhost:1080", "localhost:8118")
 	if err != nil {
 		log.Fatal(err)
@@ -256,29 +256,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9003/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+				if string(content) == "" {
+					continue					
+				}
+
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)					
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue

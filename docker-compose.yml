@@ -26,51 +26,24 @@ services:
     - internal
     depends_on:
     - protonvpn
-    - tor-privoxy
+    - tor-haproxy
     links:
     - protonvpn:protonvpn
-    - tor-privoxy:tor-privoxy
+    - tor-proxy:tor-haproxy
     command: ["/bin/bash"]
 
-  jupyter:
-    image: lucmichalski/jupyter-notebook:latest-alpine3.11
-    build:
-      context: .docker/jupyter-notebook
-      dockerfile: Dockerfile
-    container_name: ${NAMESPACE}-jupyter
-    networks:
-    - internal
-    - web
-    ports:
-    - 8888:8888
-    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]    
-
-  crawler:
-    image: lucmichalski/car-crawler:latest
-    container_name: ${NAMESPACE}-crawler  
-    build: .
-    ports:
-    - 9000:9000
-    networks:
-    - internal
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_HOST: ${MYSQL_HOST}
-    volumes:
-    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
-    - ./dataset:/opt/lucmichalski/bin/datasets
-    - ./tmp:/tmp
-    - cache-data:/opt/lucmichalski/bin/data
-    - public-data:/opt/lucmichalski/bin/public
-    restart: unless-stopped
-    depends_on:
-    - mysql
-    links:
-    - mysql:mysql
-    command: ["cars-dataset", "--parallel-jobs", "1"]
+  #jupyter:
+  #  image: lucmichalski/jupyter-notebook:latest-alpine3.11
+  #  build:
+  #    context: .docker/jupyter-notebook
+  #    dockerfile: Dockerfile
+  #  container_name: ${NAMESPACE}-jupyter
+  #  networks:
+  #  - internal
+  #  - web
+  #  ports:
+  #  - 8888:8888
+  #  command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]    
 
   crawler-mtbauto:
     image: lucmichalski/car-crawler--mtbauto:latest
@@ -179,36 +152,6 @@ services:
     - mysql:mysql
     command: ["cars-dataset", "--admin"]
 
-  admin-dev:
-    image: lucmichalski/car-admin:latest
-    container_name: ${NAMESPACE}-admin-dev
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    ports:
-    - 9018:9018
-    networks:
-    - internal
-    - web
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_HOST: ${MYSQL_HOST}
-    restart: unless-stopped
-    volumes:
-    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
-    - ./:/go/src/github.com/lucmichalski/cars-dataset
-    #- ./public:/opt/lucmichalski/bin/public
-    #- ./templates:/opt/lucmichalski/bin/templates
-    depends_on:
-    - mysql
-    links:
-    - mysql:mysql
-    working_dir: /go/src/github.com/lucmichalski/cars-dataset
-    command: ["go", "run", "main.go",  "--admin"]
-
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: ${NAMESPACE}-selenium
@@ -216,13 +159,11 @@ services:
     - PORT=4445
     expose:
     - 4444
-    # ports:
-    #- 4445:4444
     volumes:
     - /dev/shm:/dev/shm
     networks:
     - internal
-    # - web
+    - web
     restart: unless-stopped
 
   tor-haproxy:
@@ -244,17 +185,17 @@ services:
     - 2090:2090
     - 8119:8119
 
-  tor-privoxy:
-    restart: always
-    container_name: ${NAMESPACE}-tor-privoxy
-    image: dockage/tor-privoxy:latest
-    networks:
-    - internal
-    - web
-    ports:
-    - "9050:9050" # Tor proxy
-    - "9051:9051" # Tor control port
-    - "8118:8118" # Privoxy
+  #tor-privoxy:
+  #  restart: always
+  #  container_name: ${NAMESPACE}-tor-privoxy
+  #  image: dockage/tor-privoxy:latest
+  #  networks:
+  #  - internal
+  #  - web
+  #  ports:
+  #  - "9050:9050" # Tor proxy
+  #  - "9051:9051" # Tor control port
+  #  - "8118:8118" # Privoxy
 
   protonvpn:
     image: protonvpn-docker
@@ -355,43 +296,12 @@ services:
     - "9006:9006"
     environment:
        DARKNET_PORT: 9006
-    # command: ["/bin/bash"]
-    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    command: go run server.go --configFile=models/yolov4.cfg --weightsFile=models/yolov4.weights
     networks:
     - internal
     - web # for tests purpose
     restart: unless-stopped
-
-  darknet-labelme:
-    <<: *darknet_base
-    container_name: ${NAMESPACE}-darknetlabelme
-    ports:
-    - "9009:9009"
-    environment:
-       DARKNET_PORT: 9009
-    # command: go run server.go --configFile=models/cars-yolo/yolo-obj.cfg --weightsFile=models/cars-yolo/test/yolo-obj_final.weights
-    # command: go run server.go --configFile=models/yolov4/yolov4.cfg --weightsFile=models/yolov4/yolov4.weights
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
-    networks:
-    - internal
-    - web # for tests purpose
-    # restart: unless-stopped
   
-  darknet-cars:
-    <<: *darknet_base
-    container_name: ${NAMESPACE}-darknetcar
-    ports:
-    - "9007:9007"
-    environment:
-       DARKNET_PORT: 9007
-    command: go run server.go --configFile=models/cars-yolo/yolo-obj.cfg --weightsFile=models/cars-yolo/test/yolo-obj_final.weights
-    # command: go run server.go --configFile=models/yolov4/yolov4.cfg --weightsFile=models/yolov4/yolov4.weights
-    networks:
-    - internal
-    - web # for tests purpose
-    # restart: unless-stopped
-
   darknet:
     <<: *darknet_base
     ports:
@@ -400,8 +310,6 @@ services:
     environment:
        DARKNET_PORT: 9003
        NVIDIA_VISIBLE_DEVICES: all
-    # command: ["/bin/bash"]
-    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
     command: go run server.go --configFile=models/yolov4.cfg --weightsFile=models/yolov4.weights
     networks:
     - internal
@@ -415,9 +323,7 @@ services:
     - "9004:9004"
     environment:
        DARKNET_PORT: 9004
-    # command: ["/bin/bash"]
-    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    command: go run server.go --configFile=models/yolov4.cfg --weightsFile=models/yolov4.weights
     networks:
     - internal
     - web # for tests purpose
@@ -430,9 +336,7 @@ services:
     - "9005:9005"
     environment:
        DARKNET_PORT: 9005
-    # command: ["/bin/bash"]
-    # command: go run server.go --configFile=models/common_inference.cfg --weightsFile=models/common_220000.weights
-    command: go run server.go --configFile=models/yolov3.cfg --weightsFile=models/yolov3.weights
+    command: go run server.go --configFile=models/yolov4.cfg --weightsFile=models/yolov4.weights
     networks:
     - internal
     - web # for tests purpose
@@ -477,38 +381,15 @@ services:
     - web # for tests purpose
     restart: unless-stopped  
 
-  digits:
-    container_name: ${NAMESPACE}-digits
-    image: nvidia/digits:latest
-    ports:
-    - 5000:5000
-    volumes:
-    - ./shared/data/digits:/data
-    networks:
-    - internal
-    - web # for tests purpose
-    restart: unless-stopped
-
   deeepdetect:
     image: jolibrain/deepdetect_cpu
     ports:
     - 5003:5003
-    #volumes:
-    #- ./shared/data/digits:/data
     networks:
     - internal
     - web # for tests purpose
     restart: unless-stopped
     command: ["./dede", "-port", "5003", "-host", "0.0.0.0"]
-
-  ybat:
-    image: abiosoft/caddy
-    container_name: caddy
-    ports:
-    - '8087:8087'
-    volumes:
-    - './.config/Caddyfile:/etc/Caddyfile'
-    - '/home/ubuntu/cars-dataset/shared/datasets/ybat:/srv'
 
 networks:
   internal:
