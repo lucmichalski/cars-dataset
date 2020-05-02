@@ -6,15 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
+	//"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
+	// "path"
 	"path/filepath"
 	"strings"
 
-	"github.com/h2non/filetype"
+	// "github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
@@ -38,6 +38,10 @@ import (
 		TRAIN,./cars_train/02443.jpg,HUMMER H3T Crew Cab 2010
 		TRAIN,./cars_train/02444.jpg,Ford F-150 Regular Cab 2012
 		TRAIN,./cars_train/02445.jpg,Buick Rainier SUV 2007
+	- CSV excerpt #2
+		TRAIN;/opt/cars_train/02443.jpg;(640, 480);74;62;617;411;HUMMER H3T Crew Cab 2010;(0.5398437500000001, 0.4927083333333333, 0.8484375000000001, 0.7270833333333333)
+		TRAIN;/opt/cars_train/02444.jpg;(800, 576);70;60;737;541;Ford F-150 Regular Cab 2012;(0.504375, 0.5217013888888888, 0.83375, 0.8350694444444444)
+		TRAIN;/opt/cars_train/02445.jpg;(786, 491);30;99;743;427;Buick Rainier SUV 2007;(0.4917302798982189, 0.5356415478615071, 0.9071246819338423, 0.6680244399185336)
 */
 
 type imageSrc struct {
@@ -64,7 +68,7 @@ func ImportFromURL(cfg *config.Config) error {
 	}
 
 	reader := csv.NewReader(file)
-	reader.Comma = ','
+	reader.Comma = ';'
 	reader.LazyQuotes = true
 
 	t := throttler.New(1, 10000000)
@@ -83,7 +87,10 @@ func ImportFromURL(cfg *config.Config) error {
 			return err
 		}
 
-		name := row[2]
+		//pp.Println(row)
+		//os.Exit(1)
+
+		name := row[7]
 		nameParts := strings.Split(name, " ")
 		year := nameParts[len(nameParts)-1]
 		model := strings.Replace(name, nameParts[0], "", -1)
@@ -97,7 +104,7 @@ func ImportFromURL(cfg *config.Config) error {
 			cars[name].imgs = append(cars[name].imgs, imageSrcs...)
 		} else {
 			car := &carInfo{
-				name:  row[2],
+				name:  row[7],
 				make:  nameParts[0],
 				model: strings.TrimSpace(model),
 				year:  nameParts[len(nameParts)-1],
@@ -121,6 +128,7 @@ func ImportFromURL(cfg *config.Config) error {
 			vehicle.Name = row.name
 			vehicle.Year = row.year
 			vehicle.Manufacturer = row.make
+			vehicle.Class = "car"
 
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
@@ -132,65 +140,42 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for _, imgSrc := range row.imgs {
 
-				// create temporary file
+				carImage := fmt.Sprintf("http://51.91.21.67:8881/%s", imgSrc)
+				carImage = strings.Replace(carImage, "/opt/", "", -1)
+                                carImage = strings.Replace(carImage, "./shared/datasets/stanford-cars/cars_train/", "", -1)
 
-				tmpfilePath := filepath.Join(os.TempDir(), path.Base(imgSrc))
-				file, err := os.Create(tmpfilePath)
-				if err != nil {
-					log.Fatal("Create tmpfilePath", err)
-					return err
-				}
-
-				pp.Println("tmpfilePath", tmpfilePath)
-				pp.Println("imgSrc", imgSrc)
-
-				if _, err := os.Stat(imgSrc); err != nil {
-					continue
-				}
-
-				// make request to darknet service
-				request, err := newfileUploadRequest("http://localhost:9005/crop", nil, "file", imgSrc)
-				if err != nil {
-					log.Fatalln("newfileUploadRequest", err)
-				}
-				client := &http.Client{}
-				resp, err := client.Do(request)
-				if err != nil {
-					log.Fatalln("client.Do", err)
+				proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
+				log.Println("proxyURL:", proxyURL)
+				if content, err := utils.GetJSON(proxyURL); err != nil {
+					fmt.Printf("open file failure, got err %v", err)
 				} else {
-					defer resp.Body.Close()
 
-					_, err = io.Copy(file, resp.Body)
-					if err != nil {
-						log.Fatal("io.Copy", err)
-						return err
+					if string(content) == "" {
+						continue					
 					}
 
-					buf, _ := ioutil.ReadFile(file.Name())
-					kind, _ := filetype.Match(buf)
-					pp.Println("kind: ", kind)
-
-					fi, err := file.Stat()
-					if err != nil {
-						log.Fatal("file.Stat()", err)
-						return err
-					}
-
-					size := fi.Size()
-
-					checksum, err := utils.GetMD5File(tmpfilePath)
-					if err != nil {
-						log.Fatal("GetMD5File", err)
+					var detection *models.Labelme
+					if err := json.Unmarshal(content, &detection); err != nil {
+						log.Warnln("unmarshal error, ", err)
 						continue
 					}
 
-					if size == 0 {
-						file.Close()
-						log.Warnln("image to small")
+					file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+					if err != nil {
+						log.Fatalln("decodeToFile error, ", err)					
+					}
+
+					if len(detection.Shapes) != 1 {
 						continue
 					}
 
-					image := models.VehicleImage{Title: row.name, SelectedType: "image", Checksum: checksum, Source: imgSrc}
+					// we expect online one focused image
+					maxX := detection.Shapes[0].Points[0][0]
+					maxY := detection.Shapes[0].Points[0][1]
+					minX := detection.Shapes[0].Points[1][0]
+					minY := detection.Shapes[0].Points[1][1]
+				    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 					log.Println("----> Scanning file: ", file.Name())
 					image.File.Scan(file)

@@ -282,8 +282,10 @@ func Extract(cfg *config.Config) error {
 		for _, rootUrl := range cfg.URLs {
 			sitemaps, err := prefetch.ExtractSitemapIndex(rootUrl)
 			if err != nil {
-				log.Fatal("ExtractSitemapIndex:", err)
-				return err
+				pp.Println("sitemaps", sitemaps)
+				log.Warnln("ExtractSitemapIndex:", err, "rootUrl:", rootUrl)
+				continue
+				// return err
 			}
 
 			utils.Shuffle(sitemaps)
@@ -293,8 +295,9 @@ func Extract(cfg *config.Config) error {
 					log.Infoln("extract sitemap gz compressed...")
 					locs, err := prefetch.ExtractSitemapGZ(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
-						return err
+						log.Warnln("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {
@@ -305,8 +308,9 @@ func Extract(cfg *config.Config) error {
 				} else {
 					locs, err := prefetch.ExtractSitemap(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemap", err)
-						return err
+						log.Warnln("ExtractSitemap", err, "sitemap:", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {

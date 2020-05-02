@@ -6,16 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
@@ -149,56 +146,41 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for _, imgSrc := range imageSrcs {
 
-				tmpfilePath := filepath.Join(os.TempDir(), path.Base(imgSrc.URL))
-				file, err := os.Create(tmpfilePath)
-				if err != nil {
-					log.Fatal("Create tmpfilePath", err)
-					continue
-				}
+				carImage := fmt.Sprintf("http://51.91.21.67:8880/%s", imgSrc.URL)
+				carImage = strings.Replace(carImage, "../../../shared/datasets/kaggle/", "", -1)
 
-				// make request to darknet service
-				request, err := newfileUploadRequest("http://localhost:9004/crop", nil, "file", imgSrc.URL)
-				if err != nil {
-					log.Fatalln("newfileUploadRequest", err)
-				}
-				client := &http.Client{}
-				resp, err := client.Do(request)
-				if err != nil {
-					log.Fatalln("client.Do", err)
+				proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", carImage)
+				log.Println("proxyURL:", proxyURL)
+				if content, err := utils.GetJSON(proxyURL); err != nil {
+					fmt.Printf("open file failure, got err %v", err)
 				} else {
-					defer resp.Body.Close()
 
-					_, err = io.Copy(file, resp.Body)
+					if string(content) == "" {
+						continue					
+					}
+
+					var detection *models.Labelme
+					if err := json.Unmarshal(content, &detection); err != nil {
+						log.Warnln("unmarshal error, ", err)
+						continue
+					}
+
+					file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 					if err != nil {
-						log.Fatal("io.Copy", err)
-						return err
+						log.Fatalln("decodeToFile error, ", err)					
 					}
 
-					buf, _ := ioutil.ReadFile(file.Name())
-					kind, _ := filetype.Match(buf)
-					pp.Println("kind: ", kind)
-
-					fi, err := file.Stat()
-					if err != nil {
-						log.Fatal("file.Stat()", err)
-						return err
+					if len(detection.Shapes) != 1 {
+						continue
 					}
 
-					size := fi.Size()
-
-					checksum, err := utils.GetMD5File(tmpfilePath)
-					if err != nil {
-						log.Fatal("GetMD5File", err)
-						return err
-					}
-
-					if size == 0 {
-						file.Close()
-						log.Warnln("image to small")
-						return nil
-					}
-
-					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: imgSrc.URL}
+					// we expect online one focused image
+					maxX := detection.Shapes[0].Points[0][0]
+					maxY := detection.Shapes[0].Points[0][1]
+					minX := detection.Shapes[0].Points[1][0]
+					minY := detection.Shapes[0].Points[1][1]
+				    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 					log.Println("----> Scanning file: ", file.Name())
 					image.File.Scan(file)

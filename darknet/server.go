@@ -33,7 +33,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/lucmichalski/cars-dataset/pkg/grab"
-	"github.com/lucmichalski/cars-dataset/pkg/middlewares"
+	// "github.com/lucmichalski/cars-dataset/pkg/middlewares"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 )
 
@@ -47,6 +47,7 @@ var (
 	isHelp      bool
 	isVerbose   bool
 	isDryMode   bool
+	gpuId	    int
 	weightsFile string
 	configFile  string
 	geoIpFile   string
@@ -80,6 +81,7 @@ func main() {
 	pflag.StringVarP(&configFile, "config-file", "c", "./models/yolov4.cfg", "Path to network layer configuration file. Example: cfg/yolov4.cfg")
 	pflag.StringVarP(&geoIpFile, "geoip-db", "", "./geoip2/GeoLite2-City.mmdb", "geoip filepath.")
 	pflag.StringVarP(&labelmeVer, "labelme-ver", "", "3.6.10", "labelme version JSON format.")
+        pflag.IntVarP(&gpuId, "gpu", "", 0, "gpu id (eg 0,1).")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
 	pflag.Parse()
@@ -95,7 +97,7 @@ func main() {
 
 	// Define the yolo network config
 	n := darknet.YOLONetwork{
-		GPUDeviceIndex:           0, // change to 1 if multi-GPU
+		GPUDeviceIndex:           gpuId,
 		NetworkConfigurationFile: configFile,
 		WeightsFile:              weightsFile,
 		Threshold:                .25,
@@ -115,7 +117,7 @@ func main() {
 	}
 
 	// Instanciate geoip2 database
-	geoReader = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
+	// geoReader = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
 
 	// launch the web service
 	server()
@@ -127,13 +129,13 @@ func server() {
 	r := gin.Default()
 
 	// globally use middlewares
-	r.Use(
-		middlewares.RealIP(),
+	//r.Use(
+		// middlewares.RealIP(),
 		// middlewares.RecoveryWithWriter(os.Stderr),
 		// middlewares.Logger(geoReader),
 		// middlewares.CORS(),
-		gin.ErrorLogger(),
-	)
+	//	gin.ErrorLogger(),
+	//)
 
 	// The route [/] is a dunny hone page
 	//
@@ -305,38 +307,42 @@ func server() {
 				pp.Println("bboxInfos:", bboxInfos)
 			}
 
-			minX, minY := bboxInfos[0].minX, bboxInfos[0].minY
-			maxX, maxY := bboxInfos[0].maxX, bboxInfos[0].maxY
+			if len(bboxInfos) > 0 {
 
-			if minX < 0 {
-				minX = 0
+				minX, minY := bboxInfos[0].minX, bboxInfos[0].minY
+				maxX, maxY := bboxInfos[0].maxX, bboxInfos[0].maxY
+
+				if minX < 0 {
+					minX = 0
+				}
+
+				if minY < 0 {
+					minY = 0
+				}
+
+				if maxX > b.Max.X {
+					maxX = b.Max.X
+				}
+
+				if maxY > b.Max.Y {
+					maxY = b.Max.Y
+				}
+
+				sc := models.Shape{}
+				sc.Label = bboxInfos[0].class
+				sc.ShapeType = "rectangle"
+				if isVerbose {
+					fmt.Println("minX=", minX, "maxX=", maxX, "minY=", minY, "maxY=", maxY)
+				}
+				x := []int{int(maxX), int(maxY)}
+				y := []int{int(minX), int(minY)}
+
+				points := [][]int{x, y}
+				sc.Points = append(sc.Points, points...)
+				lc.Shapes = append(lc.Shapes, sc)
+			} else {
+                                lc.Shapes = nil
 			}
-
-			if minY < 0 {
-				minY = 0
-			}
-
-			if maxX > b.Max.X {
-				maxX = b.Max.X
-			}
-
-			if maxY > b.Max.Y {
-				maxY = b.Max.Y
-			}
-
-			sc := models.Shape{}
-			sc.Label = bboxInfos[0].class
-			sc.ShapeType = "rectangle"
-			if isVerbose {
-				fmt.Println("minX=", minX, "maxX=", maxX, "minY=", minY, "maxY=", maxY)
-			}
-			x := []int{int(maxX), int(maxY)}
-			y := []int{int(minX), int(minY)}
-
-			points := [][]int{x, y}
-			sc.Points = append(sc.Points, points...)
-			lc.Shapes = append(lc.Shapes, sc)
-
 			c.JSON(200, &lc)
 		} else {
 			c.String(200, "Nothing")

@@ -34,7 +34,7 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"autotrader.com", "classics.autotrader.com"},
 		URLs: []string{
-			"https://motorcycles.autotrader.com/motorcycles/2020/polaris/ranger_570/200835936",
+			"https://classics.autotrader.com/classic-cars/1961/ferrari/250/101144772",
 		},
 		DB:              DB,
 		CacheDir:        "../../../shared/data",

@@ -7,10 +7,9 @@ import (
 	"strings"
 
 	"github.com/k0kubun/pp"
-
-	// "github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/gocolly/colly/v2/proxy"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
 
@@ -36,6 +35,12 @@ func Extract(cfg *config.Config) error {
 			MaxSize: cfg.QueueMaxSize,
 		},
 	)
+
+	rp, err := proxy.RoundRobinProxySwitcher("http://51.91.21.67:8119")
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.SetProxyFunc(rp)
 
 	// c.DisableCookies()
 
@@ -69,14 +74,44 @@ func Extract(cfg *config.Config) error {
 		vehicle.Source = "motorcycles.autotrader.com"
 		vehicle.Class = "motorcycle"
 
-		make := e.ChildText(`ol.breadcrumbs li:first-child`)
-		model := e.ChildText(`ol.breadcrumbs li:nth-of-type(n+2)`)
-		year := e.ChildText(`ol.breadcrumbs ol.breadcrumbs li:nth-of-type(n+3)`)
+		var make, model, year string
+		e.ForEach(`ol.breadcrumbs li:first-child`, func(_ int, el *colly.HTMLElement) {
+			el.ForEach(`span[itemprop=name]`, func(_ int, eli *colly.HTMLElement) {
+				if make == "" {
+					make = eli.Text
+					fmt.Println("make", eli.Text)
+				}
+			})
+		})
+
+		e.ForEach(`ol.breadcrumbs li:nth-of-type(n+2)`, func(_ int, el *colly.HTMLElement) {
+			el.ForEach(`span[itemprop=name]`, func(_ int, eli *colly.HTMLElement) {
+				if model == "" {
+					model = eli.Text
+					fmt.Println("model", eli.Text)
+				}
+			})
+		})
+
+		e.ForEach(`ol.breadcrumbs li:nth-of-type(n+3)`, func(_ int, el *colly.HTMLElement) {
+			el.ForEach(`span[itemprop=name]`, func(_ int, eli *colly.HTMLElement) {
+				if year == "" {
+					year = eli.Text
+					fmt.Println("year", eli.Text)
+				}
+			})
+		})
+
+		//make := e.ChildText(`ol.breadcrumbs span[itemprop=name]:first-child`)
+		//model := e.ChildText(`ol.breadcrumbs li:nth-of-type(n+2) span[itemprop=name]`)
+		//year := e.ChildText(`ol.breadcrumbs ol.breadcrumbs li:nth-of-type(n+3) span[itemprop=name]`)
 
 		vehicle.Manufacturer = make
 		vehicle.Year = year
 		vehicle.Modl = model
 		vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
+		pp.Println("vehicle: ", vehicle)
 
 		// modele := e.ChildText("span[class=modele]")
 		if make == "" && year == "" && model == "" {
@@ -111,27 +146,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://localhost:9005/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9005/labelme?url=%s", strings.Replace(carImage, " ", "%20", -1))
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
+				if string(content) == "" {
+					continue					
+				}
+
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)					
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -215,8 +263,9 @@ func Extract(cfg *config.Config) error {
 					log.Infoln("extract sitemap gz compressed...")
 					locs, err := prefetch.ExtractSitemapGZ(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
-						return err
+						log.Warnln("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {
@@ -230,8 +279,9 @@ func Extract(cfg *config.Config) error {
 					}
 					locs, err := prefetch.ExtractSitemap(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemap", err)
-						return err
+						log.Warnln("ExtractSitemap", err, "sitemap:", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {

@@ -18,10 +18,7 @@ services:
 
   tensorflow:
     image: tensorflow/tensorflow:latest-gpu-py3
-    rm: true
-    interactive: true
-    tty: true
-    cmd: ["bash"]
+    command: ["bash"]
 
   kaggle:
     image: lucmichalski/kaggle:py3-alpine3.11

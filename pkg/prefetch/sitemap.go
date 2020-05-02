@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	// "io/ioutil"
+	// "os"
 
 	// "github.com/k0kubun/pp"
 	"github.com/beevik/etree"
@@ -25,7 +27,7 @@ import (
 
 const (
 	torProxyAddress   = "socks5://51.91.21.67:5566"
-	torPrivoxyAddress = "http://51.91.21.67:8119"
+	torPrivoxyAddress = "socks5://51.91.21.67:8119"
 )
 
 func Sitemap(cfg *config.Config) error {
@@ -111,7 +113,7 @@ func Sitemap(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ", err)
+					log.Warnln("ExtractSitemapGZ", err)
 					return err
 				}
 				for _, loc := range locs {
@@ -138,7 +140,7 @@ func Sitemap(cfg *config.Config) error {
 
 func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
@@ -167,6 +169,17 @@ func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 	}
 	defer response.Body.Close()
 
+	/*
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// log.Println(string(body))	
+	fmt.Println("Body:", string(body))
+	os.Exit(1)
+	*/
+
 	doc := etree.NewDocument()
 	if _, err := doc.ReadFrom(response.Body); err != nil {
 		return nil, err
@@ -189,7 +202,7 @@ func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 
 func ExtractSitemapGZ(rawUrl string) ([]string, error) {
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
@@ -248,7 +261,7 @@ func ExtractSitemapGZ(rawUrl string) ([]string, error) {
 func ExtractSitemap(rawUrl string) ([]string, error) {
 
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
