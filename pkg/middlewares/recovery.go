@@ -8,8 +8,8 @@ import (
 	"net/http/httputil"
 	"runtime"
 
-	"github.com/sirupsen/logrus"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 )

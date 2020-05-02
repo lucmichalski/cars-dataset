@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	"github.com/lucmichalski/cars-contrib/stanford-cars/catalog"
 	"github.com/qor/admin"
@@ -41,8 +41,8 @@ func (o stanfordCarsPlugin) Catalog(cfg *config.Config) error {
 func (o stanfordCarsPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
-		CatalogURL: "./shared/datasets/stanford-cars/data/cars_data.csv",
-		ImageDirs:  []string{"./shared/datasets/stanford-cars/cars_test", "./shared/datasets/stanford-cars/cars_train"},
+		CatalogURL:  "./shared/datasets/stanford-cars/data/cars_data.csv",
+		ImageDirs:   []string{"./shared/datasets/stanford-cars/cars_test", "./shared/datasets/stanford-cars/cars_train"},
 	}
 	return cfg
 }

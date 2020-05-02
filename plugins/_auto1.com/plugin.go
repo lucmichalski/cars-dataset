@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/auto1.com/admin"
 	"github.com/lucmichalski/cars-contrib/auto1.com/crawler"
@@ -54,8 +54,8 @@ func (o auto1Plugin) Config() *config.Config {
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
-		IsSitemapIndex: false,
-		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		IsSitemapIndex:  false,
+		AnalyzerURL:     "http://localhost:9003/crop?url=%s",
 	}
 	return cfg
 }

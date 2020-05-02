@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/classics.autotrader.com.v2/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/classics.autotrader.com.v2/crawler"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		URLs: []string{
 			"https://motorcycles.autotrader.com/motorcycles/2020/polaris/ranger_570/200835936",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -51,4 +51,3 @@ func main() {
 	}
 
 }
-

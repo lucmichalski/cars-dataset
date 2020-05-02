@@ -1,27 +1,27 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
-	"os"
 	"net/url"
+	"os"
 	"sort"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/astaxie/flatmap"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/tsak/concurrent-csv-writer"
-	"github.com/astaxie/flatmap"
-		
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	ccsv "github.com/tsak/concurrent-csv-writer"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -35,7 +35,7 @@ import (
 		- https://github.com/microsoft/playwright
 		- https://datadome.co/bot-detection/will-playwright-replace-puppeteer-for-bad-bot-play-acting/
 		- https://datadome.co/pricing/
-		- 
+		-
 */
 
 func Extract(cfg *config.Config) error {
@@ -61,10 +61,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/auto1.com_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/auto1.com_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/auto1.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -128,7 +128,7 @@ func Extract(cfg *config.Config) error {
 		var make, model, year string
 		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
-			jsonLdStr := strings.TrimSpace(el.Text)	
+			jsonLdStr := strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
@@ -141,14 +141,14 @@ func Extract(cfg *config.Config) error {
 				log.Fatal(err)
 			}
 			var ks []string
-			for k :=range fm {
-				ks = append(ks,k)		
+			for k := range fm {
+				ks = append(ks, k)
 			}
 			sort.Strings(ks)
 
-			if cfg.IsDebug {			
-				for _, k :=range ks {
-					fmt.Println(k,":",fm[k])
+			if cfg.IsDebug {
+				for _, k := range ks {
+					fmt.Println(k, ":", fm[k])
 				}
 			}
 
@@ -234,9 +234,9 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
-				}				
+				}
 
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
 
@@ -324,7 +324,7 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 					return err
 				}
 				utils.Shuffle(locs)
@@ -340,7 +340,7 @@ func Extract(cfg *config.Config) error {
 				utils.Shuffle(locs)
 				for _, loc := range locs {
 					links = append(links, loc)
-				}				
+				}
 			}
 		}
 	} else {

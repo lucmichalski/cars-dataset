@@ -11,10 +11,10 @@ import (
 func main() {
 
 	cfg := &config.Config{
-		AnalyzerURL: 	"http://localhost:9003/crop?url=%s",
-		CatalogURL: 	"../../../shared/datasets/stanford-cars/data/cars_data.csv",
-		DryMode:         true,
-		IsDebug:         true,
+		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		CatalogURL:  "../../../shared/datasets/stanford-cars/data/cars_data.csv",
+		DryMode:     true,
+		IsDebug:     true,
 	}
 
 	err := catalog.ImportFromURL(cfg)

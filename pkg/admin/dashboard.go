@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/jinzhu/now"
-	"github.com/qor/admin"
 	"github.com/jinzhu/gorm"
+	"github.com/jinzhu/now"
 	"github.com/k0kubun/pp"
+	"github.com/qor/admin"
 )
 
 var DB *gorm.DB
@@ -41,10 +41,10 @@ func GetChartData(table, start, end string) (res []Chart) {
 		Scan(&res)
 
 	return
-} 
+}
 
 type Charts struct {
-	Vehicles []Chart
+	Vehicles      []Chart
 	VehicleImages []Chart
 }
 
@@ -53,8 +53,8 @@ func ReportsDataHandler(context *admin.Context) {
 	startDate := context.Request.URL.Query().Get("startDate")
 	endDate := context.Request.URL.Query().Get("endDate")
 
-	pp.Println("startDate",startDate)
-	pp.Println("endDate",endDate)
+	pp.Println("startDate", startDate)
+	pp.Println("endDate", endDate)
 
 	charts.Vehicles = GetChartData("vehicles", startDate, endDate)
 	charts.VehicleImages = GetChartData("vehicle_images", startDate, endDate)

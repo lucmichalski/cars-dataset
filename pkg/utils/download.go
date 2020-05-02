@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,10 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"io/ioutil"
 
-	"github.com/k0kubun/pp"
 	"github.com/h2non/filetype"
+	"github.com/k0kubun/pp"
+
 	// "github.com/cavaliercoder/grab"
 	"github.com/pkg/errors"
 
@@ -27,7 +28,7 @@ func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {
 		q := fileURL.Query()
 		var segments []string
 		if q.Get("url") != "" {
-			// if 
+			// if
 			if strings.Contains(strings.ToLower(q.Get("url")), "jpg") {
 				segments = append(segments, ".jpg")
 			} else if strings.Contains(strings.ToLower(q.Get("url")), "png") {
@@ -43,11 +44,11 @@ func OpenFileByURL(rawURL string) (*os.File, int64, string, error) {
 		fileName := GetMD5Hash(rawURL) + "-" + segments[len(segments)-1]
 
 		if strings.Contains(fileName, "?") {
-                        // clean up query string
-                        fileParts := strings.Split(fileName, "?")
-                        if len(fileParts) > 0 {
-                                fileName = fileParts[0]
-                        }
+			// clean up query string
+			fileParts := strings.Split(fileName, "?")
+			if len(fileParts) > 0 {
+				fileName = fileParts[0]
+			}
 		}
 		filePath := filepath.Join(os.TempDir(), fileName)
 

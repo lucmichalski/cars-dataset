@@ -1,28 +1,29 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
+
 	// "strconv"
 	"sort"
 
-	"github.com/k0kubun/pp"
+	"github.com/astaxie/flatmap"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/tsak/concurrent-csv-writer"
-	"github.com/astaxie/flatmap"
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
-	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
+	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -41,7 +42,6 @@ import (
 */
 
 func Extract(cfg *config.Config) error {
-
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -65,10 +65,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/buyacar.co.uk_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/buyacar.co.uk_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/buyacar.co.uk_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -81,8 +81,7 @@ func Extract(cfg *config.Config) error {
 		for _, loc := range data {
 			q.AddURL(loc[0])
 		}
-	}	
-
+	}
 
 	// save discovered links
 	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/buyacar.co.uk_sitemap.txt")
@@ -148,11 +147,11 @@ func Extract(cfg *config.Config) error {
 		// var carInfo []*pmodels.JSONLD
 		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
-			jsonLdStr := strings.TrimSpace(el.Text)	
+			jsonLdStr := strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
-			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}" 
+			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}"
 			if err := json.Unmarshal([]byte(jsonLdStr), &carInfo); err != nil {
 				log.Warnln("unmarshal error, ", err)
 				return
@@ -163,17 +162,17 @@ func Extract(cfg *config.Config) error {
 				log.Fatal(err)
 			}
 			var ks []string
-			for k :=range fm {
-				ks = append(ks,k)		
+			for k := range fm {
+				ks = append(ks, k)
 			}
 			sort.Strings(ks)
 
 			/*
-			if cfg.IsDebug {			
-				for _, k :=range ks {
-					fmt.Println(k,":",fm[k])
+				if cfg.IsDebug {
+					for _, k :=range ks {
+						fmt.Println(k,":",fm[k])
+					}
 				}
-			}
 			*/
 
 			if val, ok := fm["jsonld.manufacturer"]; ok {
@@ -197,7 +196,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			if val, ok := fm["jsonld.emissionsCO2"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "EmissionsCO2", Value:  strings.Replace(val, ".000000", "", -1)})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "EmissionsCO2", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
 			if val, ok := fm["jsonld.bodyType"]; ok {
@@ -205,15 +204,15 @@ func Extract(cfg *config.Config) error {
 			}
 
 			if val, ok := fm["jsonld.fuelType"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value:  val})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: val})
 			}
 
 			if val, ok := fm["jsonld.numberOfDoors"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value:  strings.Replace(val, ".000000", "", -1)})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
 			if val, ok := fm["jsonld.offers.price"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value:  strings.Replace(val, ".000000", "", -1)})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
 			if val, ok := fm["jsonld.offers.priceCurrency"]; ok {
@@ -232,10 +231,10 @@ func Extract(cfg *config.Config) error {
 		}
 		c := pluck.Config{
 			Activators:  []string{"{\"stockItemImages\":"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: ",\"searchAutorefresh",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "images",   // the key in the returned map, after completion
+			Permanent:   1,                                 // number of activators that stay permanently (counted from left to right)
+			Deactivator: ",\"searchAutorefresh",            // restarts capturing
+			Limit:       1,                                 // specifies the number of times capturing can occur
+			Name:        "images",                          // the key in the returned map, after completion
 		}
 		p.Add(c)
 
@@ -267,7 +266,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			if strings.HasPrefix(carImage, "//") {
-				carImage = "https:"+carImage
+				carImage = "https:" + carImage
 			}
 
 			// comment temprorarly as we develop on local
@@ -286,7 +285,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 
@@ -376,7 +375,7 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 					return err
 				}
 				utils.Shuffle(locs)
@@ -404,7 +403,7 @@ func Extract(cfg *config.Config) error {
 						// links = append(links, loc)
 						q.AddURL(loc)
 					}
-				}				
+				}
 			}
 		}
 	} else {

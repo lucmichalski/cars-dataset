@@ -8,11 +8,11 @@ import (
 	"image/jpeg"
 	"log"
 	"os"
-	"strconv"
 	"path/filepath"
+	"strconv"
 
-    "github.com/disintegration/imaging"
 	darknet "github.com/LdDl/go-darknet"
+	"github.com/disintegration/imaging"
 )
 
 var configFile = flag.String("configFile", "", "Path to network layer configuration file. Example: cfg/yolov3.cfg")
@@ -98,23 +98,22 @@ func imageToBytes(img image.Image) ([]byte, error) {
 }
 
 func cropZone(inputFile string, idx int, className string, bbox image.Rectangle) error {
-    // Open a test image.
-    src, err := imaging.Open(inputFile)
-    if err != nil {
-        log.Fatalf("failed to open image: %v", err)
-        return err
-    }
+	// Open a test image.
+	src, err := imaging.Open(inputFile)
+	if err != nil {
+		log.Fatalf("failed to open image: %v", err)
+		return err
+	}
 
-    src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
+	src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
 
-    // Save the resulting image as JPEG.
+	// Save the resulting image as JPEG.
 	basename := filepath.Base(inputFile)
 
-    err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
-    if err != nil {
-        log.Fatalf("failed to save image: %v", err)
-        return err
-    }
-    return nil
+	err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
+	if err != nil {
+		log.Fatalf("failed to save image: %v", err)
+		return err
+	}
+	return nil
 }
-

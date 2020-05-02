@@ -1,0 +1,22 @@
+---
+services:
+
+  tensorflow:
+    runtime: nvidia
+    gpus: all
+
+  darknet-train:
+    runtime: nvdia
+    gpus: all
+
+  darknet:
+    runtime: nvdia
+    gpus: all
+
+  darknet2:
+    runtime: nvdia
+    gpus: all
+
+  darknet3:
+    runtime: nvdia
+    gpus: all

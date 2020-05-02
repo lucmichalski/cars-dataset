@@ -1,29 +1,29 @@
 package catalog
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
-	"os"
-	"bytes"
 	"io"
-	"path/filepath"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path"
-	"io/ioutil"
+	"path/filepath"
+	"sort"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
+	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
 	"github.com/qor/media/media_library"
-	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
@@ -31,7 +31,7 @@ import (
 	- snippets
 		- cd plugins/carvana-kaggle && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carvana-kaggle.so ; cd ../..
 
-	- CSV exceprt	
+	- CSV exceprt
 		"id","year","make","model","trim1","trim2"
 		"0004d4463b50","2014","Acura","TL","TL","w/SE"
 		"00087a6bd4dc","2014","Acura","RLX","RLX","w/Tech"
@@ -47,10 +47,10 @@ type imageSrc struct {
 
 func ImportFromURL(cfg *config.Config) error {
 
-    file, err := os.Open(cfg.CatalogURL)
-    if err != nil {
-            return err
-    }
+	file, err := os.Open(cfg.CatalogURL)
+	if err != nil {
+		return err
+	}
 
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -117,21 +117,21 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for i, imgSrc := range imageSrcs {
 
-                file, err := os.Open(imgSrc.URL)
-                if err != nil {
-                        return err
-                }
+				file, err := os.Open(imgSrc.URL)
+				if err != nil {
+					return err
+				}
 
-                fi, err := file.Stat()
-                if err != nil {
-                        return err
-                }
+				fi, err := file.Stat()
+				if err != nil {
+					return err
+				}
 
-                size := fi.Size()
-                checksum, err := utils.GetMD5File(file.Name())
-                if err != nil {
-                        return err
-                }
+				size := fi.Size()
+				checksum, err := utils.GetMD5File(file.Name())
+				if err != nil {
+					return err
+				}
 
 				imageSrcs[i].Size = size
 				imageSrcs[i].Checksum = checksum
@@ -154,7 +154,7 @@ func ImportFromURL(cfg *config.Config) error {
 				if err != nil {
 					log.Fatal("Create tmpfilePath", err)
 					continue
-				}				
+				}
 
 				// make request to darknet service
 				request, err := newfileUploadRequest("http://localhost:9004/crop", nil, "file", imgSrc.URL)
@@ -252,7 +252,7 @@ func ImportFromURL(cfg *config.Config) error {
 	return nil
 }
 
-func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
+func walkImages(gid string, dirnames []string) (list []*imageSrc, err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -268,7 +268,7 @@ func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
 			Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 		})
 	}
-	return 
+	return
 }
 
 // Creates a new file upload http request with optional extra params

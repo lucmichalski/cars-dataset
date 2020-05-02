@@ -5,16 +5,13 @@ import (
 	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/carvana.com/admin"
-	"github.com/lucmichalski/cars-contrib/carvana.com/catalog"
 	"github.com/lucmichalski/cars-contrib/carvana.com/crawler"
-	"github.com/lucmichalski/cars-contrib/carvana.com/indexer"
 	"github.com/lucmichalski/cars-contrib/carvana.com/models"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )
-
 
 var Tables = []interface{}{
 	&models.SettingCarvana{}, /*&models.ImageCarvana{}*/

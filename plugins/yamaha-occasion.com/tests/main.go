@@ -1,19 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
-	"github.com/qor/validations"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/yamaha-occasion.com/crawler"
+	"github.com/qor/media"
+	"github.com/qor/validations"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/yamaha-occasion.com/crawler"
 )
 
 func main() {
@@ -35,9 +34,9 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.yamaha-occasion.com", "yamaha-occasion.com"},
 		URLs: []string{
-			"https://yamaha-occasion.com/fiches/index/1961332-occasion-peugeot-django-50?", 
+			"https://yamaha-occasion.com/fiches/index/1961332-occasion-peugeot-django-50?",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -52,4 +51,3 @@ func main() {
 	}
 
 }
-

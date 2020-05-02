@@ -3,21 +3,21 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/PuerkitoBio/goquery"
-	
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 func Extract(cfg *config.Config) error {
@@ -72,20 +72,20 @@ func Extract(cfg *config.Config) error {
 		vehicle.URL = e.Request.Ctx.Get("url")
 
 		/*
-		<div id="listing-content" class="fx-item fx-va-top fi-3pan-2nd-col"
-			 data-favorite="false"
-			 data-listing="1310951"
-			 data-listing-url="/listings/view/1310951/1985-land-rover-defender-for-sale-in-oceanside-california-92057"
-			 data-listing-thumbnail=""
-			 data-listing-year="1985"
-			 data-listing-make="Land Rover"
-			 data-listing-model="Defender"
-			 data-listing-formatted-price="$25,000">
+			<div id="listing-content" class="fx-item fx-va-top fi-3pan-2nd-col"
+				 data-favorite="false"
+				 data-listing="1310951"
+				 data-listing-url="/listings/view/1310951/1985-land-rover-defender-for-sale-in-oceanside-california-92057"
+				 data-listing-thumbnail=""
+				 data-listing-year="1985"
+				 data-listing-make="Land Rover"
+				 data-listing-model="Defender"
+				 data-listing-formatted-price="$25,000">
 		*/
 
 		var gid, year, make, model, formattedPrice string
 		e.ForEach(`div[id=listing-content]`, func(_ int, el *colly.HTMLElement) {
-			gid  = el.Attr("data-listing")
+			gid = el.Attr("data-listing")
 			year = el.Attr("data-listing-year")
 			make = el.Attr("data-listing-make")
 			model = el.Attr("data-listing-model")
@@ -187,7 +187,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 
 				if string(content) == "" {
-					continue					
+					continue
 				}
 
 				var detection *models.Labelme
@@ -198,7 +198,7 @@ func Extract(cfg *config.Config) error {
 
 				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 				if err != nil {
-					log.Fatalln("decodeToFile error, ", err)					
+					log.Fatalln("decodeToFile error, ", err)
 				}
 
 				if len(detection.Shapes) != 1 {
@@ -210,7 +210,7 @@ func Extract(cfg *config.Config) error {
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
 				minY := detection.Shapes[0].Points[1][1]
-			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 				log.Println("----> Scanning file: ", file.Name())
@@ -293,7 +293,7 @@ func Extract(cfg *config.Config) error {
 					log.Infoln("extract sitemap gz compressed...")
 					locs, err := prefetch.ExtractSitemapGZ(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 						return err
 					}
 					utils.Shuffle(locs)
@@ -313,7 +313,7 @@ func Extract(cfg *config.Config) error {
 						if strings.Contains(loc, "listings/view") {
 							q.AddURL(loc)
 						}
-					}				
+					}
 				}
 			}
 		}

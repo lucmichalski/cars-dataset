@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gocolly/colly/v2"	
+	"github.com/gocolly/colly/v2"
 )
 
 func main() {
@@ -24,4 +24,3 @@ func main() {
 	// start scraping
 	c.Visit("https://www.auto1.com/")
 }
-

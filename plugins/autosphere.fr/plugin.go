@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/autosphere.fr/admin"
 	"github.com/lucmichalski/cars-contrib/autosphere.fr/crawler"
@@ -54,8 +54,8 @@ func (o autospherePlugin) Config() *config.Config {
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
-		IsSitemapIndex: true,
-		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		IsSitemapIndex:  true,
+		AnalyzerURL:     "http://localhost:9003/crop?url=%s",
 	}
 	return cfg
 }

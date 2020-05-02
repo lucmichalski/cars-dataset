@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/cardealpage.com/admin"
 	"github.com/lucmichalski/cars-contrib/cardealpage.com/crawler"
@@ -57,8 +57,8 @@ func (o carDealPagelugin) Config() *config.Config {
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
-		IsSitemapIndex: true,
-		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		IsSitemapIndex:  true,
+		AnalyzerURL:     "http://localhost:9003/crop?url=%s",
 	}
 	return cfg
 }

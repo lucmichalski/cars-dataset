@@ -11,10 +11,17 @@ services:
     networks:
     - internal    
     volumes:
-    - ./shared/datasets/yolo-cars:/opt/data/yolo-cars
-    - ./shared/datasets/stanford-cars/data:/opt/data/cars_train
+    - ./tools:/opt/tools
+    - ./shared/datasets:/opt/data
     - ./models:/opt/models
     command: ["/bin/bash"]
+
+  tensorflow:
+    image: tensorflow/tensorflow:latest-gpu-py3
+    rm: true
+    interactive: true
+    tty: true
+    cmd: ["bash"]
 
   kaggle:
     image: lucmichalski/kaggle:py3-alpine3.11
@@ -60,7 +67,9 @@ services:
   crawler-mtbauto:
     image: lucmichalski/car-crawler--mtbauto:latest
     # container_name: ${NAMESPACE}-cwl-mtbauto
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
     - internal
     environment:
@@ -87,7 +96,9 @@ services:
   crawler-clauto:
     image: lucmichalski/car-crawler--clauto:latest
     # container_name: ${NAMESPACE}-cwl-clauto
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
     - internal
     environment:
@@ -114,7 +125,9 @@ services:
   dataset:
     image: lucmichalski/car-admin:latest
     container_name: ${NAMESPACE}-dataset
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
     - internal
     - web
@@ -141,7 +154,9 @@ services:
   admin:
     image: lucmichalski/car-admin:latest
     container_name: ${NAMESPACE}-admin  
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
     - 9008:9008
     networks:
@@ -167,10 +182,8 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: ${NAMESPACE}-selenium
-    environment:
-    - PORT=4445
-    expose:
-    - 4444
+    ports:
+    - 4444:4444
     volumes:
     - /dev/shm:/dev/shm
     networks:

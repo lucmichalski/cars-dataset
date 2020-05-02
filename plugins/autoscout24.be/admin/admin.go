@@ -1,9 +1,8 @@
 package admin
 
 import (
-	"github.com/qor/admin"
-
 	"github.com/lucmichalski/cars-contrib/autoscout24.be/models"
+	"github.com/qor/admin"
 )
 
 const menuName = "autoscout24.be"

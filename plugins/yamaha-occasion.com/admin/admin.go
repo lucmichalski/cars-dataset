@@ -1,9 +1,8 @@
 package admin
 
 import (
-	"github.com/qor/admin"
-
 	"github.com/lucmichalski/cars-contrib/yamaha-occasion.com/models"
+	"github.com/qor/admin"
 )
 
 const menuName = "yamaha-occasion.com"

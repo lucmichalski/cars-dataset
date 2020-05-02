@@ -2,39 +2,39 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
 	"image"
-	"image/png"
-	"image/jpeg"
 	"image/color"
 	"image/draw"
-	"log"
-	"strconv"
+	"image/jpeg"
+	"image/png"
 	"io"
-	"path/filepath"
+	"io/ioutil"
+	"log"
 	"math"
-	"os"
 	"net/http"
 	"net/url"
-	"fmt"
-	"strings"
+	"os"
+	"path/filepath"
 	"sort"
-	"time"
-	"io/ioutil"
+	"strconv"
+	"strings"
 	"sync"
-    "encoding/base64"
+	"time"
 
-	"github.com/spf13/pflag"
-	"github.com/h2non/filetype"
-	"github.com/pkg/errors"
-	"github.com/k0kubun/pp"
-	"github.com/gin-gonic/gin"
-	"github.com/disintegration/imaging"
 	darknet "github.com/LdDl/go-darknet"
+	"github.com/disintegration/imaging"
+	"github.com/gin-gonic/gin"
+	"github.com/h2non/filetype"
+	"github.com/k0kubun/pp"
 	"github.com/oschwald/geoip2-golang"
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 
-	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/middlewares"
 	"github.com/lucmichalski/cars-dataset/pkg/grab"
+	"github.com/lucmichalski/cars-dataset/pkg/middlewares"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 )
 
 /*
@@ -52,7 +52,7 @@ var (
 	geoIpFile   string
 	labelmeVer  string
 	geoReader   *geoip2.Reader
-	m 			yoloModel
+	m           yoloModel
 )
 
 // yoloModel represents the yolllow network model loaded and it read/write mutex
@@ -63,14 +63,14 @@ type yoloModel struct {
 
 // bboxInfo represents detection info for an enityt detected by yolo
 type bboxInfo struct {
-	minX int
-	minY int
-	maxX int
-	maxY int
-	width int
-	height int
+	minX    int
+	minY    int
+	maxX    int
+	maxY    int
+	width   int
+	height  int
 	surface int
-	class string
+	class   string
 }
 
 func main() {
@@ -114,7 +114,7 @@ func main() {
 		l: sync.Mutex{},
 	}
 
-	// Instanciate geoip2 database 
+	// Instanciate geoip2 database
 	geoReader = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
 
 	// launch the web service
@@ -128,10 +128,10 @@ func server() {
 
 	// globally use middlewares
 	r.Use(
-		// middlewares.RealIP(),
-		middlewares.RecoveryWithWriter(os.Stderr),
-		middlewares.Logger(geoReader),
-		middlewares.CORS(),
+		middlewares.RealIP(),
+		// middlewares.RecoveryWithWriter(os.Stderr),
+		// middlewares.Logger(geoReader),
+		// middlewares.CORS(),
 		gin.ErrorLogger(),
 	)
 
@@ -232,11 +232,11 @@ func server() {
 				pp.Println("Original Width:", b.Max.X)
 			}
 
-		    if b.Max.X > 700 {
+			if b.Max.X > 700 {
 				src = imaging.Resize(src, 700, 0, imaging.Lanczos)
-		    }
+			}
 
-		    // Ge the new bounds ? shall we reload the object ?
+			// Ge the new bounds ? shall we reload the object ?
 			b = src.Bounds()
 			if isVerbose {
 				pp.Println("Height post resing:", b.Max.Y)
@@ -261,8 +261,8 @@ func server() {
 			lc.ImageHeight = b.Max.Y
 			lc.ImageWidth = b.Max.X
 
-		    // Encode as base64.
-		    lc.ImageData = base64.StdEncoding.EncodeToString(buf)
+			// Encode as base64.
+			lc.ImageData = base64.StdEncoding.EncodeToString(buf)
 
 			lc.LineColor = []int{0, 255, 0, 128}
 			lc.Version = labelmeVer
@@ -284,14 +284,14 @@ func server() {
 					}
 					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
-							class: d.ClassNames[i],
-							minX: bBox.StartPoint.X,
-							minY: bBox.StartPoint.Y,
-							maxX: bBox.EndPoint.X,
-							maxY: bBox.EndPoint.Y,
-							width: bBox.EndPoint.X-bBox.StartPoint.X,
-							height: bBox.EndPoint.Y-bBox.StartPoint.Y,
-							surface: (bBox.EndPoint.X-bBox.StartPoint.X)*(bBox.EndPoint.Y-bBox.StartPoint.Y),
+							class:   d.ClassNames[i],
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
 						})
 					}
 				}
@@ -301,7 +301,7 @@ func server() {
 				return bboxInfos[i].surface > bboxInfos[j].surface
 			})
 
-			if isVerbose {			
+			if isVerbose {
 				pp.Println("bboxInfos:", bboxInfos)
 			}
 
@@ -328,10 +328,10 @@ func server() {
 			sc.Label = bboxInfos[0].class
 			sc.ShapeType = "rectangle"
 			if isVerbose {
-				fmt.Println("minX=", minX ,"maxX=", maxX ,"minY=", minY ,"maxY=", maxY)
+				fmt.Println("minX=", minX, "maxX=", maxX, "minY=", minY, "maxY=", maxY)
 			}
-			x := []int{int(maxX),int(maxY)}
-			y := []int{int(minX),int(minY)}
+			x := []int{int(maxX), int(maxY)}
+			y := []int{int(minX), int(minY)}
 
 			points := [][]int{x, y}
 			sc.Points = append(sc.Points, points...)
@@ -438,13 +438,13 @@ func server() {
 					)
 					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
-							minX: bBox.StartPoint.X,
-							minY: bBox.StartPoint.Y,
-							maxX: bBox.EndPoint.X,
-							maxY: bBox.EndPoint.Y,
-							width: bBox.EndPoint.X-bBox.StartPoint.X,
-							height: bBox.EndPoint.Y-bBox.StartPoint.Y,
-							surface: (bBox.EndPoint.X-bBox.StartPoint.X)*(bBox.EndPoint.Y-bBox.StartPoint.Y),
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
 						})
 					}
 					minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
@@ -477,11 +477,11 @@ func server() {
 
 			// Specify the quality, between 0-100, Higher is better
 			opt := jpeg.Options{
-			    Quality: 100,
+				Quality: 100,
 			}
 			err = jpeg.Encode(c.Writer, m, &opt)
 			if err != nil {
-			    // Handle error
+				// Handle error
 				panic(err.Error())
 			}
 
@@ -580,13 +580,13 @@ func server() {
 					)
 					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
-							minX: bBox.StartPoint.X,
-							minY: bBox.StartPoint.Y,
-							maxX: bBox.EndPoint.X,
-							maxY: bBox.EndPoint.Y,
-							width: bBox.EndPoint.X-bBox.StartPoint.X,
-							height: bBox.EndPoint.Y-bBox.StartPoint.Y,
-							surface: (bBox.EndPoint.X-bBox.StartPoint.X)*(bBox.EndPoint.Y-bBox.StartPoint.Y),
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
 						})
 					}
 				}
@@ -602,18 +602,18 @@ func server() {
 				c.String(200, "Nothing")
 			} else {
 				bbox := image.Rect(bboxInfos[0].minX-20, bboxInfos[0].minY-20, bboxInfos[0].maxX+20, bboxInfos[0].maxY+20)
-			    src = imaging.Crop(src, bbox)
+				src = imaging.Crop(src, bbox)
 				b := src.Bounds()
 				imgWidth := b.Max.X
 				imgHeight := b.Max.Y
-			    log.Println("src.Width:", imgWidth ,"src.Height:", imgHeight)
-			    if imgWidth > 700 {
+				log.Println("src.Width:", imgWidth, "src.Height:", imgHeight)
+				if imgWidth > 700 {
 					src = imaging.Resize(src, 700, 0, imaging.Lanczos)
-			    }
+				}
 				err = imaging.Encode(c.Writer, src, imaging.JPEG)
-			    if err != nil {
-			        log.Fatalf("failed to encode image: %v", err)
-			    }
+				if err != nil {
+					log.Fatalf("failed to encode image: %v", err)
+				}
 			}
 
 		} else {
@@ -669,11 +669,11 @@ func server() {
 				)
 				if (d.ClassNames[i] == "car" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 					bbox := image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20)
-				    src = imaging.Crop(src, bbox)
+					src = imaging.Crop(src, bbox)
 					err = imaging.Encode(c.Writer, src, imaging.JPEG)
-				    if err != nil {
-				        log.Fatalf("failed to encode image: %v", err)
-				    }
+					if err != nil {
+						log.Fatalf("failed to encode image: %v", err)
+					}
 				}
 			}
 		}
@@ -692,33 +692,32 @@ func printError(err error) {
 }
 
 func drawableJPEGImage(r io.Reader) (draw.Image, error) {
-    img, err := jpeg.Decode(r)
-    if err != nil {
-        return nil, err
-    }
-    dimg, ok := img.(draw.Image)
-    if !ok {
-        return nil, fmt.Errorf("%T is not a drawable image type", img)
-    }
-    return dimg, nil
+	img, err := jpeg.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+	dimg, ok := img.(draw.Image)
+	if !ok {
+		return nil, fmt.Errorf("%T is not a drawable image type", img)
+	}
+	return dimg, nil
 }
 
 func drawBbox(x1, y1, x2, y2, thickness int, img *image.RGBA) {
-    col := color.RGBA{0, 255, 0, 128}
-    for t:=0; t<thickness; t++ {
-        // draw horizontal lines
-        for x := x1; x<= x2; x++ {
-            img.Set(x, y1+t, col)
-            img.Set(x, y2-t, col)
-        }
-        // draw vertical lines
-        for y := y1; y <= y2; y++ {
-            img.Set(x1+t, y, col)
-            img.Set(x2-t, y, col)
-        }
-    }
+	col := color.RGBA{0, 255, 0, 128}
+	for t := 0; t < thickness; t++ {
+		// draw horizontal lines
+		for x := x1; x <= x2; x++ {
+			img.Set(x, y1+t, col)
+			img.Set(x, y2-t, col)
+		}
+		// draw vertical lines
+		for y := y1; y <= y2; y++ {
+			img.Set(x1+t, y, col)
+			img.Set(x2-t, y, col)
+		}
+	}
 }
-
 
 func round(v float64) int {
 	if v >= 0 {
@@ -748,24 +747,24 @@ func imageToBytes(img image.Image) ([]byte, error) {
 }
 
 func cropZone(inputFile string, idx int, className string, bbox image.Rectangle) error {
-    // Open a test image.
-    src, err := imaging.Open(inputFile)
-    if err != nil {
-        log.Fatalf("failed to open image: %v", err)
-        return err
-    }
+	// Open a test image.
+	src, err := imaging.Open(inputFile)
+	if err != nil {
+		log.Fatalf("failed to open image: %v", err)
+		return err
+	}
 
-    src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
+	src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
 
-    // Save the resulting image as JPEG.
+	// Save the resulting image as JPEG.
 	basename := filepath.Base(inputFile)
 
-    err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
-    if err != nil {
-        log.Fatalf("failed to save image: %v", err)
-        return err
-    }
-    return nil
+	err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
+	if err != nil {
+		log.Fatalf("failed to save image: %v", err)
+		return err
+	}
+	return nil
 }
 
 func grabFileByURL(rawURL string) (*os.File, int64, error) {

@@ -1,34 +1,34 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"plugin"
-	"bytes"
-	"html/template"
+	"strings"
 
-	"github.com/thanhhh/gin-gonic-realip"
 	"github.com/gin-gonic/gin"
-	"github.com/qor/qor/utils"
-	"github.com/qor/admin"
-	"github.com/qor/qor"
-	"github.com/qor/assetfs"
 	"github.com/jinzhu/gorm"
-	"github.com/k0kubun/pp"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/k0kubun/pp"
+	"github.com/nozzle/throttler"
+	"github.com/oschwald/geoip2-golang"
+	"github.com/qor/admin"
+	"github.com/qor/assetfs"
 	"github.com/qor/media"
 	"github.com/qor/media/media_library"
+	"github.com/qor/qor"
+	"github.com/qor/qor/utils"
 	"github.com/qor/validations"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/nozzle/throttler"
-	"github.com/tsak/concurrent-csv-writer"
-	"github.com/oschwald/geoip2-golang"
+	realip "github.com/thanhhh/gin-gonic-realip"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
 	padmin "github.com/lucmichalski/cars-dataset/pkg/admin"
 	"github.com/lucmichalski/cars-dataset/pkg/middlewares"
@@ -37,23 +37,26 @@ import (
 )
 
 var (
-	isHelp        bool
-	isVerbose     bool
-	isAdmin       bool
-	isCrawl       bool
-	isDataset     bool
-	isTruncate    bool
-	isClean       bool
-	isCatalog     bool
-	isDryMode     bool
-	isNoCache     bool
-	isExtract     bool
-	parallelJobs  int
-	geoIpFile     string
-	pluginDir     string
-	cacheDir      string
-	usePlugins    []string
-	geo           *geoip2.Reader
+	isHelp       bool
+	isVerbose    bool
+	isAdmin      bool
+	isCrawl      bool
+	isDataset    bool
+	isTruncate   bool
+	isClean      bool
+	isCatalog    bool
+	isDryMode    bool
+	isNoCache    bool
+	isTor        bool
+	isExtract    bool
+	parallelJobs int
+	torAddress   string 
+	analyzerURL  string
+	geoIpFile    string
+	pluginDir    string
+	cacheDir     string
+	usePlugins   []string
+	geo          *geoip2.Reader
 	queueMaxSize = 100000000
 	cachePath    = "./data/cache"
 )
@@ -84,6 +87,10 @@ func main() {
 	pflag.BoolVarP(&isAdmin, "admin", "", false, "launch the admin interface.")
 	pflag.BoolVarP(&isTruncate, "truncate", "t", false, "truncate table content.")
 	pflag.BoolVarP(&isExtract, "extract", "e", false, "extract data from urls.")
+	pflag.BoolVarP(&isTor, "tor", "", false, "Proxy any GET requests with tor.")
+	pflag.StringVarP(&torAddress, "tor-address", "", "sock5://localhost:5566", "Proxy addess with tor")
+	pflag.StringVarP(&torAddress, "tor-privoxy", "", "http://localhost:8119", "Proxy address with tor-privoxy.")
+	pflag.StringVarP(&analyzerURL, "analyzer-url", "", "http://localhost:9003", "Darknet Yolo model proxy web service address")
 	pflag.StringVarP(&cacheDir, "cache-dir", "", "./shared/data", "cache directory.")
 	pflag.BoolVarP(&isNoCache, "no-cache", "", false, "disable crawler cache.")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
@@ -94,7 +101,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Instanciate geoip2 database 
+	// Instanciate geoip2 database
 	geo = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
 
 	// Instanciate the mysql client
@@ -119,10 +126,8 @@ func main() {
 	}
 
 	// migrate tables
-	// DB.AutoMigrate(&vehicle{})
-	// DB.AutoMigrate(&vehicleImage{})
-    DB.AutoMigrate(&models.Vehicle{})
-    DB.AutoMigrate(&models.VehicleImage{})
+	DB.AutoMigrate(&models.Vehicle{})
+	DB.AutoMigrate(&models.VehicleImage{})
 	DB.AutoMigrate(&media_library.MediaLibrary{})
 
 	// load plugins
@@ -196,6 +201,7 @@ func main() {
 			}
 			c.IsDebug = true
 			c.IsClean = isClean
+			c.AnalyzerURL = analyzerURL			
 			c.ConsumerThreads = 6
 			pp.Println(c)
 			c.DB = DB
@@ -213,13 +219,13 @@ func main() {
 			c := cmd.Config()
 			c.DB = DB
 			c.DryMode = isDryMode
-			c.IsDebug = isVerbose			
+			c.IsDebug = isVerbose
 			err := cmd.Catalog(c)
 			if err != nil {
 				panic(err)
 			}
 		}
-	   os.Exit(0)
+		os.Exit(0)
 	}
 
 	if isAdmin {
@@ -255,7 +261,7 @@ func main() {
 			Config:     &admin.SelectOneConfig{Collection: [][]string{{"video", "Video"}, {"image", "Image"}, {"file", "File"}, {"video_link", "Video Link"}}},
 		})
 		VehicleImagesResource.IndexAttrs("File", "Title")
- 
+
 		VehicleImagesResource.UseTheme("grid")
 
 		cars := Admin.AddResource(&models.Vehicle{}, &admin.Config{Menu: []string{"Crawl Management"}})
@@ -344,7 +350,7 @@ func main() {
 		// Flush pending writes and close file upon exit of Sitemap()
 		defer csvDataset.Close()
 
-		csvDataset.Write([]string{"name","make","model","year","image_path"})
+		csvDataset.Write([]string{"name", "make", "model", "year", "image_path"})
 		csvDataset.Flush()
 
 		// Scan
@@ -371,11 +377,11 @@ func main() {
 		var count cnt
 		DB.Raw("select count(id) as count FROM vehicles WHERE class='car'").Scan(&count)
 
-        // instanciate throttler
-       	t := throttler.New(48, count.Count)
+		// instanciate throttler
+		t := throttler.New(48, count.Count)
 
-       	counter := 0
-       	imgCounter := 0
+		counter := 0
+		imgCounter := 0
 
 		var results []res
 		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles WHERE class='car'").Scan(&results)
@@ -398,21 +404,21 @@ func main() {
 				//	return nil
 				//}
 
-	        	// prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
+				// prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
 				prefixPath := filepath.Join("./", "datasets", "cars", strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year)
 				os.MkdirAll(prefixPath, 0755)
 				// pp.Println("prefixPath:", prefixPath)
 
 				for _, entry := range ep {
 
-	                // get image Info (to test)
-	                var vi models.VehicleImage
-	    	        err := DB.First(&vi, entry.ID).Error
-	            	if err != nil {
-	            	    log.Warnln("VehicleImage", err)
+					// get image Info (to test)
+					var vi models.VehicleImage
+					err := DB.First(&vi, entry.ID).Error
+					if err != nil {
+						log.Warnln("VehicleImage", err)
 						continue
-	            	}
-	            	// fmt.Println("image checksum", vi.Checksum)
+					}
+					// fmt.Println("image checksum", vi.Checksum)
 
 					sourceFile := filepath.Join("./", "public", entry.Url)
 					// pp.Println("sourceFile:", sourceFile)
@@ -423,7 +429,7 @@ func main() {
 						continue
 					}
 
-					destinationFile := filepath.Join(prefixPath, vi.Checksum + filepath.Ext(entry.Url))
+					destinationFile := filepath.Join(prefixPath, vi.Checksum+filepath.Ext(entry.Url))
 					// destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
 					err = ioutil.WriteFile(destinationFile, input, 0644)
 					if err != nil {
@@ -441,12 +447,12 @@ func main() {
 				percent := (counter * 100) / count.Count
 				fmt.Printf("REF COUNTER=%d/%d (%.2f%), IMG COUNTER=%d\n", counter, count.Count, percent, imgCounter)
 				counter++
-			
+
 				return nil
 
 			}(result)
 
-	        t.Throttle()
+			t.Throttle()
 
 		}
 
@@ -473,4 +479,3 @@ func must(i interface{}, err error) interface{} {
 
 	return i
 }
-

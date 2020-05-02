@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/buyacar.co.uk/admin"
 	"github.com/lucmichalski/cars-contrib/buyacar.co.uk/crawler"
@@ -55,7 +55,7 @@ func (o buyACarPlugin) Config() *config.Config {
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 1,
 		IsSitemapIndex:  false,
-		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		AnalyzerURL:     "http://localhost:9003/crop?url=%s",
 	}
 	return cfg
 }

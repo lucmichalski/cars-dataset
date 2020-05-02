@@ -1,28 +1,29 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
+
 	// "strconv"
 	"sort"
 
-	"github.com/k0kubun/pp"
+	"github.com/astaxie/flatmap"
 	"github.com/corpix/uarand"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/proxy"
+	"github.com/gocolly/colly/v2/queue"
+	"github.com/k0kubun/pp"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
-	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/queue"
-	"github.com/gocolly/colly/v2/proxy"
-	"github.com/tsak/concurrent-csv-writer"
-	"github.com/astaxie/flatmap"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -40,7 +41,6 @@ import (
 */
 
 func Extract(cfg *config.Config) error {
-
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -72,10 +72,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/cars.com_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/cars.com_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/cars.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -89,8 +89,7 @@ func Extract(cfg *config.Config) error {
 		for _, loc := range data {
 			q.AddURL(loc[0])
 		}
-	}	
-
+	}
 
 	// save discovered links
 	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/cars.com_sitemap.txt")
@@ -157,11 +156,11 @@ func Extract(cfg *config.Config) error {
 		// var carInfo []*pmodels.JSONLD
 		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
-			jsonLdStr := strings.TrimSpace(el.Text)	
+			jsonLdStr := strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
-			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}" 
+			jsonLdStr = "{\"jsonld\":" + jsonLdStr + "}"
 			if err := json.Unmarshal([]byte(jsonLdStr), &carInfo); err != nil {
 				log.Fatalln("unmarshal error, ", err)
 			}
@@ -171,14 +170,14 @@ func Extract(cfg *config.Config) error {
 				log.Fatal(err)
 			}
 			var ks []string
-			for k :=range fm {
-				ks = append(ks,k)		
+			for k := range fm {
+				ks = append(ks, k)
 			}
 			sort.Strings(ks)
 
-			if cfg.IsDebug {			
-				for _, k :=range ks {
-					fmt.Println(k,":",fm[k])
+			if cfg.IsDebug {
+				for _, k := range ks {
+					fmt.Println(k, ":", fm[k])
 				}
 			}
 
@@ -210,7 +209,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			if val, ok := fm["jsonld.0.numberOfDoors"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value:  strings.Replace(val, ".000000", "", -1)})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "NumberOfDoors", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
 			if val, ok := fm["jsonld.0.vehicleSeatingCapacity"]; ok {
@@ -222,7 +221,7 @@ func Extract(cfg *config.Config) error {
 			}
 
 			if val, ok := fm["jsonld.0.offers.price"]; ok {
-				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value:  strings.Replace(val, ".000000", "", -1)})
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value: strings.Replace(val, ".000000", "", -1)})
 			}
 
 			if val, ok := fm["jsonld.0.offers.priceCurrency"]; ok {
@@ -241,7 +240,7 @@ func Extract(cfg *config.Config) error {
 			if cfg.IsDebug {
 				fmt.Println("carImage:", carImage)
 			}
-			if carImage != "https://www.cstatic-images.com/supersized/in/v1/2926059/3G1BE6SM7HS575075/ae93dbc72bb1283a87818cf822e81332.jpg" { 
+			if carImage != "https://www.cstatic-images.com/supersized/in/v1/2926059/3G1BE6SM7HS575075/ae93dbc72bb1283a87818cf822e81332.jpg" {
 				carDataImage = append(carDataImage, carImage)
 			}
 		})
@@ -263,7 +262,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 
 				if string(content) == "" {
-					continue					
+					continue
 				}
 
 				var detection *models.Labelme
@@ -274,7 +273,7 @@ func Extract(cfg *config.Config) error {
 
 				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 				if err != nil {
-					log.Fatalln("decodeToFile error, ", err)					
+					log.Fatalln("decodeToFile error, ", err)
 				}
 
 				if len(detection.Shapes) != 1 {
@@ -286,7 +285,7 @@ func Extract(cfg *config.Config) error {
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
 				minY := detection.Shapes[0].Points[1][1]
-			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 				log.Println("----> Scanning file: ", file.Name())
@@ -373,7 +372,7 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 					return err
 				}
 				utils.Shuffle(locs)
@@ -401,7 +400,7 @@ func Extract(cfg *config.Config) error {
 						// links = append(links, loc)
 						q.AddURL(loc)
 					}
-				}				
+				}
 			}
 		}
 	} else {

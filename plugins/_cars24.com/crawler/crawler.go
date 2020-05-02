@@ -3,22 +3,22 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
-	//"regexp"
+	"strings"
 
+	//"regexp"
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	// "github.com/PuerkitoBio/goquery"
-	
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -88,9 +88,9 @@ func Extract(cfg *config.Config) error {
 			}
 		})
 
-		var name string 
+		var name string
 		e.ForEach(`h1.d-inline`, func(_ int, el *colly.HTMLElement) {
-			name = strings.TrimSpace(el.Text)		
+			name = strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("name:", name)
 			}
@@ -108,7 +108,7 @@ func Extract(cfg *config.Config) error {
 			carDataImage = append(carDataImage, carImage)
 		})
 
-		var year string 
+		var year string
 		e.ForEach(`div[id=overview-container] li`, func(_ int, el *colly.HTMLElement) {
 			var label, value string
 			el.ForEach(`label`, func(_ int, eli *colly.HTMLElement) {
@@ -130,7 +130,7 @@ func Extract(cfg *config.Config) error {
 					vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: label, Value: value})
 				}
 			}
-		})		
+		})
 
 		if cfg.IsDebug {
 			fmt.Println("year:", year)
@@ -140,7 +140,7 @@ func Extract(cfg *config.Config) error {
 			return
 		}
 
-		// overview-container 
+		// overview-container
 
 		// autosphere.fr legacy
 		vehicle.Manufacturer = make
@@ -172,7 +172,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 
@@ -271,7 +271,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 				q.AddURL(sitemap)
 			}
-		}	
+		}
 	} else {
 		for _, u := range cfg.URLs {
 			q.AddURL(u)

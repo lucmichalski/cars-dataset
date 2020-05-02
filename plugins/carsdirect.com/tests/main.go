@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/carsdirect.com/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/carsdirect.com/crawler"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 			"https://www.carsdirect.com/used_cars/vehicle-detail/ul1991057178/toyota/camry?source=UsedCarListings&savedVehicleId=",
 			"https://www.carsdirect.com/2001/acura/cl/pictures",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -52,4 +52,3 @@ func main() {
 	}
 
 }
-

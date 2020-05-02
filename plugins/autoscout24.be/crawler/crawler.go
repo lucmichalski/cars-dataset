@@ -1,23 +1,23 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/tsak/concurrent-csv-writer"
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
-	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
+	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
@@ -47,10 +47,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/autoscout24.be_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/autoscout24.be_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/autoscout24.be_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -109,7 +109,7 @@ func Extract(cfg *config.Config) error {
 			if vehicleType == "moto" {
 				vehicle.Class = "motorcycle"
 			} else {
-				vehicle.Class = "car"				
+				vehicle.Class = "car"
 			}
 		})
 
@@ -121,46 +121,46 @@ func Extract(cfg *config.Config) error {
 		}
 		p.Add(pluck.Config{
 			Activators:  []string{"Marque</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "make",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "make",                        // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Modèle</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "model",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "model",                       // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Année</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "year",   // the key in the returned map, after completion
+			Permanent:   1,                            // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                      // restarts capturing
+			Limit:       1,                            // specifies the number of times capturing can occur
+			Name:        "year",                       // the key in the returned map, after completion
 		})
 
 		p.Add(pluck.Config{
 			Activators:  []string{"Couleur extérieure</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "color",   // the key in the returned map, after completion
+			Permanent:   1,                                         // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                                   // restarts capturing
+			Limit:       1,                                         // specifies the number of times capturing can occur
+			Name:        "color",                                   // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Portes</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "doors",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "doors",                       // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Sièges</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "seats",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "seats",                       // the key in the returned map, after completion
 		})
 
 		p.PluckURL(e.Request.Ctx.Get("url"))
@@ -232,7 +232,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 
 				if string(content) == "" {
-					continue					
+					continue
 				}
 
 				var detection *models.Labelme
@@ -243,7 +243,7 @@ func Extract(cfg *config.Config) error {
 
 				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 				if err != nil {
-					log.Fatalln("decodeToFile error, ", err)					
+					log.Fatalln("decodeToFile error, ", err)
 				}
 
 				if len(detection.Shapes) != 1 {
@@ -255,7 +255,7 @@ func Extract(cfg *config.Config) error {
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
 				minY := detection.Shapes[0].Points[1][1]
-			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 				log.Println("----> Scanning file: ", file.Name())

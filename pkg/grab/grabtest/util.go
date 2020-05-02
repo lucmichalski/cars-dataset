@@ -1,6 +1,8 @@
 package grabtest
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+)
 
 func MustHexDecodeString(s string) (b []byte) {
 	var err error

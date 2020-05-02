@@ -3,25 +3,25 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
-	// "time"
+	"strings"
 
+	// "time"
 	// "github.com/qor/oss/filesystem"
 	// "github.com/qor/oss/s3"
 	"github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
+	"github.com/nozzle/throttler"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
-	"github.com/lucmichalski/cars-dataset/pkg/selenium"
-	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
-	slog "github.com/lucmichalski/cars-dataset/pkg/selenium/log"
-	"github.com/nozzle/throttler"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium"
+	"github.com/lucmichalski/cars-dataset/pkg/selenium/chrome"
+	slog "github.com/lucmichalski/cars-dataset/pkg/selenium/log"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -96,15 +96,15 @@ curl -X PUT http://localhost:8089/services/detection_600 -d '{
 func Extract(cfg *config.Config) error {
 
 	/*
-  	// OSS's default storage is directory `public`, change it to S3
-	oss.Storage = s3.New(&s3.Config{
-		AccessID: "access_id", 
-		AccessKey: "access_key", 
-		Region: "region", 
-		Bucket: "bucket", 
-		Endpoint: "cdn.getqor.com", 
-		ACL: awss3.BucketCannedACLPublicRead,
-	})
+		  	// OSS's default storage is directory `public`, change it to S3
+			oss.Storage = s3.New(&s3.Config{
+				AccessID: "access_id",
+				AccessKey: "access_key",
+				Region: "region",
+				Bucket: "bucket",
+				Endpoint: "cdn.getqor.com",
+				ACL: awss3.BucketCannedACLPublicRead,
+			})
 	*/
 
 	caps := selenium.Capabilities{"browserName": "chrome"}
@@ -117,14 +117,14 @@ func Extract(cfg *config.Config) error {
 			"--disable-crash-reporter",
 			"--hide-scrollbars",
 			"--disable-gpu",
-	        "--disable-setuid-sandbox",
-	        "--disable-infobars",
-	        "--window-position=0,0",
-	        "--ignore-certifcate-errors",
-	        "--ignore-certifcate-errors-spki-list",
+			"--disable-setuid-sandbox",
+			"--disable-infobars",
+			"--window-position=0,0",
+			"--ignore-certifcate-errors",
+			"--ignore-certifcate-errors-spki-list",
 			"--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/604.4.7 (KHTML, like Gecko) Version/11.0.2 Safari/604.4.7",
-                        "--proxy-server=http://tor-haproxy:8119",
-                        // "--host-resolver-rules=\"MAP * 0.0.0.0 , EXCLUDE localhost\"",
+			"--proxy-server=http://tor-haproxy:8119",
+			// "--host-resolver-rules=\"MAP * 0.0.0.0 , EXCLUDE localhost\"",
 		},
 	}
 	caps.AddChrome(chromeCaps)
@@ -142,20 +142,6 @@ func Extract(cfg *config.Config) error {
 	}
 	defer wd.Quit()
 
-	// wd.AddCookie()
-
-	/*
-	err = wd.SetImplicitWaitTimeout(time.Second * 2)
-	if err != nil {
-		return err
-	}	
-
-	err = wd.SetPageLoadTimeout(time.Second * 2)
-	if err != nil {
-		return err
-	}
-	*/
-
 	// if cfg.IsSitemapIndex {
 	log.Infoln("extractSitemapIndex...")
 	sitemaps, err := prefetch.ExtractSitemapIndex("https://motorcycles.autotrader.com/sitemap.xml")
@@ -172,7 +158,7 @@ func Extract(cfg *config.Config) error {
 			log.Infoln("extract sitemap gz compressed...")
 			locs, err := prefetch.ExtractSitemapGZ(sitemap)
 			if err != nil {
-				log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+				log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 				return err
 			}
 			utils.Shuffle(locs)
@@ -187,17 +173,18 @@ func Extract(cfg *config.Config) error {
 			}
 			locs, err := prefetch.ExtractSitemap(sitemap)
 			if err != nil {
-				log.Fatal("ExtractSitemap", err)
-				return err
+				log.Warnln("ExtractSitemap", err)
+				continue
+				// return err
 			}
 			utils.Shuffle(locs)
 			for _, loc := range locs {
 				if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
 					links = append(links, loc)
 				}
-			}				
+			}
 		}
-	}	
+	}
 
 	pp.Println("found:", len(links))
 
@@ -221,26 +208,18 @@ func Extract(cfg *config.Config) error {
 		}
 		log.Fatal(t.Err())
 	}
-	
+
 	// }
 
 	return nil
 }
 
-func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (error) {
+func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) error {
 
 	err := wd.Get(url)
 	if err != nil {
 		return err
 	}
-
-	/*
-	src, err := wd.PageSource()
-	if err != nil {
-		return err
-	}
-	fmt.Println("source", src)
-	*/
 
 	// check in the databse if exists
 	var vehicleExists models.Vehicle
@@ -249,7 +228,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 		return nil
 	}
 
-	// create vehicle 
+	// create vehicle
 	vehicle := &models.Vehicle{}
 	vehicle.URL = url
 	vehicle.Source = "motorcycles.autotrader.com"
@@ -287,7 +266,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 	if err != nil {
 		return err
 	}
-	pp.Println("year:", year)	
+	pp.Println("year:", year)
 
 	vehicle.Manufacturer = make
 	vehicle.Year = year
@@ -299,7 +278,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 		return err
 	}
 
-	for _ , imageCnt := range imagesCnt {
+	for _, imageCnt := range imagesCnt {
 		image, err := imageCnt.GetAttribute("src")
 		if err != nil {
 			continue
@@ -314,28 +293,40 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			continue
 		}
 
-		proxyURL := fmt.Sprintf("http://51.91.21.67:9003/crop?url=%s", image)
+		proxyURL := fmt.Sprintf("http://51.91.21.67:9005/labelme?url=%s", image)
 		log.Println("proxyURL:", proxyURL)
-		if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+		if content, err := utils.GetJSON(proxyURL); err != nil {
 			fmt.Printf("open file failure, got err %v", err)
 		} else {
-			defer file.Close()
 
-			if size < 40000 {
-				if cfg.IsClean {
-					// delete tmp file
-					err := os.Remove(file.Name())
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-				log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+			if string(content) == "" {
 				continue
 			}
 
-			image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: image}
+			var detection *models.Labelme
+			if err := json.Unmarshal(content, &detection); err != nil {
+				log.Warnln("unmarshal error, ", err)
+				continue
+			}
 
-			log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+			file, checksum, err := utils.DecodeToFile(image, detection.ImageData)
+			if err != nil {
+				log.Fatalln("decodeToFile error, ", err)
+			}
+
+			if len(detection.Shapes) != 1 {
+				continue
+			}
+
+			// we expect online one focused image
+			maxX := detection.Shapes[0].Points[0][0]
+			maxY := detection.Shapes[0].Points[0][1]
+			minX := detection.Shapes[0].Points[1][0]
+			minY := detection.Shapes[0].Points[1][1]
+			bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+			image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: image, BBox: bbox}
+
+			log.Println("----> Scanning file: ", file.Name())
 			if err := image.File.Scan(file); err != nil {
 				log.Fatalln("image.File.Scan, err:", err)
 				continue
@@ -369,7 +360,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 				}
 			}
 		}
-	}	
+	}
 
 	if len(vehicle.Images.Files) == 0 {
 		return nil
@@ -383,7 +374,7 @@ func scrapeSelenium(url string, cfg *config.Config, wd selenium.WebDriver) (erro
 			log.Fatalf("create vehicle (%v) failure, got err %v", vehicle, err)
 			return err
 		}
-	}	
+	}
 
 	return nil
 }

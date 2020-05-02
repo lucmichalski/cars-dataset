@@ -1,13 +1,15 @@
 package prefetch
 
 import (
-	"errors"
-	"runtime"
-	"net/http"
 	"compress/gzip"
-	"io"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"runtime"
 	"strings"
+	"time"
 
 	// "github.com/k0kubun/pp"
 	"github.com/beevik/etree"
@@ -15,9 +17,15 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
 	log "github.com/sirupsen/logrus"
-	"github.com/tsak/concurrent-csv-writer"
+	ccsv "github.com/tsak/concurrent-csv-writer"
+	"golang.org/x/net/proxy"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
+)
+
+const (
+	torProxyAddress   = "socks5://51.91.21.67:5566"
+	torPrivoxyAddress = "http://51.91.21.67:8119"
 )
 
 func Sitemap(cfg *config.Config) error {
@@ -112,7 +120,7 @@ func Sitemap(cfg *config.Config) error {
 			} else {
 				q.AddURL(sitemap)
 			}
-		}		
+		}
 	} else {
 		for _, u := range cfg.URLs {
 			q.AddURL(u)
@@ -128,18 +136,35 @@ func Sitemap(cfg *config.Config) error {
 	return nil
 }
 
-func ExtractSitemapIndex(url string) ([]string, error) {
-	client := new(http.Client)
-	request, err := http.NewRequest("GET", url, nil)
+func ExtractSitemapIndex(rawUrl string) ([]string, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	tbProxyURL, err := url.Parse(torProxyAddress)
 	if err != nil {
-	 	fmt.Println(err)
+		return nil, err
+	}
+
+	tbDialer, err := proxy.FromURL(tbProxyURL, proxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+	tbTransport := &http.Transport{
+		Dial: tbDialer.Dial,
+	}
+	client.Transport = tbTransport
+
+	request, err := http.NewRequest("GET", rawUrl, nil)
+	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
-	}	
+	}
 	defer response.Body.Close()
 
 	doc := etree.NewDocument()
@@ -150,36 +175,52 @@ func ExtractSitemapIndex(url string) ([]string, error) {
 	index := doc.SelectElement("sitemapindex")
 	sitemaps := index.SelectElements("sitemap")
 	for _, sitemap := range sitemaps {
-	 	loc := sitemap.SelectElement("loc")
-	 	l := loc.Text()
+		loc := sitemap.SelectElement("loc")
+		l := loc.Text()
 		l = strings.TrimLeftFunc(l, func(c rune) bool {
 			return c == '\r' || c == '\n' || c == '\t'
 		})
 		l = strings.TrimSpace(l)
-	 	log.Infoln("loc:", l)
-	 	urls = append(urls,l)
+		log.Infoln("loc:", l)
+		urls = append(urls, l)
 	}
 	return urls, nil
 }
 
-func ExtractSitemapGZ(url string) ([]string, error) {
-	client := new(http.Client)
-	request, err := http.NewRequest("GET", url, nil)
+func ExtractSitemapGZ(rawUrl string) ([]string, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	tbProxyURL, err := url.Parse(torProxyAddress)
 	if err != nil {
-	 	fmt.Println(err)
+		return nil, err
+	}
+
+	tbDialer, err := proxy.FromURL(tbProxyURL, proxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+	tbTransport := &http.Transport{
+		Dial: tbDialer.Dial,
+	}
+	client.Transport = tbTransport
+	request, err := http.NewRequest("GET", rawUrl, nil)
+	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
-	}	
+	}
 	defer response.Body.Close()
 
 	var reader io.ReadCloser
 	reader, err = gzip.NewReader(response.Body)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
 	}
 	defer reader.Close()
@@ -192,30 +233,50 @@ func ExtractSitemapGZ(url string) ([]string, error) {
 	urlset := doc.SelectElement("urlset")
 	entries := urlset.SelectElements("url")
 	for _, entry := range entries {
-	 	loc := entry.SelectElement("loc")
-	 	l := loc.Text()
+		loc := entry.SelectElement("loc")
+		l := loc.Text()
 		l = strings.TrimLeftFunc(l, func(c rune) bool {
 			return c == '\r' || c == '\n' || c == '\t'
 		})
 		l = strings.TrimSpace(l)
-	 	log.Infoln("loc:", l)
-	 	urls = append(urls, l)
+		log.Infoln("loc:", l)
+		urls = append(urls, l)
 	}
 	return urls, err
 }
 
-func ExtractSitemap(url string) ([]string, error) {
-	client := new(http.Client)
-	request, err := http.NewRequest("GET", url, nil)
+func ExtractSitemap(rawUrl string) ([]string, error) {
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	tbProxyURL, err := url.Parse(torProxyAddress)
 	if err != nil {
-	 	fmt.Println(err)
+		return nil, err
+	}
+	// pp.Println(tbProxyURL)
+
+	tbDialer, err := proxy.FromURL(tbProxyURL, proxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+	tbTransport := &http.Transport{
+		Dial: tbDialer.Dial,
+	}
+	client.Transport = tbTransport
+
+	// client := new(http.Client)
+	request, err := http.NewRequest("GET", rawUrl, nil)
+	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-	 	fmt.Println(err)
+		fmt.Println(err)
 		return nil, err
-	}	
+	}
 	defer response.Body.Close()
 
 	doc := etree.NewDocument()
@@ -227,16 +288,15 @@ func ExtractSitemap(url string) ([]string, error) {
 	if urlset != nil {
 		entries := urlset.SelectElements("url")
 		for _, entry := range entries {
-		 	loc := entry.SelectElement("loc")
-		 	l := loc.Text()
+			loc := entry.SelectElement("loc")
+			l := loc.Text()
 			l = strings.TrimLeftFunc(l, func(c rune) bool {
 				return c == '\r' || c == '\n' || c == '\t'
 			})
 			l = strings.TrimSpace(l)
-		 	log.Infoln("loc:", l)
-		 	urls = append(urls, l)
+			log.Infoln("loc:", l)
+			urls = append(urls, l)
 		}
 	}
 	return urls, err
 }
-

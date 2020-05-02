@@ -1,37 +1,37 @@
 package catalog
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"os"
 	"io"
 	"io/ioutil"
-	"mime/multipart"	
+	"mime/multipart"
 	"net/http"
-	"bytes"
+	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
+	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
 	"github.com/qor/media/media_library"
-	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
-/* 
+/*
 	- snippets
 	  - cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-stanford-cars.so ; cd ../..
 
 	- converter
-	  - 
+	  -
 
 	- CSV excerpt
 		"image_type","image_relpath","name"
@@ -49,19 +49,19 @@ type imageSrc struct {
 }
 
 type carInfo struct {
-	name string
+	name  string
 	model string
-	year string
-	make string
-	imgs []string
+	year  string
+	make  string
+	imgs  []string
 }
 
 func ImportFromURL(cfg *config.Config) error {
 
 	file, err := os.Open(cfg.CatalogURL)
-    if err != nil {
-            return err
-    }
+	if err != nil {
+		return err
+	}
 
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -77,10 +77,10 @@ func ImportFromURL(cfg *config.Config) error {
 			break
 		}
 		if err != nil {
-		    if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
-		        continue
-		    }
-		    return err
+			if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
+				continue
+			}
+			return err
 		}
 
 		name := row[2]
@@ -97,10 +97,10 @@ func ImportFromURL(cfg *config.Config) error {
 			cars[name].imgs = append(cars[name].imgs, imageSrcs...)
 		} else {
 			car := &carInfo{
-				name: row[2],
-				make: nameParts[0],
+				name:  row[2],
+				make:  nameParts[0],
 				model: strings.TrimSpace(model),
-				year: nameParts[len(nameParts)-1],
+				year:  nameParts[len(nameParts)-1],
 			}
 			car.imgs = append(car.imgs, imageSrcs...)
 			cars[name] = car
@@ -243,7 +243,7 @@ func ImportFromURL(cfg *config.Config) error {
 	return nil
 }
 
-func walkImagesSlice(gid string, dirnames []string) (list []string, err error ){
+func walkImagesSlice(gid string, dirnames []string) (list []string, err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -259,10 +259,10 @@ func walkImagesSlice(gid string, dirnames []string) (list []string, err error ){
 			Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 		})
 	}
-	return 
+	return
 }
 
-func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
+func walkImages(gid string, dirnames []string) (list []*imageSrc, err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -278,7 +278,7 @@ func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
 			Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 		})
 	}
-	return 
+	return
 }
 
 // Creates a new file upload http request with optional extra params

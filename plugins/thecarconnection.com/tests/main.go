@@ -15,7 +15,7 @@ func main() {
 		URLs: []string{
 			"https://www.thecarconnection.com/overview/jaguar_f-type_2021",
 		},
-	//	CacheDir:        "../../../shared/data",
+		//	CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
 		DryMode:         true,

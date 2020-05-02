@@ -1,23 +1,21 @@
-
-
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
 	"regexp"
+	"strings"
 
-	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/proxy"
+	"github.com/gocolly/colly/v2/queue"
+	"github.com/k0kubun/pp"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
-	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/queue"
-	"github.com/gocolly/colly/v2/proxy"
-	"github.com/tsak/concurrent-csv-writer"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -30,7 +28,6 @@ import (
 */
 
 func Extract(cfg *config.Config) error {
-
 
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -59,10 +56,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/cardealpage.com_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/cardealpage.com_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/cardealpage.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -78,7 +75,6 @@ func Extract(cfg *config.Config) error {
 		}
 
 	}
-
 
 	// regex rules on vehicles url
 	vehicleURLRegexp, err := regexp.Compile(`https://www\.cardealpage\.com/([_0-9A-Za-z-]+)/([_%0-9A-Za-z-]+)/([0-9]+)/`)
@@ -172,11 +168,11 @@ func Extract(cfg *config.Config) error {
 				})
 				value = strings.TrimRightFunc(value, func(c rune) bool {
 					return c == '\r' || c == '\n' || c == '\t'
-				})				
+				})
 			})
 			switch key {
-            case "Steering":
-                vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
+			case "Steering":
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Steering", Value: value})
 			case "Fuel":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "FuelType", Value: value})
 			case "Transmission":
@@ -189,12 +185,12 @@ func Extract(cfg *config.Config) error {
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "No. of Seats", Value: value})
 			case "Colour":
 				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Color", Value: value})
-            case "Reg.Year":
+			case "Reg.Year":
 				fallthrough
 			case "Reg.Year / Month":
 				vehicle.Year = value
-            case "Engine":
-                    vehicle.Engine = value
+			case "Engine":
+				vehicle.Engine = value
 			}
 
 			if cfg.IsDebug {
@@ -246,7 +242,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 

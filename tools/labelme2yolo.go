@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"path/filepath"
 	"encoding/json"
-    "strconv"
-    "os"
-    "io/ioutil"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -23,7 +22,6 @@ var (
 		"4": "truck",
 	}
 )
-
 
 func main() {
 	walkImages(".json", "../tools/dataset/bus/")
@@ -45,21 +43,21 @@ type Flags struct {
 }
 
 type Shape struct {
-	FillColor []int 	  `json:"fill_color"`
-	Label     string      `json:"label"`
-	LineColor []int 	  `json:"line_color"`
-	Points    [][]int     `json:"points"` // []array
-	ShapeType string      `json:"shape_type"`
+	FillColor []int   `json:"fill_color"`
+	Label     string  `json:"label"`
+	LineColor []int   `json:"line_color"`
+	Points    [][]int `json:"points"` // []array
+	ShapeType string  `json:"shape_type"`
 }
 
 func convert(fp, fi string) error {
-    file, err := os.Open(fp)
-    if err != nil {
-        return err
-    }
+	file, err := os.Open(fp)
+	if err != nil {
+		return err
+	}
 
 	byteValue, _ := ioutil.ReadAll(file)
-    var labelme Labelme
+	var labelme Labelme
 	if err := json.Unmarshal(byteValue, &labelme); err != nil {
 		log.Fatalln("unmarshal error, ", err)
 	}
@@ -69,7 +67,7 @@ func convert(fp, fi string) error {
 
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -86,7 +84,7 @@ func walkImages(extension string, dirnames ...string) (err error ){
 			Unsorted: true,
 		})
 	}
-	return 
+	return
 }
 
 func checkErr(err error) {

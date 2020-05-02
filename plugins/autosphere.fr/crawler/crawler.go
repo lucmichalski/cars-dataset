@@ -3,23 +3,22 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/PuerkitoBio/goquery"
-	
+	"github.com/k0kubun/pp"
+	pmodels "github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-
-	pmodels "github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 func Extract(cfg *config.Config) error {
@@ -154,7 +153,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 
 				if string(content) == "" {
-					continue					
+					continue
 				}
 
 				var detection *models.Labelme
@@ -165,7 +164,7 @@ func Extract(cfg *config.Config) error {
 
 				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 				if err != nil {
-					log.Fatalln("decodeToFile error, ", err)					
+					log.Fatalln("decodeToFile error, ", err)
 				}
 
 				if len(detection.Shapes) != 1 {
@@ -177,7 +176,7 @@ func Extract(cfg *config.Config) error {
 				maxY := detection.Shapes[0].Points[0][1]
 				minX := detection.Shapes[0].Points[1][0]
 				minY := detection.Shapes[0].Points[1][1]
-			    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 				log.Println("----> Scanning file: ", file.Name())

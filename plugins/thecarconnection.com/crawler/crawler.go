@@ -3,24 +3,24 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
 	"regexp"
+	"strings"
 
 	// "github.com/k0kubun/pp"
 	// "github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	// "github.com/PuerkitoBio/goquery"
-	
+	pmodels "github.com/lucmichalski/cars-contrib/thecarconnection.com/models"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-
-	pmodels "github.com/lucmichalski/cars-contrib/thecarconnection.com/models"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -85,7 +85,6 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 
-
 		make := strings.TrimSpace(e.ChildText("div[id=breadcrumbs] a[id=a_bc_1]"))
 		if cfg.IsDebug {
 			fmt.Println("model:", make)
@@ -114,25 +113,24 @@ func Extract(cfg *config.Config) error {
 		vehicle.Engine = engine
 		vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value: price})
 
-
 		// "https://www.thecarconnection.com/specifications/jaguar_f-type_2021",
 		/*
-		e.ForEach(`div.category-details div.specs-set-item`, func(_ int, el *colly.HTMLElement) {
-			var key, value string
-			el.ForEach(`span.key`, func(_ int, eli *colly.HTMLElement) {
-				key = strings.TrimSpace(eli.Text)
+			e.ForEach(`div.category-details div.specs-set-item`, func(_ int, el *colly.HTMLElement) {
+				var key, value string
+				el.ForEach(`span.key`, func(_ int, eli *colly.HTMLElement) {
+					key = strings.TrimSpace(eli.Text)
+				})
+				el.ForEach(`span.value`, func(_ int, eli *colly.HTMLElement) {
+					value = strings.TrimSpace(eli.Text)
+				})
+				if cfg.IsDebug {
+					fmt.Println("key", key, " <========> value", value)
+				}
+				if key == "Engine" {
+					vehicle.Engine = value
+				}
+				vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: key, Value: value})
 			})
-			el.ForEach(`span.value`, func(_ int, eli *colly.HTMLElement) {
-				value = strings.TrimSpace(eli.Text)
-			})
-			if cfg.IsDebug {
-				fmt.Println("key", key, " <========> value", value)
-			}
-			if key == "Engine" {
-				vehicle.Engine = value
-			}
-			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: key, Value: value})
-		})
 		*/
 		// os.Exit(1)
 
@@ -187,7 +185,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 
@@ -284,7 +282,7 @@ func Extract(cfg *config.Config) error {
 			} else {
 				q.AddURL(sitemap)
 			}
-		}	
+		}
 	} else {
 		for _, u := range cfg.URLs {
 			q.AddURL(u)

@@ -6,23 +6,24 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+
 	// "net/url"
 	"strings"
 
-	sitemapz "github.com/oxffaa/gopher-parse-sitemap"
-	"github.com/yterajima/go-sitemap"
-	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+	"github.com/k0kubun/pp"
+	sitemapz "github.com/oxffaa/gopher-parse-sitemap"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	"github.com/yterajima/go-sitemap"
+
 	// "github.com/PuerkitoBio/goquery"
-	
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
@@ -82,11 +83,11 @@ func Extract(cfg *config.Config) error {
 
 		var name, make, model, year string
 		e.ForEach(`div.panel-panel.panel-title-and-subtitle h1`, func(_ int, el *colly.HTMLElement) {
-			name = strings.TrimSpace(el.Text)		
+			name = strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("name:", name)
 			}
-			nameParts := strings.Split(name, " ")			
+			nameParts := strings.Split(name, " ")
 			year = nameParts[0]
 			make = nameParts[1]
 			model = nameParts[2]
@@ -107,7 +108,7 @@ func Extract(cfg *config.Config) error {
 		e.ForEach(`div.field-name-field-car-type div.field-item`, func(_ int, el *colly.HTMLElement) {
 			carType := strings.TrimSpace(el.Text)
 			vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Car Type", Value: carType})
-		})		
+		})
 
 		if make == "" && model == "" && year == "" {
 			return
@@ -141,7 +142,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 
@@ -228,8 +229,8 @@ func Extract(cfg *config.Config) error {
 
 	result := make([]string, 0, 0)
 	err = sitemapz.ParseFromSite(cfg.URLs[0], func(e sitemapz.Entry) error {
-	    result = append(result, e.GetLocation())
-	    return nil
+		result = append(result, e.GetLocation())
+		return nil
 	})
 
 	pp.Println(result)
@@ -274,6 +275,3 @@ func Extract(cfg *config.Config) error {
 
 	return nil
 }
-
-
-

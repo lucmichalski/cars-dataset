@@ -3,20 +3,21 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
 	"github.com/k0kubun/pp"
+
 	// "github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 func Extract(cfg *config.Config) error {
@@ -125,7 +126,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 
@@ -166,9 +167,9 @@ func Extract(cfg *config.Config) error {
 			}
 		}
 
-		if len(vehicle.Images.Files) == 0 {	
+		if len(vehicle.Images.Files) == 0 {
 			return
-		}	
+		}
 
 		pp.Println(vehicle)
 
@@ -214,7 +215,7 @@ func Extract(cfg *config.Config) error {
 					log.Infoln("extract sitemap gz compressed...")
 					locs, err := prefetch.ExtractSitemapGZ(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 						return err
 					}
 					utils.Shuffle(locs)
@@ -237,7 +238,7 @@ func Extract(cfg *config.Config) error {
 						if strings.HasPrefix(loc, "https://motorcycles.autotrader.com/motorcycles") {
 							q.AddURL(loc)
 						}
-					}				
+					}
 				}
 			}
 		}

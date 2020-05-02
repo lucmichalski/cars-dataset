@@ -1,19 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"os"
 	"encoding/csv"
+	"fmt"
+	"os"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	isDryMode = false
-	counter = 0
-	total = 0
+	counter   = 0
+	total     = 0
 )
 
 func main() {
@@ -21,17 +21,17 @@ func main() {
 	fmt.Println("purged ", counter, "files over ", total, "files")
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
 				if !de.IsDir() {
 					if strings.Contains(osPathname, extension) {
 
-					    file, err := os.Open(osPathname)
-					    if err != nil {
-					        return err
-					    }
+						file, err := os.Open(osPathname)
+						if err != nil {
+							return err
+						}
 
 						reader := csv.NewReader(file)
 						reader.Comma = ' '
@@ -43,10 +43,10 @@ func walkImages(extension string, dirnames ...string) (err error ){
 						file.Close()
 
 						for _, row := range data {
-							classId := 1						
+							classId := 1
 							centerX := row[1]
-							centerY := row[2] 
-							width := row[3] 
+							centerY := row[2]
+							width := row[3]
 							height := row[4]
 
 							ft, err := os.Create(osPathname)
@@ -66,7 +66,7 @@ func walkImages(extension string, dirnames ...string) (err error ){
 			Unsorted: true,
 		})
 	}
-	return 
+	return
 }
 
 func checkErr(err error) {
@@ -74,4 +74,3 @@ func checkErr(err error) {
 		log.Fatal(err)
 	}
 }
-

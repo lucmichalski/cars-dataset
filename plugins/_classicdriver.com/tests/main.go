@@ -16,7 +16,7 @@ func main() {
 			// "https://www.classicdriver.com/en/car/ferrari/308/1974/388412",
 			"https://www.classicdriver.com/en/sitemap.xml?page=1",
 		},
-	//	CacheDir:        "../../../shared/data",
+		//	CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
 		DryMode:         true,
