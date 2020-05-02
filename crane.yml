@@ -4,10 +4,19 @@ services:
   tensorflow:
     runtime: nvidia
     gpus: all
+    rm: true
+    interactive: true
+    user: 1000
+    tty: true
+    cmd: ["bash"]
 
   darknet-train:
     runtime: nvdia
     gpus: all
+    rm: true
+    interactive: true
+    tty: true
+    cmd: ["bash"]
 
   darknet:
     runtime: nvdia
