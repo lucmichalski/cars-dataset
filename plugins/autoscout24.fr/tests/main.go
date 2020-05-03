@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/autoscout24.fr/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/autoscout24.fr/crawler"
 )
 
 func main() {
@@ -37,11 +37,11 @@ func main() {
 			// "https://www.autoscout24.fr/offres/citroen-c5-tourer-bluehdi-150-exclusive-shz-navi-eu6-diesel-noir-f373352a-9bcf-4efc-bf39-d7d366d229d0?cldtidx=1&cldtsrc=listPage",
 			"https://www.autoscout24.fr/offres/bmw-g-650-gs-abs-essence-noir-dfeb68e9-a8b3-44ef-aacd-66927d1c039b?cldtidx=1&cldtsrc=listPage",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
-		DryMode:         true,
+		DryMode:         false,
 		IsDebug:         true,
 	}
 
@@ -51,4 +51,3 @@ func main() {
 	}
 
 }
-

@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	walkImages(".jpg", "data/obj")
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 
 	// write file
 	ft, err := os.Create("data/train.txt")
@@ -26,7 +26,7 @@ func walkImages(extension string, dirnames ...string) (err error ){
 				if !de.IsDir() {
 					if strings.Contains(osPathname, extension) {
 						fmt.Println("found ", osPathname, "extension", extension)
-						_, err = ft.WriteString(osPathname+"\n")
+						_, err = ft.WriteString(osPathname + "\n")
 						checkErr(err)
 						ft.Sync()
 					}
@@ -44,4 +44,3 @@ func checkErr(err error) {
 		log.Fatal(err)
 	}
 }
-

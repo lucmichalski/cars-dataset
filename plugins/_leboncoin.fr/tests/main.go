@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/leboncoin.fr/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/leboncoin.fr/crawler"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		URLs: []string{
 			"https://www.leboncoin.fr/voitures/1646523647.htm/",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -50,4 +50,3 @@ func main() {
 	}
 
 }
-

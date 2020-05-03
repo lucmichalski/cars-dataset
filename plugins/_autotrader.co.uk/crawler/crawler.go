@@ -3,23 +3,22 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/PuerkitoBio/goquery"
-	
+	"github.com/k0kubun/pp"
+	pmodels "github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
-
-	pmodels "github.com/lucmichalski/cars-contrib/autosphere.fr/models"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 func Extract(cfg *config.Config) error {
@@ -162,7 +161,7 @@ func Extract(cfg *config.Config) error {
 							log.Fatal(err)
 						}
 					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
 					continue
 				}
 

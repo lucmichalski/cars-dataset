@@ -1,6 +1,8 @@
 package grab
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"mime"
 	"net/http"
@@ -9,8 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"crypto/md5"
-	"encoding/hex"
 )
 
 // setLastModified sets the last modified timestamp of a local file according to
@@ -69,7 +69,7 @@ func guessFilename(resp *http.Response) (string, error) {
 	// sanitize
 	if filename == "" || strings.HasSuffix(filename, "/") || strings.Contains(filename, "\x00") {
 		// generate one
-		return getMD5Hash(resp.Request.URL.String())+".jpg", nil
+		return getMD5Hash(resp.Request.URL.String()) + ".jpg", nil
 	}
 
 	filename = filepath.Base(path.Clean("/" + filename))

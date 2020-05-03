@@ -14,6 +14,7 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/golang/glog"
+
 	"github.com/lucmichalski/cars-dataset/pkg/selenium"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/internal/seleniumtest"
 )

@@ -1,23 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"path/filepath"
 	"encoding/csv"
-    	"os"
-    	"path"
+	"fmt"
 	"io"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
-	isDryMode = true
-	isDeleteMode = false
+	isDryMode      = true
+	isDeleteMode   = false
 	isDispatchMode = true
-	yoloClass = map[string]string{
+	yoloClass      = map[string]string{
 		"0": "person",
 		"1": "car",
 		"2": "motorcycle",
@@ -27,11 +27,11 @@ var (
 	countDelete = 0
 )
 
-
 const (
-	datasetAbsPath = `/home/ubuntu/cars-dataset/shared/datasets/train2017_set/`
-	dataset4Classes = filepath.Join("dataset", "train2017_4classes")
+	datasetAbsPath = `/home/ubuntu/cars-dataset/shared/datasets/5classes/train2017_set/`
 )
+
+var dataset4Classes = filepath.Join("dataset", "train2017_4classes")
 
 func main() {
 
@@ -50,10 +50,10 @@ func main() {
 }
 
 func dispatch(fp string) error {
-    file, err := os.Open(fp)
-    if err != nil {
-        return err
-    }
+	file, err := os.Open(fp)
+	if err != nil {
+		return err
+	}
 
 	reader := csv.NewReader(file)
 	reader.Comma = ' '
@@ -76,7 +76,7 @@ func dispatch(fp string) error {
 				destFileNameTXT = filepath.Join(dataset4Classes, path.Base(fp))
 				destFileNameIMG = filepath.Join(dataset4Classes, strings.Replace(path.Base(fp), ".txt", ".jpg", -1))
 				copy(fp, destFileNameTXT)
-				copy(srcFileNameIMG, destFileNameIMG)				
+				copy(srcFileNameIMG, destFileNameIMG)
 			}
 		}
 	}
@@ -108,7 +108,7 @@ func dispatch(fp string) error {
 
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -123,32 +123,32 @@ func walkImages(extension string, dirnames ...string) (err error ){
 			Unsorted: true,
 		})
 	}
-	return 
+	return
 }
 
 func copy(src, dst string) (int64, error) {
-        sourceFileStat, err := os.Stat(src)
-        if err != nil {
-                return 0, err
-        }
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
 
-        if !sourceFileStat.Mode().IsRegular() {
-                return 0, fmt.Errorf("%s is not a regular file", src)
-        }
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
 
-        source, err := os.Open(src)
-        if err != nil {
-                return 0, err
-        }
-        defer source.Close()
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
 
-        destination, err := os.Create(dst)
-        if err != nil {
-                return 0, err
-        }
-        defer destination.Close()
-        nBytes, err := io.Copy(destination, source)
-        return nBytes, err
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 func ensureDir(path string) error {

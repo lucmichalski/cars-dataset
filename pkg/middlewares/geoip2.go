@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"github.com/oschwald/geoip2-golang"
+	"github.com/sirupsen/logrus"
 
-	"github.com/lucmichalski/cars-dataset/pkg/models"	
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 )
 
 // Logger returns a middleware that logs all request

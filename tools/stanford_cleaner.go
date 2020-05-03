@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
 	isDryMode = false
-	counter = 0
-	total = 0
+	counter   = 0
+	total     = 0
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	fmt.Println("purged ", counter, "files over ", total, "files")
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -44,7 +44,7 @@ func walkImages(extension string, dirnames ...string) (err error ){
 			Unsorted: true,
 		})
 	}
-	return 
+	return
 }
 
 func checkErr(err error) {

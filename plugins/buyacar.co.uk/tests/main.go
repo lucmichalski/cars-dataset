@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/buyacar.co.uk/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/buyacar.co.uk/crawler"
 )
 
 func main() {
@@ -34,10 +34,10 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.buyacar.co.uk", "buyacar.co.uk"},
 		URLs: []string{
-			// 
+			//
 			"https://www.buyacar.co.uk/abarth/595/595-hatchback/1-4-t-jet-180-competizione-3dr-75464/deal-3112001",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -51,4 +51,3 @@ func main() {
 	}
 
 }
-

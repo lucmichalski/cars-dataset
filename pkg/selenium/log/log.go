@@ -1,7 +1,9 @@
 // Package log provides logging-related configuration types and constants.
 package log
 
-import "time"
+import (
+	"time"
+)
 
 // Type represents a component capable of logging.
 type Type string

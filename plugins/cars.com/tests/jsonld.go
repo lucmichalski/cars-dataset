@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"fmt"
+	"log"
 	"sort"
 
-	"github.com/k0kubun/pp"	
 	"github.com/astaxie/flatmap"
+	"github.com/k0kubun/pp"
 )
 
 func main() {
@@ -157,12 +157,12 @@ func main() {
 		log.Fatal(err)
 	}
 	var ks []string
-	for k :=range fm {
-		ks = append(ks,k)		
+	for k := range fm {
+		ks = append(ks, k)
 	}
 	sort.Strings(ks)
-	for _, k :=range ks {
-		fmt.Println(k,":",fm[k])
+	for _, k := range ks {
+		fmt.Println(k, ":", fm[k])
 	}
 
 	pp.Println(fm["jsonld.0.model.name"])

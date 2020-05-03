@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 
 	adm "github.com/lucmichalski/cars-contrib/autoscout24.be/admin"
 	"github.com/lucmichalski/cars-contrib/autoscout24.be/crawler"
@@ -54,8 +54,8 @@ func (o autoScout24BePlugin) Config() *config.Config {
 		},
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 6,
-		IsSitemapIndex: false,
-		AnalyzerURL: "http://localhost:9003/crop?url=%s",
+		IsSitemapIndex:  false,
+		AnalyzerURL:     "http://localhost:9003/crop?url=%s",
 	}
 	return cfg
 }

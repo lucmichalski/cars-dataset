@@ -1,18 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	//"path/filepath"
 	"encoding/csv"
-	"os"
-	//"path"
+	"fmt"
 	"io"
+	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"	
-	log "github.com/sirupsen/logrus"
+	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 )
+
+/*
+	This utility converts stanford CSV File (generated with ...[to find]) to yolo annotation.
+*/
 
 var (
 	isDryMode = true
@@ -51,10 +53,10 @@ func main() {
 			break
 		}
 		if err != nil {
-		    if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
-		        continue
-		    }
-		    checkErr(err)
+			if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
+				continue
+			}
+			checkErr(err)
 		}
 
 		// cleanup dimension
@@ -93,7 +95,7 @@ func main() {
 
 }
 
-func walkImages(extension string, dirnames ...string) (err error ){
+func walkImages(extension string, dirnames ...string) (err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -108,32 +110,32 @@ func walkImages(extension string, dirnames ...string) (err error ){
 			Unsorted: true,
 		})
 	}
-	return 
+	return
 }
 
 func copy(src, dst string) (int64, error) {
-        sourceFileStat, err := os.Stat(src)
-        if err != nil {
-                return 0, err
-        }
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
 
-        if !sourceFileStat.Mode().IsRegular() {
-                return 0, fmt.Errorf("%s is not a regular file", src)
-        }
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
 
-        source, err := os.Open(src)
-        if err != nil {
-                return 0, err
-        }
-        defer source.Close()
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
 
-        destination, err := os.Create(dst)
-        if err != nil {
-                return 0, err
-        }
-        defer destination.Close()
-        nBytes, err := io.Copy(destination, source)
-        return nBytes, err
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 func ensureDir(path string) error {

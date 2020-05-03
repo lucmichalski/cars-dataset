@@ -15,7 +15,7 @@ func main() {
 		URLs: []string{
 			"https://www.cars24.com/buy-used-Tata-Tiago-2017-cars-Noida-1009527588/",
 		},
-	//	CacheDir:        "../../../shared/data",
+		//	CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
 		DryMode:         true,

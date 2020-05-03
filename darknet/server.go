@@ -2,165 +2,169 @@ package main
 
 import (
 	"bytes"
-	"flag"
+	"encoding/base64"
+	"fmt"
 	"image"
-	"image/png"
-	"image/jpeg"
 	"image/color"
 	"image/draw"
-	"log"
-	"strconv"
+	"image/jpeg"
+	"image/png"
 	"io"
-	"path/filepath"
+	"io/ioutil"
+	"log"
 	"math"
-	"os"
 	"net/http"
 	"net/url"
-	"fmt"
-	"strings"
+	"os"
+	"path/filepath"
 	"sort"
-	"time"
-	"io/ioutil"
+	"strconv"
+	"math/rand"
+	"strings"
 	"sync"
-	// "encoding/json"
+	"time"
 
-	"github.com/h2non/filetype"
-	// "github.com/cavaliercoder/grab"
-	"github.com/pkg/errors"
-	"github.com/k0kubun/pp"
-	"github.com/gin-gonic/gin"
-    	"github.com/disintegration/imaging"
 	darknet "github.com/LdDl/go-darknet"
+	"github.com/disintegration/imaging"
+	"github.com/gin-gonic/gin"
+	"github.com/h2non/filetype"
+	"github.com/k0kubun/pp"
+	"github.com/oschwald/geoip2-golang"
+	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 
 	"github.com/lucmichalski/cars-dataset/pkg/grab"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
+	// "github.com/lucmichalski/cars-dataset/pkg/middlewares"
 )
 
 /*
-
-	To do:
-	- extract the biggest bbox for labelme
-	- encode as base64 ImageData for labelme
-
-	Snippets:
-	- gdrivedl
-		- !sudo wget -O /usr/sbin/gdrivedl 'https://f.mjh.nz/gdrivedl'
-		- !sudo chmod +x /usr/sbin/gdrivedl
-		- !gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
-		- !tar xf camembert_sentiment.tar.xz
-	- find-object
-		- apk add --no-cache qt5-qtbase-dev cmake
-		- cmake -DCMAKE_BUILD_TYPE=Release ..
-	- nvidia-docker
-		- distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-		- curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-		- curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-		- sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-		- sudo systemctl restart docker
-		- docker run --gpus all nvidia/cuda:10.0-base nvidia-smi
-	- docker-compose gpu
-        - sudo apt-get install nvidia-container-runtime
-        - ~$ sudo vim /etc/docker/daemon.json
-        - then , in this daemon.json file, add this content:
-        - {
-        - "default-runtime": "nvidia"
-        - "runtimes": {
-        - "nvidia": {
-        - "path": "/usr/bin/nvidia-container-runtime",
-        - "runtimeArgs": []
-        - }
-        - }
-        - }
-        - ~$ sudo systemctl daemon-reload
-        - ~$ sudo systemctl restart docker
-    - remove files
-    	- find ./ -type f -size 0 -exec rm -f {} \;
-
-	Todo:
-	- https://www.lacentrale.fr/robots.txt
-	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-annonce.xml.gz
-	  - https://www.lacentrale.fr/sitemap.php?file=sitemap-index-cotft.xml.gz
-	- https://vitux.com/install-and-deploy-kubernetes-on-ubuntu/
-
-	Examples:
-	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQD.jpg (utilitaire)
-	- https://cdn-photos.autosphere.fr/media/FH/FH-662-SQC.jpg (utilitaire)
-	- https://cdn-photos.autosphere.fr/media/FL/FL-823-GFF.jpg
-	- https://cdn-photos.autosphere.fr/media/CY/CY-745-VTC.jpg
-	- https://i.pinimg.com/originals/28/1b/ed/281bed127dae148b0e0536ea611e5e67.jpg
-	- https://www.lambocars.com/images/lambonews/production_numbers.jpg
-	- https://i.pinimg.com/originals/7e/fc/ab/7efcabaff4c082e99955b7b555b8b3da.png
-
-	Refs:
-	- https://hackernoon.com/docker-compose-gpu-tensorflow-%EF%B8%8F-a0e2011d36
-	- https://github.com/eywalker/nvidia-docker-compose
-	- https://github.com/NVIDIA/nvidia-docker
-	- https://github.com/dbolya/yolact
-	- https://github.com/Jonarod/tensorflow_lite_alpine
-	- https://github.com/tinrab/go-tensorflow-image-recognition
-	- https://github.com/dereklstinson/coco
-	- https://github.com/chtorr/go-tensorflow-realtime-object-detection/blob/master/src/main.go
-	- https://github.com/codegangsta/gin
-	- https://github.com/shunk031/libtorch-gin-api-server/blob/master/docker/Dockerfile.api
-	- https://github.com/tinrab/go-tensorflow-image-recognition/blob/master/main.go
-	- https://github.com/x0rzkov/gocv-alpine (runtime,builder)
-	- https://stackoverflow.com/questions/15341538/numpy-opencv-2-how-do-i-crop-non-rectangular-region
-	- https://www.pyimagesearch.com/2018/11/19/mask-r-cnn-with-opencv/
-	- https://note.nkmk.me/en/python-opencv-numpy-alpha-blend-mask/
+	TO DO:
+	- Make more elegant this dirty hacky code
+	- Comment the code as much as possible
 */
 
 var (
-	// n darknet.YOLONetwork
-	m yoloModel
-	configFile = flag.String("configFile", "", "Path to network layer configuration file. Example: cfg/yolov3.cfg")
-	weightsFile = flag.String("weightsFile", "", "Path to weights file. Example: yolov3.weights")
-	imageFile = flag.String("imageFile", "", "Path to image file, for detection. Example: image.jpg")
+	isHelp      bool
+	isVerbose   bool
+	isDryMode   bool
+	gpuId	    int
+	weightsFile string
+	configFile  string
+	geoIpFile   string
+	labelmeVer  string
+	geoReader   *geoip2.Reader
+	m           yoloModel
+    minWidth 	= 700
+    maxWidth 	= 800
 )
 
+// yoloModel represents the yolllow network model loaded and it read/write mutex
 type yoloModel struct {
 	n darknet.YOLONetwork
 	l sync.Mutex
 }
 
+// bboxInfo represents detection info for an enityt detected by yolo
 type bboxInfo struct {
-	minX int
-	minY int
-	maxX int
-	maxY int
-	width int
-	height int
+	minX    int
+	minY    int
+	maxX    int
+	maxY    int
+	width   int
+	height  int
 	surface int
+	class   string
 }
 
-type Labelme struct {
-	FillColor   []int       `json:"fillColor"`
-	Flags       Flags       `json:"flags"`
-	ImageData   interface{} `json:"imageData"`
-	ImageHeight int         `json:"imageHeight"`
-	ImagePath   string      `json:"imagePath"`
-	ImageWidth  int         `json:"imageWidth"`
-	LineColor   []int       `json:"lineColor"`
-	Shapes      []Shape     `json:"shapes"`
-	Version     string      `json:"version"`
+func main() {
+
+	// Define cli flag parameters
+	pflag.StringVarP(&weightsFile, "weights-file", "w", "./models/yolov4.cfg", "Path to weights file. Example: yolov4.weights")
+	pflag.StringVarP(&configFile, "config-file", "c", "./models/yolov4.cfg", "Path to network layer configuration file. Example: cfg/yolov4.cfg")
+	pflag.StringVarP(&geoIpFile, "geoip-db", "", "./geoip2/GeoLite2-City.mmdb", "geoip filepath.")
+	pflag.StringVarP(&labelmeVer, "labelme-ver", "", "3.6.10", "labelme version JSON format.")
+        pflag.IntVarP(&gpuId, "gpu", "", 0, "gpu id (eg 0,1).")
+	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
+	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
+	pflag.Parse()
+	if isHelp {
+		pflag.PrintDefaults()
+		return
+	}
+
+	if configFile == "" || weightsFile == "" {
+		pflag.PrintDefaults()
+		return
+	}
+
+	// Define the yolo network config
+	n := darknet.YOLONetwork{
+		GPUDeviceIndex:           gpuId,
+		NetworkConfigurationFile: configFile,
+		WeightsFile:              weightsFile,
+		Threshold:                .25,
+	}
+
+	// Instanciate the yolo network
+	if err := n.Init(); err != nil {
+		printError(err)
+		return
+	}
+	defer n.Close()
+
+	// create the global yolo model
+	m = yoloModel{
+		n: n,
+		l: sync.Mutex{},
+	}
+
+	// Instanciate geoip2 database
+	// geoReader = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
+
+	// launch the web service
+	server()
 }
 
-type Flags struct {
-}
-
-type Shape struct {
-	FillColor []int 	  `json:"fill_color"`
-	Label     string      `json:"label"`
-	LineColor []int 	  `json:"line_color"`
-	Points    [][]int     `json:"points"`
-	ShapeType string      `json:"shape_type"`
+func init() {
+    rand.Seed(time.Now().UnixNano())
 }
 
 func server() {
+
 	r := gin.Default()
 
+	// globally use middlewares
+	//r.Use(
+		// middlewares.RealIP(),
+		// middlewares.RecoveryWithWriter(os.Stderr),
+		// middlewares.Logger(geoReader),
+		// middlewares.CORS(),
+	//	gin.ErrorLogger(),
+	//)
+
+	// The route [/] is a dunny hone page
+	//
+	// Method: GET
 	r.GET("/", func(c *gin.Context) {
 		c.File("index.html")
 	})
 
+	// The route [/labelme] allows to save the detection in th label me JSON format
+	//
+	// Method: GET
+	//
+	// Behaviour:
+	// 1. Get an input image issued from a focused crawler (cars, motorcyle)
+	// 2. Resize the input image if wider or higher than 700px
+	// 3. Process yolov4 detection
+	// 4. Detect the largest boudning box (assumption made that the biggest object detection is our focused target)
+	// 5. Return a labelme JSON response with the annotation info and the image base64 encoded
+	//
+	// Parameters:
+	// url       = image url to process
+	// classes   = filter detections by classes
+	// threshold = minium threshold of confidence in the dection
 	r.GET("/labelme", func(c *gin.Context) {
 		m.l.Lock()
 		defer m.l.Unlock()
@@ -169,13 +173,14 @@ func server() {
 		u := c.Query("url")
 		u, err = url.QueryUnescape(u)
 
-		fmt.Println("url:", u)
+		if isVerbose {
+			fmt.Println("url:", u)
+		}
 
 		classesStr := c.Query("classes")
 		classes := strings.Split(classesStr, ",")
 		thresholdStr := c.Query("threshold")
 		var threshold float64
-		//var err error
 		if thresholdStr != "" {
 			threshold, err = strconv.ParseFloat(thresholdStr, 64)
 			if err != nil {
@@ -183,11 +188,13 @@ func server() {
 			}
 		}
 
-		fmt.Println("classes", classes)
-		fmt.Println("threshold", threshold)
+		if isVerbose {
+			fmt.Println("classes", classes)
+			fmt.Println("threshold", threshold)
+		}
 
-		var file *os.File
 		var size int64
+		var file *os.File
 		if u != "" && strings.HasPrefix(u, "http") {
 			file, size, err = grabFileByURL(u)
 			if err != nil {
@@ -195,35 +202,32 @@ func server() {
 			}
 		}
 
-		fmt.Println("file", file.Name())
-		fmt.Println("size", size)
+		if isVerbose {
+			fmt.Println("file", file.Name())
+			fmt.Println("size", size)
+		}
 
+		bboxInfos := make([]*bboxInfo, 0)
 		if size > 0 {
-
-			/*
-			buf := bytes.NewBuffer(nil)
-			if _, err := io.Copy(buf, file); err != nil {
-				panic(err.Error())
-			}
-
-			kind, _ := filetype.Match(buf.Bytes())
-			*/
-
 			buf, _ := ioutil.ReadFile(file.Name())
 			kind, _ := filetype.Match(buf)
 
 			var src image.Image
-			log.Println("kind.MIME.Value:", kind.MIME.Value)
+			if isVerbose {
+				log.Println("kind.MIME.Value:", kind.MIME.Value)
+			}
 
 			switch kind.MIME.Value {
 			case "image/jpeg":
 				src, err = jpeg.Decode(file)
 				if err != nil {
+					// fmt.Println("jpeg.Decode failed")					
 					panic(err.Error())
 				}
 			case "image/png":
 				src, err = png.Decode(file)
 				if err != nil {
+					// fmt.Println("png.Decode failed")
 					panic(err.Error())
 				}
 			default:
@@ -231,8 +235,28 @@ func server() {
 				return
 			}
 
+			b := src.Bounds()
+
+			if isVerbose {
+				pp.Println("Original Height:", b.Max.Y)
+				pp.Println("Original Width:", b.Max.X)
+			}
+
+			if b.Max.X > 700 {
+				width := rand.Intn(maxWidth - minWidth + 1) + minWidth
+				src = imaging.Resize(src, width, 0, imaging.Lanczos)
+			}
+
+			// Ge the new bounds ? shall we reload the object ?
+			b = src.Bounds()
+			if isVerbose {
+				pp.Println("Height post resing:", b.Max.Y)
+				pp.Println("Width post resing:", b.Max.X)
+			}
+
 			imgDarknet, err := darknet.Image2Float32(src)
 			if err != nil {
+				fmt.Println("darknet failed")
 				panic(err.Error())
 			}
 			defer imgDarknet.Close()
@@ -243,57 +267,106 @@ func server() {
 				return
 			}
 
-			lc := Labelme{}
+			lc := models.Labelme{}
 			lc.FillColor = []int{255, 0, 0, 128}
-			b := src.Bounds()
 
 			lc.ImageHeight = b.Max.Y
 			lc.ImageWidth = b.Max.X
-			// lc.ImagePath = filepath.Base(file.Name)
-		    // Encode as base64.
-		    // lc.ImageData := base64.StdEncoding.EncodeToString(buf)
+
 
 			lc.LineColor = []int{0, 255, 0, 128}
-			lc.Version = "3.6.10"
+			lc.Version = labelmeVer
 
-			log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
-			log.Println("Overall time taken:", dr.OverallTimeTaken, len(dr.Detections))
+			if isVerbose {
+				log.Println("Network-only time taken:", dr.NetworkOnlyTimeTaken)
+				log.Println("Overall time taken:", dr.OverallTimeTaken, len(dr.Detections))
+			}
 			for _, d := range dr.Detections {
 				for i := range d.ClassIDs {
 					bBox := d.BoundingBox
-					fmt.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
-						d.ClassNames[i], d.ClassIDs[i],
-						d.Probabilities[i],
-						bBox.StartPoint.X, bBox.StartPoint.Y,
-						bBox.EndPoint.X, bBox.EndPoint.Y,
-					)
-
-					minX, minY := float64(bBox.StartPoint.X-10), float64(bBox.StartPoint.Y-10)
-					maxX, maxY := float64(bBox.EndPoint.X+10), float64(bBox.EndPoint.Y+10)
-
-					sc := Shape{}
-					sc.Label = d.ClassNames[i]
-					sc.ShapeType = "rectangle"
-					fmt.Println("minX=",minX,"maxX=",maxX,"minY=",minY,"maxY=",maxY)
-
-					x := []int{int(maxX),int(maxY)}
-					y := []int{int(minX),int(minY)}
-
-					points := [][]int{x, y}
-					sc.Points = append(sc.Points, points...)
-					lc.Shapes = append(lc.Shapes, sc)
+					if isVerbose {
+						fmt.Printf("%s (%d): %.4f%% | start point: (%d,%d) | end point: (%d, %d)\n",
+							d.ClassNames[i], d.ClassIDs[i],
+							d.Probabilities[i],
+							bBox.StartPoint.X, bBox.StartPoint.Y,
+							bBox.EndPoint.X, bBox.EndPoint.Y,
+						)
+					}
+					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
+						bboxInfos = append(bboxInfos, &bboxInfo{
+							class:   d.ClassNames[i],
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
+						})
+					}
 				}
 			}
 
-			// slcB, err := json.MarshalIndent(&lc, "", "\t")
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			c.IndentedJSON(200, &lc)
+			sort.Slice(bboxInfos[:], func(i, j int) bool {
+				return bboxInfos[i].surface > bboxInfos[j].surface
+			})
 
+			if isVerbose {
+				pp.Println("bboxInfos:", bboxInfos)
+			}
+
+			if len(bboxInfos) > 0 {
+
+				buf := new(bytes.Buffer)
+				err := jpeg.Encode(buf, src, nil)
+				if err != nil {
+					panic(err.Error())					
+				}
+
+				// Encode as base64.
+				lc.ImageData = base64.StdEncoding.EncodeToString(buf.Bytes())
+
+				minX, minY := bboxInfos[0].minX, bboxInfos[0].minY
+				maxX, maxY := bboxInfos[0].maxX, bboxInfos[0].maxY
+
+				if minX < 0 {
+					minX = 0
+				}
+
+				if minY < 0 {
+					minY = 0
+				}
+
+				if maxX > b.Max.X {
+					maxX = b.Max.X
+				}
+
+				if maxY > b.Max.Y {
+					maxY = b.Max.Y
+				}
+
+				sc := models.Shape{}
+				sc.Label = bboxInfos[0].class
+				sc.ShapeType = "rectangle"
+				if isVerbose {
+					fmt.Println("minX=", minX, "maxX=", maxX, "minY=", minY, "maxY=", maxY)
+				}
+				x := []int{int(maxX), int(maxY)}
+				y := []int{int(minX), int(minY)}
+
+				points := [][]int{x, y}
+				sc.Points = append(sc.Points, points...)
+				lc.Shapes = append(lc.Shapes, sc)
+			} else {
+                                lc.Shapes = nil
+			}
+			c.JSON(200, &lc)
 		} else {
 			c.String(200, "Nothing")
 		}
+
+		// unlink
+		os.Remove(file.Name())
 
 		log.Println("crop end")
 
@@ -335,18 +408,9 @@ func server() {
 
 		fmt.Println("file", file.Name())
 		fmt.Println("size", size)
+		bboxInfos := make([]*bboxInfo, 0)
 
 		if size > 0 {
-
-			/*
-			buf := bytes.NewBuffer(nil)
-			if _, err := io.Copy(buf, file); err != nil {
-				panic(err.Error())
-			}
-
-			kind, _ := filetype.Match(buf.Bytes())
-			*/
-
 			buf, _ := ioutil.ReadFile(file.Name())
 			kind, _ := filetype.Match(buf)
 
@@ -371,12 +435,14 @@ func server() {
 
 			imgDarknet, err := darknet.Image2Float32(src)
 			if err != nil {
+				fmt.Println("darknet.Image2Float32 error")
 				panic(err.Error())
 			}
 			defer imgDarknet.Close()
 
 			dr, err := m.n.Detect(imgDarknet)
 			if err != nil {
+				fmt.Println("darknet.Detect error")
 				printError(err)
 				return
 			}
@@ -384,8 +450,6 @@ func server() {
 			// Use same size as source image has
 			b := src.Bounds()
 			m := image.NewRGBA(b)
-
-			// offset := image.Pt(0, 0)
 
 			// Draw source
 			draw.Draw(m, b, src, image.ZP, draw.Src)
@@ -401,42 +465,61 @@ func server() {
 						bBox.StartPoint.X, bBox.StartPoint.Y,
 						bBox.EndPoint.X, bBox.EndPoint.Y,
 					)
+					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
+						bboxInfos = append(bboxInfos, &bboxInfo{
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
+						})
+					}
+					minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
+					maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
 
-					minX, minY := float64(bBox.StartPoint.X-10), float64(bBox.StartPoint.Y-10)
-					maxX, maxY := float64(bBox.EndPoint.X+10), float64(bBox.EndPoint.Y+10)
-					// rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
-					// img, err := drawableJPEGImage(f)
-					// fmt.Println(rect)
-					// Draw watermark
-					// draw.Draw(m, watermarkImage.Bounds().Add(offset), watermarkImage, image.ZP, draw.Over)
-					// draw.Draw(image3, src.Bounds(), src, image.ZP, draw.Src)
+					if minX < 0 {
+						minX = 0
+					}
+
+					if minY < 0 {
+						minY = 0
+					}
+
+					if maxX > float64(b.Max.X) {
+						maxX = float64(b.Max.X)
+					}
+
+					if maxY > float64(b.Max.Y) {
+						maxY = float64(b.Max.Y)
+					}
+
 					draw.Draw(m, src.Bounds(), src, image.ZP, draw.Src)
 					drawBbox(round(minX), round(minY), round(maxX), round(maxY), 1, m)
-
-					/*
-					red_rect := image.Rect(60, 80, 120, 160) //  geometry of 2nd rectangle
-					myred := color.RGBA{200, 0, 0, 255}
-
-					// create a red rectangle atop the green surface
-					draw.Draw(m, red_rect, &image.Uniform{myred}, image.ZP, draw.Src)
-					*/
-
 				}
 			}
-			// Specify the quality, between 0-100
-			// Higher is better
+
+			sort.Slice(bboxInfos[:], func(i, j int) bool {
+				return bboxInfos[i].surface > bboxInfos[j].surface
+			})
+
+			// Specify the quality, between 0-100, Higher is better
 			opt := jpeg.Options{
-			    Quality: 100,
+				Quality: 100,
 			}
 			err = jpeg.Encode(c.Writer, m, &opt)
 			if err != nil {
-			    // Handle error
+				// Handle error
 				panic(err.Error())
-			}
+			}			
 
 		} else {
 			c.String(200, "Nothing")
 		}
+
+		// unlink
+		os.Remove(file.Name())
 
 		log.Println("crop end")
 
@@ -448,8 +531,6 @@ func server() {
 
 		log.Println("crop start")
 
-		// url.QueryUnescape
-
 		var err error
 		u := c.Query("url")
 		u, err = url.QueryUnescape(u)
@@ -460,7 +541,7 @@ func server() {
 		classes := strings.Split(classesStr, ",")
 		thresholdStr := c.Query("threshold")
 		var threshold float64
-		//var err error
+
 		if thresholdStr != "" {
 			threshold, err = strconv.ParseFloat(thresholdStr, 64)
 			if err != nil {
@@ -483,15 +564,6 @@ func server() {
 		bboxInfos := make([]*bboxInfo, 0)
 
 		if size > 0 {
-
-			/*
-			buf := bytes.NewBuffer(nil)
-			if _, err := io.Copy(buf, file); err != nil {
-				panic(err.Error())
-			}
-
-			kind, _ := filetype.Match(buf.Bytes())
-			*/
 
 			buf, _ := ioutil.ReadFile(file.Name())
 			kind, _ := filetype.Match(buf)
@@ -540,13 +612,13 @@ func server() {
 					)
 					if (d.ClassNames[i] == "car" || d.ClassNames[i] == "motorbike" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
 						bboxInfos = append(bboxInfos, &bboxInfo{
-							minX: bBox.StartPoint.X,
-							minY: bBox.StartPoint.Y,
-							maxX: bBox.EndPoint.X,
-							maxY: bBox.EndPoint.Y,
-							width: bBox.EndPoint.X-bBox.StartPoint.X,
-							height: bBox.EndPoint.Y-bBox.StartPoint.Y,
-							surface: (bBox.EndPoint.X-bBox.StartPoint.X)*(bBox.EndPoint.Y-bBox.StartPoint.Y),
+							minX:    bBox.StartPoint.X,
+							minY:    bBox.StartPoint.Y,
+							maxX:    bBox.EndPoint.X,
+							maxY:    bBox.EndPoint.Y,
+							width:   bBox.EndPoint.X - bBox.StartPoint.X,
+							height:  bBox.EndPoint.Y - bBox.StartPoint.Y,
+							surface: (bBox.EndPoint.X - bBox.StartPoint.X) * (bBox.EndPoint.Y - bBox.StartPoint.Y),
 						})
 					}
 				}
@@ -562,25 +634,19 @@ func server() {
 				c.String(200, "Nothing")
 			} else {
 				bbox := image.Rect(bboxInfos[0].minX-20, bboxInfos[0].minY-20, bboxInfos[0].maxX+20, bboxInfos[0].maxY+20)
-			    src = imaging.Crop(src, bbox)
+				src = imaging.Crop(src, bbox)
 				b := src.Bounds()
 				imgWidth := b.Max.X
 				imgHeight := b.Max.Y
-			    log.Println("src.Width:", imgWidth ,"src.Height:", imgHeight)
-			    if imgWidth > 700 {
+				log.Println("src.Width:", imgWidth, "src.Height:", imgHeight)
+				if imgWidth > 700 {
 					src = imaging.Resize(src, 700, 0, imaging.Lanczos)
-			    }
+				}
 				err = imaging.Encode(c.Writer, src, imaging.JPEG)
-			    if err != nil {
-			        log.Fatalf("failed to encode image: %v", err)
-			    }
+				if err != nil {
+					log.Fatalf("failed to encode image: %v", err)
+				}
 			}
-
-			// remove temporary file
-			//err = os.Remove(file.Name())
-			//if err != nil {
-			//	panic(err)
-			//}
 
 		} else {
 			c.String(200, "Nothing")
@@ -592,8 +658,6 @@ func server() {
 	r.POST("/crop", func(c *gin.Context) {
 		m.l.Lock()
 		defer m.l.Unlock()
-		// classes := c.PostForm("classes")
-		// threshold := c.PostForm("threshold")
 
 		// Source
 		file, err := c.FormFile("file")
@@ -636,29 +700,12 @@ func server() {
 					bBox.EndPoint.X, bBox.EndPoint.Y,
 				)
 				if (d.ClassNames[i] == "car" || d.ClassNames[i] == "truck") && d.Probabilities[i] >= 70 {
-					// save bouding boxes
-					// cropZone(imageFile, i, d.ClassNames[i], image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20))
-					// check image size if not acceptable size
-					// Uncomment code below if you want save cropped objects to files
-					// minX, minY := float64(bBox.StartPoint.X), float64(bBox.StartPoint.Y)
-					// maxX, maxY := float64(bBox.EndPoint.X), float64(bBox.EndPoint.Y)
-					// rect := image.Rect(round(minX), round(minY), round(maxX), round(maxY))
-					// err := saveToFile(src, rect, fmt.Sprintf("crop_%d.jpeg", i))
-					// if err != nil {
-					// 	fmt.Println(err)
-					// 	return
-					// }
-				    // Open a test image.
 					bbox := image.Rect(bBox.StartPoint.X-20, bBox.StartPoint.Y-20, bBox.EndPoint.X+20, bBox.EndPoint.Y+20)
-				    //src, err := imaging.Decode(f)
-				    //if err != nil {
-				    //   log.Fatalf("failed to open image: %v", err)
-				    //}
-				    src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
+					src = imaging.Crop(src, bbox)
 					err = imaging.Encode(c.Writer, src, imaging.JPEG)
-				    if err != nil {
-				        log.Fatalf("failed to encode image: %v", err)
-				    }
+					if err != nil {
+						log.Fatalf("failed to encode image: %v", err)
+					}
 				}
 			}
 		}
@@ -676,63 +723,33 @@ func printError(err error) {
 	log.Println("error:", err)
 }
 
-func main() {
-	flag.Parse()
-
-	if *configFile == "" || *weightsFile == "" {
-		flag.Usage()
-		return
-	}
-
-	n := darknet.YOLONetwork{
-		GPUDeviceIndex:           0,
-		NetworkConfigurationFile: *configFile,
-		WeightsFile:              *weightsFile,
-		Threshold:                .25,
-	}
-
-	if err := n.Init(); err != nil {
-		printError(err)
-		return
-	}
-	defer n.Close()
-
-	m = yoloModel{
-		n: n,
-		l: sync.Mutex{},
-	}
-
-	server()
-}
-
 func drawableJPEGImage(r io.Reader) (draw.Image, error) {
-    img, err := jpeg.Decode(r)
-    if err != nil {
-        return nil, err
-    }
-    dimg, ok := img.(draw.Image)
-    if !ok {
-        return nil, fmt.Errorf("%T is not a drawable image type", img)
-    }
-    return dimg, nil
+	img, err := jpeg.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+	dimg, ok := img.(draw.Image)
+	if !ok {
+		return nil, fmt.Errorf("%T is not a drawable image type", img)
+	}
+	return dimg, nil
 }
 
 func drawBbox(x1, y1, x2, y2, thickness int, img *image.RGBA) {
-    col := color.RGBA{0, 255, 0, 128}
-    for t:=0; t<thickness; t++ {
-        // draw horizontal lines
-        for x := x1; x<= x2; x++ {
-            img.Set(x, y1+t, col)
-            img.Set(x, y2-t, col)
-        }
-        // draw vertical lines
-        for y := y1; y <= y2; y++ {
-            img.Set(x1+t, y, col)
-            img.Set(x2-t, y, col)
-        }
-    }
+	col := color.RGBA{0, 255, 0, 128}
+	for t := 0; t < thickness; t++ {
+		// draw horizontal lines
+		for x := x1; x <= x2; x++ {
+			img.Set(x, y1+t, col)
+			img.Set(x, y2-t, col)
+		}
+		// draw vertical lines
+		for y := y1; y <= y2; y++ {
+			img.Set(x1+t, y, col)
+			img.Set(x2-t, y, col)
+		}
+	}
 }
-
 
 func round(v float64) int {
 	if v >= 0 {
@@ -762,24 +779,24 @@ func imageToBytes(img image.Image) ([]byte, error) {
 }
 
 func cropZone(inputFile string, idx int, className string, bbox image.Rectangle) error {
-    // Open a test image.
-    src, err := imaging.Open(inputFile)
-    if err != nil {
-        log.Fatalf("failed to open image: %v", err)
-        return err
-    }
+	// Open a test image.
+	src, err := imaging.Open(inputFile)
+	if err != nil {
+		log.Fatalf("failed to open image: %v", err)
+		return err
+	}
 
-    src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
+	src = imaging.Crop(src, bbox) // image.Rect(42, 51, 772, 485))
 
-    // Save the resulting image as JPEG.
+	// Save the resulting image as JPEG.
 	basename := filepath.Base(inputFile)
 
-    err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
-    if err != nil {
-        log.Fatalf("failed to save image: %v", err)
-        return err
-    }
-    return nil
+	err = imaging.Save(src, "/darknet/cropped_"+className+"-"+strconv.Itoa(idx)+"-"+basename)
+	if err != nil {
+		log.Fatalf("failed to save image: %v", err)
+		return err
+	}
+	return nil
 }
 
 func grabFileByURL(rawURL string) (*os.File, int64, error) {
@@ -830,4 +847,13 @@ Loop:
 	file, _ := os.Open(resp.Filename)
 
 	return file, fi.Size(), nil
+}
+
+// fail fast on initialization
+func must(i interface{}, err error) interface{} {
+	if err != nil {
+		panic(err)
+	}
+
+	return i
 }

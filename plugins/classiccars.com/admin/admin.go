@@ -1,9 +1,8 @@
 package admin
 
 import (
-	"github.com/qor/admin"
-
 	"github.com/lucmichalski/cars-contrib/classiccars.com/models"
+	"github.com/qor/admin"
 )
 
 const menuName = "classiccars.com"

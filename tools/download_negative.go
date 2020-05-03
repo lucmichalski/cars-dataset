@@ -1,17 +1,17 @@
 package main
 
 import (
-	"net/url"
-	"net/http"
-	"path/filepath"
-	"os"
-	"strings"
-	"fmt"
 	"encoding/csv"
+	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/k0kubun/pp"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,17 +33,17 @@ func main() {
 			break
 		}
 		if err != nil {
-		    if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
-		        continue
-		    }
-		    checkErr(err)
+			if perr, ok := err.(*csv.ParseError); ok && perr.Err == csv.ErrFieldCount {
+				continue
+			}
+			checkErr(err)
 		}
 		pp.Println("found link: ", row[0])
 		f, _, err := openFileByURL(row[0], "./test_negative")
-	    checkErr(err)
+		checkErr(err)
 
-	    // create empty bbox file for yolo
-	    annotationFile := strings.Replace(f.Name(), filepath.Ext(f.Name()), ".txt", -1)
+		// create empty bbox file for yolo
+		annotationFile := strings.Replace(f.Name(), filepath.Ext(f.Name()), ".txt", -1)
 
 		pp.Println("annotationFile: ", annotationFile)
 
@@ -59,7 +59,6 @@ func main() {
 	}
 }
 
-
 func openFileByURL(rawURL, destPath string) (*os.File, int64, error) {
 	if fileURL, err := url.Parse(rawURL); err != nil {
 		return nil, 0, err
@@ -74,9 +73,9 @@ func openFileByURL(rawURL, destPath string) (*os.File, int64, error) {
 		// pp.Println("segments", segments)
 		filePath := filepath.Join(destPath, fileName+extension)
 
-		pp.Println("download to local path: ", filePath)		
+		pp.Println("download to local path: ", filePath)
 
-		// return nil, 0, err		
+		// return nil, 0, err
 
 		file, err := os.Create(filePath)
 		if err != nil {

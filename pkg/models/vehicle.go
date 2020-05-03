@@ -21,7 +21,7 @@ type Vehicle struct {
 	Source            string `gorm:"index:source"`
 	Gid               string `gorm:"index:gid"`
 	Manufacturer      string `gorm:"index:manufacturer"`
-	Class 			  string `gorm:"index:class"`
+	Class             string `gorm:"index:class"`
 	MainImage         media_library.MediaBox
 	Images            media_library.MediaBox
 	VehicleProperties VehicleProperties `sql:"type:text"`
@@ -58,8 +58,8 @@ type VehicleImage struct {
 	Title        string
 	Checksum     string
 	Source       string
-	BBox 		 string
-	Labelme 	 string
+	BBox         string
+	Labelme      string `gorm:"type:text" sql:"type:text"`
 	SelectedType string
 	File         media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
 }

@@ -18,7 +18,7 @@ func renderLatestVehicles(context *admin.Context) template.HTML {
 	if vehicles, err := vehicleContext.FindMany(); err == nil {
 		return vehicleContext.Render("index/table", vehicles)
 	}
-	return template.HTML("") 
+	return template.HTML("")
 }
 
 /*

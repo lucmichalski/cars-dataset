@@ -3,21 +3,21 @@ package crawler
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/PuerkitoBio/goquery"
-	
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 func Extract(cfg *config.Config) error {
@@ -26,12 +26,6 @@ func Extract(cfg *config.Config) error {
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
-		/*
-			colly.URLFilters(
-				regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
-				regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
-			),
-		*/
 	)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
@@ -41,8 +35,6 @@ func Extract(cfg *config.Config) error {
 			MaxSize: cfg.QueueMaxSize,
 		},
 	)
-
-	// c.DisableCookies()
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
@@ -71,21 +63,9 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 
-		/*
-		<div id="listing-content" class="fx-item fx-va-top fi-3pan-2nd-col"
-			 data-favorite="false"
-			 data-listing="1310951"
-			 data-listing-url="/listings/view/1310951/1985-land-rover-defender-for-sale-in-oceanside-california-92057"
-			 data-listing-thumbnail=""
-			 data-listing-year="1985"
-			 data-listing-make="Land Rover"
-			 data-listing-model="Defender"
-			 data-listing-formatted-price="$25,000">
-		*/
-
 		var gid, year, make, model, formattedPrice string
 		e.ForEach(`div[id=listing-content]`, func(_ int, el *colly.HTMLElement) {
-			gid  = el.Attr("data-listing")
+			gid = el.Attr("data-listing")
 			year = el.Attr("data-listing-year")
 			make = el.Attr("data-listing-make")
 			model = el.Attr("data-listing-model")
@@ -180,28 +160,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://localhost:9006/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9005/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+				if string(content) == "" {
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
+					continue
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -270,8 +262,10 @@ func Extract(cfg *config.Config) error {
 		for _, rootUrl := range cfg.URLs {
 			sitemaps, err := prefetch.ExtractSitemapIndex(rootUrl)
 			if err != nil {
-				log.Fatal("ExtractSitemapIndex:", err)
-				return err
+				pp.Println("sitemaps", sitemaps)
+				log.Warnln("ExtractSitemapIndex:", err, "rootUrl:", rootUrl)
+				continue
+				// return err
 			}
 
 			utils.Shuffle(sitemaps)
@@ -281,8 +275,9 @@ func Extract(cfg *config.Config) error {
 					log.Infoln("extract sitemap gz compressed...")
 					locs, err := prefetch.ExtractSitemapGZ(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
-						return err
+						log.Warnln("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {
@@ -293,15 +288,16 @@ func Extract(cfg *config.Config) error {
 				} else {
 					locs, err := prefetch.ExtractSitemap(sitemap)
 					if err != nil {
-						log.Fatal("ExtractSitemap", err)
-						return err
+						log.Warnln("ExtractSitemap", err, "sitemap:", sitemap)
+						continue
+						// return err
 					}
 					utils.Shuffle(locs)
 					for _, loc := range locs {
 						if strings.Contains(loc, "listings/view") {
 							q.AddURL(loc)
 						}
-					}				
+					}
 				}
 			}
 		}

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/qor/admin"
+
 	adm "github.com/lucmichalski/cars-dataset/autotrader.co.uk/admin"
 	"github.com/lucmichalski/cars-dataset/autotrader.co.uk/crawler"
 	"github.com/lucmichalski/cars-dataset/autotrader.co.uk/models"
-	"github.com/qor/admin"
-
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/plugins"
 )

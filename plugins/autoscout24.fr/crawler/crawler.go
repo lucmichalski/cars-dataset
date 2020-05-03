@@ -1,23 +1,23 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"github.com/k0kubun/pp"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/tsak/concurrent-csv-writer"
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	ccsv "github.com/tsak/concurrent-csv-writer"
 
-	"github.com/lucmichalski/cars-dataset/pkg/pluck"		
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
+	"github.com/lucmichalski/cars-dataset/pkg/pluck"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
@@ -47,10 +47,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/autoscout24.fr_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/autoscout24.fr_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/autoscout24.fr_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -79,15 +79,17 @@ func Extract(cfg *config.Config) error {
 		q.AddURL(r.Request.URL.String())
 	})
 
-	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		if strings.Contains(link, "offres/") {
-			fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-			csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
-			csvSitemap.Flush()
-		}
-		q.AddURL(e.Request.AbsoluteURL(link))
-	})
+	if !cfg.DryMode {
+		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
+			link := e.Attr("href")
+			if strings.Contains(link, "offres/") {
+				fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
+				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
+				csvSitemap.Flush()
+			}
+			q.AddURL(e.Request.AbsoluteURL(link))
+		})
+	}
 
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 
@@ -108,7 +110,7 @@ func Extract(cfg *config.Config) error {
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
 		vehicle.Source = "autoscout24.fr"
-		// vehicle.Class = "car"
+		vehicle.Class = "car"
 
 		e.ForEach(`as24-tracking[type="pagename"]`, func(_ int, el *colly.HTMLElement) {
 			vehicleType := el.Attr("category")
@@ -125,46 +127,46 @@ func Extract(cfg *config.Config) error {
 		}
 		p.Add(pluck.Config{
 			Activators:  []string{"Marque</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "make",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "make",                        // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Modèle</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "model",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "model",                       // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Année</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "year",   // the key in the returned map, after completion
+			Permanent:   1,                            // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                      // restarts capturing
+			Limit:       1,                            // specifies the number of times capturing can occur
+			Name:        "year",                       // the key in the returned map, after completion
 		})
 
 		p.Add(pluck.Config{
 			Activators:  []string{"Couleur extérieure</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "color",   // the key in the returned map, after completion
+			Permanent:   1,                                         // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                                   // restarts capturing
+			Limit:       1,                                         // specifies the number of times capturing can occur
+			Name:        "color",                                   // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Portes</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "doors",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "doors",                       // the key in the returned map, after completion
 		})
 		p.Add(pluck.Config{
 			Activators:  []string{"Sièges</dt>\n<dd>"}, // must be found in order, before capturing commences
-			Permanent:   1,      // number of activators that stay permanently (counted from left to right)
-			Deactivator: "</dd>",   // restarts capturing
-			Limit:       1,      // specifies the number of times capturing can occur
-			Name: "seats",   // the key in the returned map, after completion
+			Permanent:   1,                             // number of activators that stay permanently (counted from left to right)
+			Deactivator: "</dd>",                       // restarts capturing
+			Limit:       1,                             // specifies the number of times capturing can occur
+			Name:        "seats",                       // the key in the returned map, after completion
 		})
 
 		p.PluckURL(e.Request.Ctx.Get("url"))
@@ -185,9 +187,9 @@ func Extract(cfg *config.Config) error {
 			vehicle.Year = utils.RemoveAllTags(v)
 		}
 
-                if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
-                        return
-                }
+		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
+			return
+		}
 
 		switch v := rev["color"].(type) {
 		case string:
@@ -233,29 +235,43 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9004/crop?url=%s", carImage)
+			// TODO:
+			// - use gRPC instead on serialize/unserilize JSON file
+			//   - eg. https://github.com/LdDl/license_plate_recognition
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+				if string(content) == "" {
 					continue
-				}				
+				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
+					continue
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -288,6 +304,8 @@ func Extract(cfg *config.Config) error {
 						log.Fatal(err)
 					}
 				}
+
+				file.Close()
 			}
 		}
 
@@ -319,9 +337,6 @@ func Extract(cfg *config.Config) error {
 		//}
 		r.Ctx.Put("url", r.URL.String())
 	})
-
-
-
 
 	for _, u := range cfg.URLs {
 		q.AddURL(u)

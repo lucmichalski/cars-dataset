@@ -1,19 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
-	"github.com/qor/validations"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/classiccars.com/crawler"
+	"github.com/qor/media"
+	"github.com/qor/validations"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/classiccars.com/crawler"
 )
 
 func main() {
@@ -37,7 +36,7 @@ func main() {
 		URLs: []string{
 			"https://classiccars.com/listings/view/1310951/1985-land-rover-defender-for-sale-in-oceanside-california-92057", // https://photos.classiccars.com/cc-temp/listing/131/951/19090125-1985-land-rover-defender-std.jpg
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -52,4 +51,3 @@ func main() {
 	}
 
 }
-

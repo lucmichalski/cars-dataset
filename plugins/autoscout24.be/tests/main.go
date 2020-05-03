@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"os"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/qor/media"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/lucmichalski/cars-contrib/autoscout24.be/crawler"
+	"github.com/qor/media"
 	"github.com/qor/validations"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-
-	"github.com/lucmichalski/cars-contrib/autoscout24.be/crawler"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		URLs: []string{
 			"https://www.autoscout24.be/offres/citroen-c5-tourer-bluehdi-150-exclusive-shz-navi-eu6-diesel-noir-f373352a-9bcf-4efc-bf39-d7d366d229d0?cldtidx=1&cldtsrc=listPage",
 		},
-		DB: 			 DB,
+		DB:              DB,
 		CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,
 		ConsumerThreads: 35,
@@ -50,4 +50,3 @@ func main() {
 	}
 
 }
-

@@ -2,26 +2,74 @@ package utils
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"io"
-	"os"
-	"reflect"
-	"time"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"time"
 )
 
 func init() {
-    rand.Seed(time.Now().UnixNano()) // do it once during app initialization
+	rand.Seed(time.Now().UnixNano()) // do it once during app initialization
+}
+
+func DecodeToFile(url, data string) (*os.File, string, error) {
+
+	var segments []string
+	if strings.Contains(strings.ToLower(url), "jpg") {
+		segments = append(segments, ".jpg")
+	} else if strings.Contains(strings.ToLower(url), "png") {
+		segments = append(segments, ".png")
+	} else {
+		segments = strings.Split(url, "/")
+	}
+
+	fileName := GetMD5Hash(url) + "-" + segments[len(segments)-1]
+	if strings.Contains(fileName, "?") {
+		// clean up query string
+		fileParts := strings.Split(fileName, "?")
+		if len(fileParts) > 0 {
+			fileName = fileParts[0]
+		}
+	}
+	filePath := filepath.Join(os.TempDir(), fileName)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return nil, "", err
+	}
+
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data))
+
+	// defer file.Close()
+	buf, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, "", err
+	}
+	_, err = file.Write(buf)
+
+	checksum, err := GetMD5File(filePath)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return file, checksum, nil
+
 }
 
 func Shuffle(slice interface{}) {
-    rv := reflect.ValueOf(slice)
-    swap := reflect.Swapper(slice)
-    length := rv.Len()
-    for i := length - 1; i > 0; i-- {
-        j := rand.Intn(i + 1)
-        swap(i, j)
-    }
+	rv := reflect.ValueOf(slice)
+	swap := reflect.Swapper(slice)
+	length := rv.Len()
+	for i := length - 1; i > 0; i-- {
+		j := rand.Intn(i + 1)
+		swap(i, j)
+	}
 }
 
 func EnsureDir(path string) error {

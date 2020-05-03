@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/blang/semver"
+
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/firefox"
 	"github.com/lucmichalski/cars-dataset/pkg/selenium/log"
 )

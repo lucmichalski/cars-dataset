@@ -1,9 +1,8 @@
 package admin
 
 import (
-	"github.com/qor/admin"
-
 	"github.com/lucmichalski/cars-contrib/motorcycles.autotrader.com/models"
+	"github.com/qor/admin"
 )
 
 const menuName = "motorcycles.autotrader.com.v2"

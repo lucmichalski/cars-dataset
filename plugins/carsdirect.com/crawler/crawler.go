@@ -1,32 +1,32 @@
 package crawler
 
 import (
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	"strings"
-	"os"
 	"net/url"
+	"os"
 	"sort"
+	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/astaxie/flatmap"
 	"github.com/corpix/uarand"
-	"github.com/qor/media/media_library"
-	log "github.com/sirupsen/logrus"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
-	"github.com/tsak/concurrent-csv-writer"
-	"github.com/astaxie/flatmap"
-		
+	"github.com/k0kubun/pp"
+	"github.com/qor/media/media_library"
+	log "github.com/sirupsen/logrus"
+	ccsv "github.com/tsak/concurrent-csv-writer"
+
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
-	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/prefetch"
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
 /*
 	Refs:
-	- rsync -av -v --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@35.179.44.166:/home/ubuntu/cars-dataset/
+	- rsync -av -v --ignore-existing —-progress -e "ssh -i ~/Downloads/ounsi.pem" /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/public ubuntu@51.91.21.67:/home/ubuntu/cars-dataset/
 	- cd plugins/carsdirect.com && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carsdirect.com.so ; cd ../..
 	- good practices
 		- https://intoli.com/blog/making-chrome-headless-undetectable/
@@ -35,7 +35,7 @@ import (
 		- https://github.com/microsoft/playwright
 		- https://datadome.co/bot-detection/will-playwright-replace-puppeteer-for-bad-bot-play-acting/
 		- https://datadome.co/pricing/
-		- 
+		-
 */
 
 func Extract(cfg *config.Config) error {
@@ -61,10 +61,10 @@ func Extract(cfg *config.Config) error {
 	utils.EnsureDir("./shared/queue/")
 
 	if _, err := os.Stat("shared/queue/carsdirect.com_sitemap.txt"); !os.IsNotExist(err) {
-	    file, err := os.Open("shared/queue/carsdirect.com_sitemap.txt")
-	    if err != nil {
-	        return err
-	    }
+		file, err := os.Open("shared/queue/carsdirect.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
 
 		reader := csv.NewReader(file)
 		reader.Comma = ','
@@ -128,7 +128,7 @@ func Extract(cfg *config.Config) error {
 		var make, model, year string
 		var carInfo map[string]interface{}
 		e.ForEach(`script[type="application/ld+json"]`, func(_ int, el *colly.HTMLElement) {
-			jsonLdStr := strings.TrimSpace(el.Text)	
+			jsonLdStr := strings.TrimSpace(el.Text)
 			if cfg.IsDebug {
 				fmt.Println("jsonLdStr:", jsonLdStr)
 			}
@@ -141,14 +141,14 @@ func Extract(cfg *config.Config) error {
 				log.Fatal(err)
 			}
 			var ks []string
-			for k :=range fm {
-				ks = append(ks,k)		
+			for k := range fm {
+				ks = append(ks, k)
 			}
 			sort.Strings(ks)
 
-			if cfg.IsDebug {			
-				for _, k :=range ks {
-					fmt.Println(k,":",fm[k])
+			if cfg.IsDebug {
+				for _, k := range ks {
+					fmt.Println(k, ":", fm[k])
 				}
 			}
 
@@ -218,29 +218,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://35.179.44.166:9004/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)					
+				if string(content) == "" {
 					continue
-				}				
+				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
+					continue
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -324,7 +335,7 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ",sitemap)
+					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
 					return err
 				}
 				utils.Shuffle(locs)
@@ -340,7 +351,7 @@ func Extract(cfg *config.Config) error {
 				utils.Shuffle(locs)
 				for _, loc := range locs {
 					links = append(links, loc)
-				}				
+				}
 			}
 		}
 	} else {

@@ -95,6 +95,8 @@ COPY --from=builder /usr/local/lib64 /usr/local/lib64
 COPY --from=builder /usr/local/lib64/pkgconfig/opencv4.pc /usr/local/lib64/pkgconfig/opencv4.pc
 COPY --from=builder /usr/local/include/opencv4/opencv2 /usr/local/include/opencv4/opencv2
 
+ENV PKG_CONFIG_PATH /usr/local/lib64/pkgconfig
+
 ENV PKG="libstdc++ \
          ca-certificates \
          wget \

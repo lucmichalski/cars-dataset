@@ -1,29 +1,26 @@
 package catalog
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
-	"os"
-	"bytes"
 	"io"
-	"path/filepath"
 	"mime/multipart"
 	"net/http"
-	"path"
-	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
+	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
 	"github.com/qor/media/media_library"
-	"github.com/karrick/godirwalk"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/config"
+	"github.com/lucmichalski/cars-dataset/pkg/models"
 	"github.com/lucmichalski/cars-dataset/pkg/utils"
 )
 
@@ -31,7 +28,7 @@ import (
 	- snippets
 		- cd plugins/carvana-kaggle && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carvana-kaggle.so ; cd ../..
 
-	- CSV exceprt	
+	- CSV exceprt
 		"id","year","make","model","trim1","trim2"
 		"0004d4463b50","2014","Acura","TL","TL","w/SE"
 		"00087a6bd4dc","2014","Acura","RLX","RLX","w/Tech"
@@ -47,10 +44,10 @@ type imageSrc struct {
 
 func ImportFromURL(cfg *config.Config) error {
 
-    file, err := os.Open(cfg.CatalogURL)
-    if err != nil {
-            return err
-    }
+	file, err := os.Open(cfg.CatalogURL)
+	if err != nil {
+		return err
+	}
 
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -78,8 +75,11 @@ func ImportFromURL(cfg *config.Config) error {
 			// so it can dispatch another worker
 			defer t.Done(nil)
 
+			pp.Println("csvMap", csvMap)
+
 			vehicle := models.Vehicle{}
 			vehicle.Source = "carvana-kaggle"
+			vehicle.Class = "car"
 			for id, header := range csvMap {
 				switch header {
 				case "id":
@@ -95,7 +95,15 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
+			if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
+				return nil
+			}
+
 			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
+			pp.Println(row)
+                        pp.Println(vehicle)
+			//os.Exit(1)
 
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
@@ -117,21 +125,21 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for i, imgSrc := range imageSrcs {
 
-                file, err := os.Open(imgSrc.URL)
-                if err != nil {
-                        return err
-                }
+				file, err := os.Open(imgSrc.URL)
+				if err != nil {
+					return err
+				}
 
-                fi, err := file.Stat()
-                if err != nil {
-                        return err
-                }
+				fi, err := file.Stat()
+				if err != nil {
+					return err
+				}
 
-                size := fi.Size()
-                checksum, err := utils.GetMD5File(file.Name())
-                if err != nil {
-                        return err
-                }
+				size := fi.Size()
+				checksum, err := utils.GetMD5File(file.Name())
+				if err != nil {
+					return err
+				}
 
 				imageSrcs[i].Size = size
 				imageSrcs[i].Checksum = checksum
@@ -149,56 +157,42 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for _, imgSrc := range imageSrcs {
 
-				tmpfilePath := filepath.Join(os.TempDir(), path.Base(imgSrc.URL))
-				file, err := os.Create(tmpfilePath)
-				if err != nil {
-					log.Fatal("Create tmpfilePath", err)
-					continue
-				}				
+				carImage := fmt.Sprintf("http://51.91.21.67:8880/%s", imgSrc.URL)
+				carImage = strings.Replace(carImage, "../../../shared/datasets/kaggle/", "", -1)
+				carImage = strings.Replace(carImage, "shared/datasets/kaggle/", "", -1)
 
-				// make request to darknet service
-				request, err := newfileUploadRequest("http://localhost:9004/crop", nil, "file", imgSrc.URL)
-				if err != nil {
-					log.Fatalln("newfileUploadRequest", err)
-				}
-				client := &http.Client{}
-				resp, err := client.Do(request)
-				if err != nil {
-					log.Fatalln("client.Do", err)
+				proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", carImage)
+				log.Println("proxyURL:", proxyURL)
+				if content, err := utils.GetJSON(proxyURL); err != nil {
+					fmt.Printf("open file failure, got err %v", err)
 				} else {
-					defer resp.Body.Close()
 
-					_, err = io.Copy(file, resp.Body)
+					if string(content) == "" {
+						continue
+					}
+
+					var detection *models.Labelme
+					if err := json.Unmarshal(content, &detection); err != nil {
+						log.Warnln("unmarshal error, ", err)
+						continue
+					}
+
+					file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
 					if err != nil {
-						log.Fatal("io.Copy", err)
-						return err
+						log.Fatalln("decodeToFile error, ", err)					
 					}
 
-					buf, _ := ioutil.ReadFile(file.Name())
-					kind, _ := filetype.Match(buf)
-					pp.Println("kind: ", kind)
-
-					fi, err := file.Stat()
-					if err != nil {
-						log.Fatal("file.Stat()", err)
-						return err
+					if len(detection.Shapes) != 1 {
+						continue
 					}
 
-					size := fi.Size()
-
-					checksum, err := utils.GetMD5File(tmpfilePath)
-					if err != nil {
-						log.Fatal("GetMD5File", err)
-						return err
-					}
-
-					if size == 0 {
-						file.Close()
-						log.Warnln("image to small")
-						return nil
-					}
-
-					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: imgSrc.URL}
+					// we expect online one focused image
+					maxX := detection.Shapes[0].Points[0][0]
+					maxY := detection.Shapes[0].Points[0][1]
+					minX := detection.Shapes[0].Points[1][0]
+					minY := detection.Shapes[0].Points[1][1]
+				        bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 					log.Println("----> Scanning file: ", file.Name())
 					image.File.Scan(file)
@@ -252,7 +246,7 @@ func ImportFromURL(cfg *config.Config) error {
 	return nil
 }
 
-func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
+func walkImages(gid string, dirnames []string) (list []*imageSrc, err error) {
 	for _, dirname := range dirnames {
 		err = godirwalk.Walk(dirname, &godirwalk.Options{
 			Callback: func(osPathname string, de *godirwalk.Dirent) error {
@@ -268,7 +262,7 @@ func walkImages(gid string, dirnames []string) (list []*imageSrc, err error ){
 			Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 		})
 	}
-	return 
+	return
 }
 
 // Creates a new file upload http request with optional extra params
