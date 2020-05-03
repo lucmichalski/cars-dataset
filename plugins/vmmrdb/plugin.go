@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lucmichalski/cars-contrib/stanford-cars/catalog"
+	"github.com/lucmichalski/cars-contrib/vmmrdb/catalog"
 	"github.com/qor/admin"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
@@ -16,60 +16,60 @@ var Tables = []interface{}{}
 
 var Resources = []interface{}{}
 
-type stanfordCarsPlugin string
+type vmmrdbPlugin string
 
-func (o stanfordCarsPlugin) Name() string      { return string(o) }
-func (o stanfordCarsPlugin) Section() string   { return `Stanford Cars` }
-func (o stanfordCarsPlugin) Usage() string     { return `hello` }
-func (o stanfordCarsPlugin) ShortDesc() string { return `Stanford Cars data importer"` }
-func (o stanfordCarsPlugin) LongDesc() string  { return o.ShortDesc() }
+func (o vmmrdbPlugin) Name() string      { return string(o) }
+func (o vmmrdbPlugin) Section() string   { return `Stanford Cars` }
+func (o vmmrdbPlugin) Usage() string     { return `hello` }
+func (o vmmrdbPlugin) ShortDesc() string { return `Stanford Cars data importer"` }
+func (o vmmrdbPlugin) LongDesc() string  { return o.ShortDesc() }
 
-func (o stanfordCarsPlugin) Migrate() []interface{} {
+func (o vmmrdbPlugin) Migrate() []interface{} {
 	return Tables
 }
 
-func (o stanfordCarsPlugin) Resources(Admin *admin.Admin) {}
+func (o vmmrdbPlugin) Resources(Admin *admin.Admin) {}
 
-func (o stanfordCarsPlugin) Crawl(cfg *config.Config) error {
+func (o vmmrdbPlugin) Crawl(cfg *config.Config) error {
 	return errors.New("Not implemented")
 }
 
-func (o stanfordCarsPlugin) Catalog(cfg *config.Config) error {
+func (o vmmrdbPlugin) Catalog(cfg *config.Config) error {
 	return catalog.ImportFromURL(cfg)
 }
 
-func (o stanfordCarsPlugin) Config() *config.Config {
+func (o vmmrdbPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
-		CatalogURL:  "./shared/datasets/stanford-cars/data/yolo_cars_data.csv",
-		ImageDirs:   []string{"./shared/datasets/stanford-cars/cars_test", "./shared/datasets/stanford-cars/cars_train"},
+		CatalogURL:  "./shared/datasets/vmmrdb/vmmrdb_dirs.csv",
+		ImageDirs:   []string{"./shared/datasets/vmmrdb/"},
 	}
 	return cfg
 }
 
-type stanfordCarsCommands struct{}
+type vmmrdbCommands struct{}
 
-func (t *stanfordCarsCommands) Init(ctx context.Context) error {
+func (t *vmmrdbCommands) Init(ctx context.Context) error {
 	// to set your splash, modify the text in the println statement below, multiline is supported
 	fmt.Println(`
---------------------------------------------------------------------------------------------------------------------------------------
-:'######::'########::::'###::::'##::: ##:'########::'#######::'########::'########::::::::::::'######:::::'###::::'########:::'######::
-'##... ##:... ##..::::'## ##::: ###:: ##: ##.....::'##.... ##: ##.... ##: ##.... ##::::::::::'##... ##:::'## ##::: ##.... ##:'##... ##:
- ##:::..::::: ##:::::'##:. ##:: ####: ##: ##::::::: ##:::: ##: ##:::: ##: ##:::: ##:::::::::: ##:::..:::'##:. ##:: ##:::: ##: ##:::..::
-. ######::::: ##::::'##:::. ##: ## ## ##: ######::: ##:::: ##: ########:: ##:::: ##:'#######: ##:::::::'##:::. ##: ########::. ######::
-:..... ##:::: ##:::: #########: ##. ####: ##...:::: ##:::: ##: ##.. ##::: ##:::: ##:........: ##::::::: #########: ##.. ##::::..... ##:
-'##::: ##:::: ##:::: ##.... ##: ##:. ###: ##::::::: ##:::: ##: ##::. ##:: ##:::: ##:::::::::: ##::: ##: ##.... ##: ##::. ##::'##::: ##:
-. ######::::: ##:::: ##:::: ##: ##::. ##: ##:::::::. #######:: ##:::. ##: ########:::::::::::. ######:: ##:::: ##: ##:::. ##:. ######::
-:......::::::..:::::..:::::..::..::::..::..:::::::::.......:::..:::::..::........:::::::::::::......:::..:::::..::..:::::..:::......:::
+-----------------------------------------------------------------
+'##::::'##:'##::::'##:'##::::'##:'########::'########::'########::
+ ##:::: ##: ###::'###: ###::'###: ##.... ##: ##.... ##: ##.... ##:
+ ##:::: ##: ####'####: ####'####: ##:::: ##: ##:::: ##: ##:::: ##:
+ ##:::: ##: ## ### ##: ## ### ##: ########:: ##:::: ##: ########::
+. ##:: ##:: ##. #: ##: ##. #: ##: ##.. ##::: ##:::: ##: ##.... ##:
+:. ## ##::: ##:.:: ##: ##:.:: ##: ##::. ##:: ##:::: ##: ##:::: ##:
+::. ###:::: ##:::: ##: ##:::: ##: ##:::. ##: ########:: ########::
+:::...:::::..:::::..::..:::::..::..:::::..::........:::........:::
 `)
 
 	return nil
 }
 
-func (t *stanfordCarsCommands) Registry() map[string]plugins.Plugin {
+func (t *vmmrdbCommands) Registry() map[string]plugins.Plugin {
 	return map[string]plugins.Plugin{
-		"stanfordCars": stanfordCarsPlugin("stanfordCars"), //OP
+		"vmmrdb": vmmrdbPlugin("vmmrdb"), //OP
 	}
 }
 
-var Plugins stanfordCarsCommands
+var Plugins vmmrdbCommands

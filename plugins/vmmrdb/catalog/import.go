@@ -6,15 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	//"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
-	// "path"
 	"path/filepath"
 	"strings"
 
-	// "github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
 	"github.com/nozzle/throttler"
@@ -28,20 +25,7 @@ import (
 
 /*
 	- snippets
-	  - cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-stanford-cars.so ; cd ../..
-
-	- converter
-	  -
-
-	- CSV excerpt
-		"image_type","image_relpath","name"
-		TRAIN,./cars_train/02443.jpg,HUMMER H3T Crew Cab 2010
-		TRAIN,./cars_train/02444.jpg,Ford F-150 Regular Cab 2012
-		TRAIN,./cars_train/02445.jpg,Buick Rainier SUV 2007
-	- CSV excerpt #2
-		TRAIN;/opt/cars_train/02443.jpg;(640, 480);74;62;617;411;HUMMER H3T Crew Cab 2010;(0.5398437500000001, 0.4927083333333333, 0.8484375000000001, 0.7270833333333333)
-		TRAIN;/opt/cars_train/02444.jpg;(800, 576);70;60;737;541;Ford F-150 Regular Cab 2012;(0.504375, 0.5217013888888888, 0.83375, 0.8350694444444444)
-		TRAIN;/opt/cars_train/02445.jpg;(786, 491);30;99;743;427;Buick Rainier SUV 2007;(0.4917302798982189, 0.5356415478615071, 0.9071246819338423, 0.6680244399185336)
+	  - cd plugins/vmmrdb && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-vmmrdb.so ; cd ../..
 */
 
 type imageSrc struct {
@@ -89,25 +73,23 @@ func ImportFromURL(cfg *config.Config) error {
 
 		//pp.Println(row)
 		//os.Exit(1)
-
-		name := row[7]
-		nameParts := strings.Split(name, " ")
-		year := nameParts[len(nameParts)-1]
-		model := strings.Replace(name, nameParts[0], "", -1)
-		model = strings.Replace(model, year, "", -1)
+		dirParts := strings.Split(row[0], "/")
+		nameParts := strings.Split(dirParts[0], "_")
+		make := nameParts[0]
+		model := nameParts[1]
+		year := nameParts[2]
 
 		var imageSrcs []string
-		// imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_test/"+row[1])
-		imageSrcs = append(imageSrcs, "./shared/datasets/stanford-cars/cars_train/"+row[1])
+		imageSrcs = append(imageSrcs, row[0])
 
 		if _, ok := cars[name]; ok {
 			cars[name].imgs = append(cars[name].imgs, imageSrcs...)
 		} else {
 			car := &carInfo{
-				name:  row[7],
-				make:  nameParts[0],
+				name:  make + " " + model + " " + year,
+				make:  make,
 				model: strings.TrimSpace(model),
-				year:  nameParts[len(nameParts)-1],
+				year:  year,
 			}
 			car.imgs = append(car.imgs, imageSrcs...)
 			cars[name] = car
@@ -122,7 +104,7 @@ func ImportFromURL(cfg *config.Config) error {
 			defer t.Done(nil)
 
 			vehicle := models.Vehicle{}
-			vehicle.Source = "stanford-cars"
+			vehicle.Source = "vmmrdb"
 
 			vehicle.Modl = row.model
 			vehicle.Name = row.name
@@ -140,9 +122,7 @@ func ImportFromURL(cfg *config.Config) error {
 
 			for _, imgSrc := range row.imgs {
 
-				carImage := fmt.Sprintf("http://51.91.21.67:8881/%s", imgSrc)
-				carImage = strings.Replace(carImage, "/opt/", "", -1)
-                                carImage = strings.Replace(carImage, "./shared/datasets/stanford-cars/cars_train/", "", -1)
+				carImage := fmt.Sprintf("http://51.91.21.67:8882/%s", imgSrc)
 
 				proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
 				log.Println("proxyURL:", proxyURL)

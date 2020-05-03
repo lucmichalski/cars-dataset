@@ -264,6 +264,9 @@ docker-compose stop crawler-clauto
 docker-compose scale crawler-mtbauto=4
 docker-compose scale crawler-clauto=4
 
+
+find . -type f -printf '%P\n' > listing.csv
+
 find . -type f -name "*.go" -print0 | xargs -0 sed -i 's/localhost:90046/localhost:9003/g'
 
 find . -type f -name "*.go" -print0 | xargs -0 sed -i 's/35.179.44.166/51.91.21.67/g'
