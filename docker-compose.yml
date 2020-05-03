@@ -61,64 +61,6 @@ services:
   #  - 8888:8888
   #  command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]    
 
-  crawler-mtbauto:
-    image: lucmichalski/car-crawler--mtbauto:latest
-    # container_name: ${NAMESPACE}-cwl-mtbauto
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks:
-    - internal
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_HOST: ${MYSQL_HOST}
-    volumes:
-    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
-    - ./dataset:/opt/lucmichalski/bin/datasets
-    - ./tmp:/tmp
-    - cache-data:/opt/lucmichalski/bin/data
-    - public-data:/opt/lucmichalski/bin/public
-    restart: unless-stopped
-    depends_on:
-    - mysql
-    - tor-haproxy
-    - selenium
-    links:
-    - mysql:mysql
-    command: ["cars-dataset", "--plugins", "motorcycles.autotrader.com", "--extract", "--no-cache", "--clean", "--verbose"]
-
-  crawler-clauto:
-    image: lucmichalski/car-crawler--clauto:latest
-    # container_name: ${NAMESPACE}-cwl-clauto
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks:
-    - internal
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_HOST: ${MYSQL_HOST}
-    volumes:
-    - ./shared/geoip2/:/opt/lucmichalski/bin/shared/geoip2/
-    - ./dataset:/opt/lucmichalski/bin/datasets
-    - ./tmp:/tmp
-    - cache-data:/opt/lucmichalski/bin/data
-    - public-data:/opt/lucmichalski/bin/public
-    restart: unless-stopped
-    depends_on:
-    - mysql
-    - tor-haproxy
-    - selenium
-    links:
-    - mysql:mysql
-    command: ["cars-dataset", "--plugins", "classics.autotrader.com", "--extract", "--no-cache", "--clean", "--verbose"]
-
   dataset:
     image: lucmichalski/car-admin:latest
     container_name: ${NAMESPACE}-dataset
