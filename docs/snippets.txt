@@ -12,6 +12,85 @@ Cheers,
 X
 
 ------------------------------------------------------------------------------------------------------
+## download from gdrive
+
+https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=FILEID' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=FILEID" -O FILENAME && rm -rf /tmp/cookies.txt
+
+-- or ----------------------------------------------------------------------------------------------------
+
+!sudo wget -O /usr/sbin/gdrivedl 'https://f.mjh.nz/gdrivedl'
+!sudo chmod +x /usr/sbin/gdrivedl
+!gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h camembert_sentiment.tar.xz
+!tar xf camembert_sentiment.tar.xz
+
+------------------------------------------------------------------------------------------------------
+## upload to gdrive
+
+
+??????
+
+------------------------------------------------------------------------------------------------------
+car (0): 98.1139% | start point: (159,103) | end point: (553, 489)
+
+for i in *.jpg; do rm "$i"; done
+
+------------------------------------------------------------------------------------------------------
+## darknet-train
+
+docker run -ti --runtime=nvidia --gpus all --rm -v `pwd`/tools:/opt/tools -v `pwd`/shared/datasets:/opt/data -v `pwd`/models:/opt/models lucmichalski/darknet-train:latest
+
+------------------------------------------------------------------------------------------------------
+## fix autoscout24.fr/be mistakes
+update vehicles set class='motorcycle' where modl='' and source='autoscout24.be'
+
+------------------------------------------------------------------------------------------------------
+## car datasets
+https://ai.stanford.edu/~jkrause/cars/car_dataset.html
+http://mmlab.ie.cuhk.edu.hk/datasets/comp_cars/
+http://vmmrdb.cecsresearch.org/
+http://mmlab.ie.cuhk.edu.hk/datasets/comp_cars/instruction.txt
+
+------------------------------------------------------------------------------------------------------
+nvidia-docker run nvcr.io/nvidia/cuda:10.2-runtime
+
+curl -Lo /usr/local/bin/crane "https://www.crane-orchestration.com/downloads/mac/v3.5.0?key=e84d0987-33d0-4144-9a7b-94f3a203093e"
+chmod +x /usr/local/bin/crane
+
+go run main.go --plugins autoscout24.fr --extract --no-cache --clean --verbose
+
+wget -nc --output-document=./models/yolov3.cfg https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov3.cfg
+wget -nc --output-document=./models/yolov3.weights https://pjreddie.com/media/files/yolov3.weights
+
+docker build -t lucmichalski/darknet:gpu-latest -f Dockerfile.gpu .
+
+# daenon
+docker run --name darknet2 --runtime=nvidia -d -p 9004:9004 -e DARKNET_PORT=9004 \
+-v `pwd`/darknet:/darknet -v `pwd`/models:/darknet/models lucmichalski/darknet:gpu-latest \
+sh -c 'go run server.go --config-file=./models/yolov4.cfg --weights-file=./models/yolov4.weights'
+
+docker run --name darknet5 --runtime=nvidia -ti -p 9006:9006 -e DARKNET_PORT=9006 \
+-v `pwd`/darknet:/darknet -v `pwd`/models:/darknet/models lucmichalski/darknet:gpu-latest \
+sh -c 'go run server.go --config-file=./models/stanford-1class.cfg --weights-file=./models/stanford-1class_final.weights --gpu 1'
+
+# interactive
+docker stop darknet; docker rm darknet && \
+docker run --name darknet --runtime=nvidia -ti -p 9003:9003 -e DARKNET_PORT=9003 \
+-v `pwd`/shared/geoip2/GeoLite2-City.mmdb:/darknet/geoip2/GeoLite2-City.mmdb -v `pwd`/darknet:/darknet -v `pwd`/models:/darknet/models lucmichalski/darknet:gpu-latest \
+sh -c 'go run server.go --config-file=./models/yolov4.cfg --weights-file=./models/yolov4.weights'
+
+
+
+https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT
+
+https://shorturl.at/dyBTX
+
+"source_url" | "filepath" | "x_top" | "y_top" | "x_bottom" | "y_bottom"
+
+51.91.21.67:9008
+
+sudo systemctl start mysql
 
 # wordpress upload
 wp media import ~/Pictures/**\/*.jpg
@@ -37,6 +116,7 @@ https://github.com/solefaucet/sole-server/tree/master/middlewares
 https://github.com/solefaucet/sole-server/blob/master/middlewares/logger.go#L16 (geoip + logger + gin)
 https://github.com/x0rzkov/geoip2-rest-api-golang/blob/master/main.go#L9-L13
 https://github.com/x0rzkov/gin-gonic-realip/blob/master/realip.go
+https://github.com/solefaucet/sole-server/blob/master/main.go#L50
 
 create a middleware to log geoip data
 
@@ -86,15 +166,32 @@ https://github.com/ablacklama/Vehicle-Detection/blob/master/utils/utils.py
 -rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_final.weights
 -rw-r--r-- 1 root root 256015980 Apr 27 12:09 yolo-obj_last.weights
 
+https://www.autoscout24.fr/offres/husqvarna-svartpilen-701-essence-gris-15b0f509-d45a-4dce-bf6f-d6d72a699f57?
+
+docker build -t stanford-map2csv .
+docker run -ti -v `pwd`:/opt stanford-map2csv
+
+# yamaha-occasion.com ! important !
+update vehicles set class='motorcycle' where source='yamaha-occasion.com'
+update vehicles set class='car' where source='autosphere.fr'
+
+# test tf gpu
+import tensorflow as tf
+tf.test.is_gpu_available()
+
 # mailwizz
 https://www.mailwizz.com/frontend/files/Mailwizz-Customer-Manual.pdf
 https://www.youtube.com/watch?v=gol9NaRWqSs
 
+docker rmi $(docker images -f "dangling=true" -q)
+
 ## launchers
-docker compose up crawler-mtbauto
-docker compose up crawler-clauto
+docker-compose up crawler-mtbauto
+docker-compose up crawler-clauto
 docker-compose stop crawler-mtbauto
 docker-compose stop crawler-clauto
+
+docker-compose build crawler-mtbauto
 
 docker-compose scale crawler-mtbauto=5
 docker-compose scale crawler-clauto=5
@@ -167,9 +264,15 @@ docker-compose stop crawler-clauto
 docker-compose scale crawler-mtbauto=4
 docker-compose scale crawler-clauto=4
 
+find . -type f -name "*.go" -print0 | xargs -0 sed -i 's/localhost:90046/localhost:9003/g'
+
+find . -type f -name "*.go" -print0 | xargs -0 sed -i 's/35.179.44.166/51.91.21.67/g'
+
 find . -type f -name "*.txt" -print0 | xargs -0 sed -i 's/%!s(int=1)/1/g'
 
 find . -type f -name "*.json" -print0 | xargs -0 sed -i 's/person/car/g'
+
+gdrivedl https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT yolov4.weights
 
 gdrivedl https://drive.google.com/open?id=1Cfnykelzf8n_Ct-8NMAkcpYgQYL6c10V val2017_coco.zip
 gdrivedl drive.google.com/open?id=1PTA24UTZcsnzXPN1gmV0_lRg3lMHqwp6 
@@ -178,8 +281,38 @@ gdrivedl https://drive.google.com/open?id=1GL0zdThuAECX6zo1rA_ExKha1CPu1h_h came
 
 gdrivedl https://drive.google.com/open?id=1JKF-bdIklxOOVy-2Cr5qdvjgGpmGfcbp yolov4.conv.137
 
-../../../darknet detector train -dont_show data/obj.data yolo-obj.cfg yolov4.conv.137
+../../../
 
+darknet detector map data/obj.data yolo-obj.cfg backup/
+
+
+darknet detector train -dont_show -gpus 1 data/obj.data stanford-1class.cfg ../models/yolov4.conv.137
+
+darknet detector train -dont_show -mjpeg_port 8090 -map -gpus 1 data/obj.data stanford-5class.cfg ../models/yolov4.conv.137
+
+darknet detector train -dont_show data/obj.data yolo-obj.cfg yolov4.conv.137
+
+
+
+docker stop darknet
+docker rm darknet
+
+docker run --name darknet --runtime=nvidia -ti -p 9003:9003 -e DARKNET_PORT=9003 \
+-v `pwd`/darknet:/darknet -v `pwd`/models:/darknet/models lucmichalski/darknet:gpu-latest \
+sh -c 'go run server.go --config-file=./models/yolov4.cfg --weights-file=./models/yolov4.weights'
+
+
+docker build -t lucmichalski/darknet-train:latest -f Dockerfile.dev .
+
+docker run -ti --runtime=nvidia --gpus all \
+--rm -v `pwd`/tools:/opt/tools -v `pwd`/shared/datasets:/opt/data -v `pwd`/models:/opt/models \
+lucmichalski/darknet-train:latest -f Dockerfile.dev .
+
+    volumes:
+    - ./tools:/opt/tools
+    - ./shared/datasets:/opt/data
+    - ./models:/opt/models
+    command: ["/bin/bash"]
 
 ../../../darknet detector test data/obj.data yolo-obj.cfg backup/yolo-obj_2000.weights
 
@@ -373,6 +506,17 @@ https://github.com/zet4/alpine-tor
 https://github.com/GabrielDeml/Yolo_mark_in_docker/blob/master/run.sh#L4
 -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix
 
+rp, err := proxy.RoundRobinProxySwitcher("http://51.91.21.67:8118")
+if err != nil {
+        log.Fatal(err)
+}
+c.SetProxyFunc(rp)
+
+curl --socks5 localhost:5566 -o test3.html https://motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678
+curl --proxy localhost:8118 http://httpbin.org/ip
+
+curl --proxy localhost:8119 -o test2.html https://motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678
+curl --proxy localhost:5566 -o test2.html https://motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678
 
 curl --proxy localhost:8118 https://www.carvana.com
 curl --proxy localhost:8118 https://www.google.com
@@ -381,13 +525,13 @@ curl -x socks5h://localhost:1080 https://www.google.com
 curl -x socks5h://protonvpn:1080 https://www.youtube.com
 
 {
-	"default-runtime": "nvidia",
-	"runtimes": {
-		"nvidia": {
-	 		"path": "/usr/bin/nvidia-container-runtime",
- 			"runtimeArgs": []
-		}
-	}
+  "default-runtime": "nvidia",
+  "runtimes": {
+    "nvidia": {
+      "path": "/usr/bin/nvidia-container-runtime",
+      "runtimeArgs": []
+    }
+  }
 }
 
 export LDFLAGS="${LDFLAGS} -L/usr/local/opt/openblas/lib"
@@ -400,32 +544,53 @@ git clone -b fix-build https://github.com/mattn/go-tensorflow-realtime-object-de
 export CFLAGS="-I/usr/local/lib/python3.7/site-packages/numpy/core/include $CFLAGS"
 
 darknet_1      | runtime.throw(0xabcbeb, 0x2a)
-darknet_1      | 	/usr/local/go/src/runtime/panic.go:1114 +0x72
+darknet_1      |  /usr/local/go/src/runtime/panic.go:1114 +0x72
 darknet_1      | runtime.sigpanic()
-darknet_1      | 	/usr/local/go/src/runtime/signal_unix.go:679 +0x46a
+darknet_1      |  /usr/local/go/src/runtime/signal_unix.go:679 +0x46a
 darknet_1      |
 darknet_1      | goroutine 11 [syscall]:
 darknet_1      | runtime.cgocall(0x977750, 0xc0000eb2e0, 0xc0002ae040)
-darknet_1      | 	/usr/local/go/src/runtime/cgocall.go:133 +0x5b fp=0xc0000eb2b0 sp=0xc0000eb278 pc=0x4057fb
+darknet_1      |  /usr/local/go/src/runtime/cgocall.go:133 +0x5b fp=0xc0000eb2b0 sp=0xc0000eb278 pc=0x4057fb
 darknet_1      | github.com/LdDl/go-darknet._Cfunc_perform_network_detect(0x1674660, 0xc0002ae040, 0x3e80000000000005, 0x3ee666663f000000, 0xc000000000, 0x0, 0x0)
-darknet_1      | 	_cgo_gotypes.go:810 +0x4d fp=0xc0000eb2e0 sp=0xc0000eb2b0 pc=0x96f65d
+darknet_1      |  _cgo_gotypes.go:810 +0x4d fp=0xc0000eb2e0 sp=0xc0000eb2b0 pc=0x96f65d
 darknet_1      | github.com/LdDl/go-darknet.(*YOLONetwork).Detect.func1(0xf965a0, 0xc0002ae030, 0x0, 0x0)
-darknet_1      | 	/go/src/github.com/LdDl/go-darknet/network.go:72 +0x117 fp=0xc0000eb350 sp=0xc0000eb2e0 pc=0x971927
+darknet_1      |  /go/src/github.com/LdDl/go-darknet/network.go:72 +0x117 fp=0xc0000eb350 sp=0xc0000eb2e0 pc=0x971927
 darknet_1      | github.com/LdDl/go-darknet.(*YOLONetwork).Detect(0xf965a0, 0xc0002ae030, 0x0, 0x0, 0x0)
-darknet_1      | 	/go/src/github.com/LdDl/go-darknet/network.go:72 +0xb9 fp=0xc0000eb470 sp=0xc0000eb350 pc=0x970f69
+darknet_1      |  /go/src/github.com/LdDl/go-darknet/network.go:72 +0xb9 fp=0xc0000eb470 sp=0xc0000eb350 pc=0x970f69
 darknet_1      | main.server.func3(0xc0004c9260)
 
 /usr/local/share/android-sdk
 
-find . -maxdepth 1 -type f -name *.jpg | head -5702 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
-find . -maxdepth 1 -type f -name *.jpg | wc -l
+find . -maxdepth 1 -type f -name "*.jpg" | head -5702 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
+find . -maxdepth 1 -type f -name "*.jpg" | wc -l
+
+369 negative cars
+5803 cars
+5434
 
 https://stackoverflow.com/questions/37458287/how-to-run-a-cron-job-inside-a-docker-container
 
 cd plugins/carvana-kaggle && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-carvana-kaggle.so && cd ../.. && \
 cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -o ../../release/cars-dataset-stanford-cars.so && cd ../..
 
+369 negative cars
+11606 cars from stanford-cars
 
+57431 
+
+~/cars-dataset/shared/datasets/5classes/train2017_stanford
+
+
+
+convert them
+cd ~/cars-dataset/tools/python/labelme2yolo && docker build -t labelme2yolo .
+cd ~/cars-dataset/shared/datasets
+
+nano ~/cars-dataset/tools/python/labelme2yolo/labelme2yolo.py
+
+docker run --rm -ti -v `pwd`/stanford_train_bbfixed:/opt/data \
+-v ~/cars-dataset/tools/python/labelme2yolo/labelme2yolo.py:/opt/labelme2yolo.py \
+labelme2yolo
 
 # Campaigns sender, runs each minute.
 * * * * * /usr/bin/php -q /var/www/web/apps/console/console.php send-campaigns >/dev/null 2>&1
