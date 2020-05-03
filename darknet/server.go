@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -33,8 +34,8 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/lucmichalski/cars-dataset/pkg/grab"
-	// "github.com/lucmichalski/cars-dataset/pkg/middlewares"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
+	// "github.com/lucmichalski/cars-dataset/pkg/middlewares"
 )
 
 /*
@@ -54,6 +55,8 @@ var (
 	labelmeVer  string
 	geoReader   *geoip2.Reader
 	m           yoloModel
+    minWidth 	= 700
+    maxWidth 	= 800
 )
 
 // yoloModel represents the yolllow network model loaded and it read/write mutex
@@ -121,7 +124,10 @@ func main() {
 
 	// launch the web service
 	server()
+}
 
+func init() {
+    rand.Seed(time.Now().UnixNano())
 }
 
 func server() {
@@ -215,11 +221,13 @@ func server() {
 			case "image/jpeg":
 				src, err = jpeg.Decode(file)
 				if err != nil {
+					// fmt.Println("jpeg.Decode failed")					
 					panic(err.Error())
 				}
 			case "image/png":
 				src, err = png.Decode(file)
 				if err != nil {
+					// fmt.Println("png.Decode failed")
 					panic(err.Error())
 				}
 			default:
@@ -235,7 +243,8 @@ func server() {
 			}
 
 			if b.Max.X > 700 {
-				src = imaging.Resize(src, 700, 0, imaging.Lanczos)
+				width := rand.Intn(maxWidth - minWidth + 1) + minWidth
+				src = imaging.Resize(src, width, 0, imaging.Lanczos)
 			}
 
 			// Ge the new bounds ? shall we reload the object ?
@@ -247,6 +256,7 @@ func server() {
 
 			imgDarknet, err := darknet.Image2Float32(src)
 			if err != nil {
+				fmt.Println("darknet failed")
 				panic(err.Error())
 			}
 			defer imgDarknet.Close()
@@ -263,8 +273,6 @@ func server() {
 			lc.ImageHeight = b.Max.Y
 			lc.ImageWidth = b.Max.X
 
-			// Encode as base64.
-			lc.ImageData = base64.StdEncoding.EncodeToString(buf)
 
 			lc.LineColor = []int{0, 255, 0, 128}
 			lc.Version = labelmeVer
@@ -309,6 +317,15 @@ func server() {
 
 			if len(bboxInfos) > 0 {
 
+				buf := new(bytes.Buffer)
+				err := jpeg.Encode(buf, src, nil)
+				if err != nil {
+					panic(err.Error())					
+				}
+
+				// Encode as base64.
+				lc.ImageData = base64.StdEncoding.EncodeToString(buf.Bytes())
+
 				minX, minY := bboxInfos[0].minX, bboxInfos[0].minY
 				maxX, maxY := bboxInfos[0].maxX, bboxInfos[0].maxY
 
@@ -347,6 +364,10 @@ func server() {
 		} else {
 			c.String(200, "Nothing")
 		}
+
+		// unlink
+		os.Remove(file.Name())
+
 		log.Println("crop end")
 
 	})
@@ -414,12 +435,14 @@ func server() {
 
 			imgDarknet, err := darknet.Image2Float32(src)
 			if err != nil {
+				fmt.Println("darknet.Image2Float32 error")
 				panic(err.Error())
 			}
 			defer imgDarknet.Close()
 
 			dr, err := m.n.Detect(imgDarknet)
 			if err != nil {
+				fmt.Println("darknet.Detect error")
 				printError(err)
 				return
 			}
@@ -489,11 +512,14 @@ func server() {
 			if err != nil {
 				// Handle error
 				panic(err.Error())
-			}
+			}			
 
 		} else {
 			c.String(200, "Nothing")
 		}
+
+		// unlink
+		os.Remove(file.Name())
 
 		log.Println("crop end")
 

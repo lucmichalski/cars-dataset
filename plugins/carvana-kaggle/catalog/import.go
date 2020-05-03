@@ -75,8 +75,11 @@ func ImportFromURL(cfg *config.Config) error {
 			// so it can dispatch another worker
 			defer t.Done(nil)
 
+			pp.Println("csvMap", csvMap)
+
 			vehicle := models.Vehicle{}
 			vehicle.Source = "carvana-kaggle"
+			vehicle.Class = "car"
 			for id, header := range csvMap {
 				switch header {
 				case "id":
@@ -92,7 +95,15 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
+			if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
+				return nil
+			}
+
 			vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
+
+			pp.Println(row)
+                        pp.Println(vehicle)
+			//os.Exit(1)
 
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
@@ -148,6 +159,7 @@ func ImportFromURL(cfg *config.Config) error {
 
 				carImage := fmt.Sprintf("http://51.91.21.67:8880/%s", imgSrc.URL)
 				carImage = strings.Replace(carImage, "../../../shared/datasets/kaggle/", "", -1)
+				carImage = strings.Replace(carImage, "shared/datasets/kaggle/", "", -1)
 
 				proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", carImage)
 				log.Println("proxyURL:", proxyURL)
@@ -156,7 +168,7 @@ func ImportFromURL(cfg *config.Config) error {
 				} else {
 
 					if string(content) == "" {
-						continue					
+						continue
 					}
 
 					var detection *models.Labelme
@@ -179,7 +191,7 @@ func ImportFromURL(cfg *config.Config) error {
 					maxY := detection.Shapes[0].Points[0][1]
 					minX := detection.Shapes[0].Points[1][0]
 					minY := detection.Shapes[0].Points[1][1]
-				    bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				        bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
 					image := models.VehicleImage{Title: vehicle.Manufacturer + " " + vehicle.Modl, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
 
 					log.Println("----> Scanning file: ", file.Name())

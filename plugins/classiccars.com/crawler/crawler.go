@@ -26,12 +26,6 @@ func Extract(cfg *config.Config) error {
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
-		/*
-			colly.URLFilters(
-				regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
-				regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
-			),
-		*/
 	)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
@@ -41,8 +35,6 @@ func Extract(cfg *config.Config) error {
 			MaxSize: cfg.QueueMaxSize,
 		},
 	)
-
-	// c.DisableCookies()
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
@@ -70,18 +62,6 @@ func Extract(cfg *config.Config) error {
 
 		vehicle := &models.Vehicle{}
 		vehicle.URL = e.Request.Ctx.Get("url")
-
-		/*
-			<div id="listing-content" class="fx-item fx-va-top fi-3pan-2nd-col"
-				 data-favorite="false"
-				 data-listing="1310951"
-				 data-listing-url="/listings/view/1310951/1985-land-rover-defender-for-sale-in-oceanside-california-92057"
-				 data-listing-thumbnail=""
-				 data-listing-year="1985"
-				 data-listing-make="Land Rover"
-				 data-listing-model="Defender"
-				 data-listing-formatted-price="$25,000">
-		*/
 
 		var gid, year, make, model, formattedPrice string
 		e.ForEach(`div[id=listing-content]`, func(_ int, el *colly.HTMLElement) {

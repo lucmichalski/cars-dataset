@@ -109,6 +109,7 @@ func Extract(cfg *config.Config) error {
 		vehicle.Modl = carInfo.ProductModele
 		vehicle.Name = carInfo.ProductBrand + " " + carInfo.ProductModele + " " + carInfo.ProductYear
 		vehicle.Source = "autosphere.fr"
+		vehicle.Class = "car"
 
 		vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Price", Value: carInfo.ProductPrice})
 		vehicle.VehicleProperties = append(vehicle.VehicleProperties, models.VehicleProperty{Name: "Transmission", Value: carInfo.ProductTransmission})
@@ -167,7 +168,11 @@ func Extract(cfg *config.Config) error {
 					log.Fatalln("decodeToFile error, ", err)
 				}
 
-				if len(detection.Shapes) != 1 {
+				if detection.Shapes == nil {
+					continue
+				}
+
+				if len(detection.Shapes) < 0 {
 					continue
 				}
 
@@ -321,28 +326,53 @@ func Extract(cfg *config.Config) error {
 		r.Ctx.Put("url", r.URL.String())
 	})
 
-	// Start scraping on https://www.autosphere.fr
-	log.Infoln("extractSitemapIndex...")
-	sitemaps, err := prefetch.ExtractSitemapIndex("https://www.autosphere.fr/sitemap.xml")
-	if err != nil {
-		log.Fatal("ExtractSitemapIndex:", err)
-	}
-
-	utils.Shuffle(sitemaps)
-	for _, sitemap := range sitemaps {
-		log.Infoln("processing ", sitemap)
-		if strings.Contains(sitemap, ".gz") {
-			log.Infoln("extract sitemap gz compressed...")
-			locs, err := prefetch.ExtractSitemapGZ(sitemap)
+	if cfg.IsSitemapIndex {
+		log.Infoln("extractSitemapIndex...")
+		for _, rootUrl := range cfg.URLs {
+			sitemaps, err := prefetch.ExtractSitemapIndex(rootUrl)
 			if err != nil {
-				log.Fatal("ExtractSitemapGZ", err)
+				pp.Println("sitemaps", sitemaps)
+				log.Warnln("ExtractSitemapIndex:", err, "rootUrl:", rootUrl)
+				continue
+				// return err
 			}
-			utils.Shuffle(locs)
-			for _, loc := range locs {
-				q.AddURL(loc)
+
+			utils.Shuffle(sitemaps)
+			for _, sitemap := range sitemaps {
+				log.Infoln("processing ", sitemap)
+				if strings.HasSuffix(sitemap, ".gz") {
+					log.Infoln("extract sitemap gz compressed...")
+					locs, err := prefetch.ExtractSitemapGZ(sitemap)
+					if err != nil {
+						log.Warnln("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
+						continue
+						// return err
+					}
+					utils.Shuffle(locs)
+					for _, loc := range locs {
+						if strings.Contains(loc, "fiche") {
+							q.AddURL(loc)
+						}
+					}
+				} else {
+					locs, err := prefetch.ExtractSitemap(sitemap)
+					if err != nil {
+						log.Warnln("ExtractSitemap", err, "sitemap:", sitemap)
+						continue
+						// return err
+					}
+					utils.Shuffle(locs)
+					for _, loc := range locs {
+						if strings.Contains(loc, "fiche") {
+							q.AddURL(loc)
+						}
+					}
+				}
 			}
-		} else {
-			q.AddURL(sitemap)
+		}
+	} else {
+		for _, u := range cfg.URLs {
+			q.AddURL(u)
 		}
 	}
 
