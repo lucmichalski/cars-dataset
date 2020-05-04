@@ -71,22 +71,31 @@ func ImportFromURL(cfg *config.Config) error {
 			return err
 		}
 
-		//pp.Println(row)
-		//os.Exit(1)
 		dirParts := strings.Split(row[0], "/")
+		if len(dirParts) == 0 {
+			continue
+		}
+                pp.Println(row[0])
+
 		nameParts := strings.Split(dirParts[0], "_")
+
+		if len(nameParts) != 3 {
+			continue
+		}
+
 		make := nameParts[0]
 		model := nameParts[1]
 		year := nameParts[2]
+		name := make + " " + model + " " + year
 
 		var imageSrcs []string
-		imageSrcs = append(imageSrcs, row[0])
+		imageSrcs = append(imageSrcs, strings.Replace(row[0], " ", "%20", -1))
 
 		if _, ok := cars[name]; ok {
 			cars[name].imgs = append(cars[name].imgs, imageSrcs...)
 		} else {
 			car := &carInfo{
-				name:  make + " " + model + " " + year,
+				name:  name,
 				make:  make,
 				model: strings.TrimSpace(model),
 				year:  year,
@@ -94,6 +103,8 @@ func ImportFromURL(cfg *config.Config) error {
 			car.imgs = append(car.imgs, imageSrcs...)
 			cars[name] = car
 		}
+		// pp.Println(cars[name])
+
 	}
 
 	for _, row := range cars {
@@ -112,6 +123,8 @@ func ImportFromURL(cfg *config.Config) error {
 			vehicle.Manufacturer = row.make
 			vehicle.Class = "car"
 
+			pp.Println(vehicle)
+
 			if !cfg.DryMode {
 				var vehicleExists models.Vehicle
 				if !cfg.DB.Where("name = ? AND year = ? AND manufacturer = ? AND source = ?", vehicle.Name, vehicle.Year, vehicle.Manufacturer, vehicle.Source).First(&vehicleExists).RecordNotFound() {
@@ -120,11 +133,13 @@ func ImportFromURL(cfg *config.Config) error {
 				}
 			}
 
+			pp.Println("row.imgs", row.imgs)
+
 			for _, imgSrc := range row.imgs {
 
 				carImage := fmt.Sprintf("http://51.91.21.67:8882/%s", imgSrc)
 
-				proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
+				proxyURL := fmt.Sprintf("http://51.91.21.67:9007/labelme?url=%s", carImage)
 				log.Println("proxyURL:", proxyURL)
 				if content, err := utils.GetJSON(proxyURL); err != nil {
 					fmt.Printf("open file failure, got err %v", err)

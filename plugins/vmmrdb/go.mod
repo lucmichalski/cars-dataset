@@ -1,4 +1,4 @@
-module github.com/lucmichalski/cars-contrib/stanford-cars
+module github.com/lucmichalski/cars-contrib/vmmrdb
 
 replace github.com/lucmichalski/cars-dataset => ../..
 

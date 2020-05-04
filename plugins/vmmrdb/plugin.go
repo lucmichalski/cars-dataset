@@ -41,7 +41,7 @@ func (o vmmrdbPlugin) Catalog(cfg *config.Config) error {
 func (o vmmrdbPlugin) Config() *config.Config {
 	cfg := &config.Config{
 		AnalyzerURL: "http://localhost:9003/crop?url=%s",
-		CatalogURL:  "./shared/datasets/vmmrdb/vmmrdb_dirs.csv",
+		CatalogURL:  "./shared/datasets/vmmrdb/listing.csv",
 		ImageDirs:   []string{"./shared/datasets/vmmrdb/"},
 	}
 	return cfg
