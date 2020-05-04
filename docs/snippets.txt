@@ -12,6 +12,27 @@ Cheers,
 X
 
 ------------------------------------------------------------------------------------------------------
+ssh -i ~/.ssh/ovh ubuntu@51.91.21.67
+
+# 9004
+cp shared/queue/cars.com_sitemap.txt.4 shared/queue/cars.com_sitemap.txt
+go run main.go --plugins cars.com --extract --no-cache --clean --verbose
+
+
+go run main.go --plugins motorcycles.autotrader.com.v2 --extract --no-cache --clean --verbose
+
+# 9007
+
+http://mmlab.ie.cuhk.edu.hk/datasets/comp_cars/instruction.txt
+pass: d89551fd190e38
+
+
+## download/upload to/from grdive
+https://github.com/odeke-em/drive#listing
+
+docker run --name darknet6 --runtime=nvidia -d -p 9007:9007 -e DARKNET_PORT=9007 -v /home/ubuntu/cars-dataset/darknet:/darknet -v /home/ubuntu/cars-dataset/models:/darknet/models lucmichalski/darknet:gpu-latest sh -c go run server.go --config-file=./models/stanford-1class.cfg --weights-file=./models/stanford-1class_final.weights
+
+------------------------------------------------------------------------------------------------------
 ## download from gdrive
 
 https://medium.com/@acpanjan/download-google-drive-files-using-wget-3c2c025a8b99
@@ -33,6 +54,8 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 
 ------------------------------------------------------------------------------------------------------
 car (0): 98.1139% | start point: (159,103) | end point: (553, 489)
+
+sudo fuser 8882/tcp
 
 for i in *.jpg; do rm "$i"; done
 

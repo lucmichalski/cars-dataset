@@ -1,0 +1,118 @@
+{{$current_values := (raw_value_of .ResourceValue .Meta)}}
+{{$meta := .Meta}}
+{{$inputName := .InputName}}
+{{$primaryMeta := $meta.Config.PrimaryAttributeMetas}}
+
+<div class="qor-field" data-toggle="qor.variations" data-input-name="{{$inputName}}" {{if $current_values}}data-input-value-length="{{len $current_values}}" {{end}}>
+  <label class="qor-field__label" for="{{.InputId}}">
+    {{meta_label .Meta}}
+    <button type="button" class="mdl-button mdl-js-button mdl-button--icon qor-product__fullscreen">
+      <i class="material-icons">fullscreen</i>
+      <i class="material-icons" style="display: none;">fullscreen_exit</i>
+    </button>
+  </label>
+
+  <div class="qor-fieldset-container qor-product__container">
+    <div class="qor-product__property" data-has-primary-meta={{len $primaryMeta}}>
+      {{range $primaryMeta := $meta.Config.PrimaryAttributeMetas}}
+        <!-- render meta based on meta type (like select one -> select many, string -> tags) -->
+        {{render_meta $meta.Resource.NewStruct $primaryMeta "variations"}}
+      {{end}}
+    </div>
+
+    <div class="qor-field__block qor-product__block">
+      <div class="qor-product__filter clearfix">
+        <ul class="qor-product__filter-base">
+          <li><a href="javascript://" data-filter-type="all">All</a></li>
+          <li><a href="javascript://" data-filter-type="none">None</a></li>
+        </ul>
+        <ul class="qor-product__filter-options">
+        </ul>
+        <div class="qor-product__filter-actions" style="display:none;">
+          <span>{{t "qor_variations.action.seleced_variants" "<em>1</em> variants selected"}}</span>
+          <button type="button" class="mdl-button mdl-js-button qor-product__filter-actions__edit">
+            {{t "qor_variations.action.bulk_edit" "Bulk Edit"}}
+          </button>
+          <button type="button" class="mdl-button mdl-js-button qor-product__filter-actions__delete" data-confirm="{{t "qor_variations.confirm.are_you_sure_delete_select_variants" "Are you sure you want to delete the selected variants?"}}" data-confirm-ok="{{t "qor_variations.confirm.delete" "delete"}}" data-confirm-cancel="{{t "qor_variations.confirm.cancel" "cancel"}}">
+            {{t "qor_variations.action.delete_selected_variant" "Delete selected variants"}}
+          </button>
+        </div>
+      </div>
+      <div class="qor-product__table">
+        <table class="mdl-data-table mdl-js-data-table mdl-data-table--selectable qor-table">
+          <thead>
+            {{range $meta := convert_sections_to_metas $meta.Resource (edit_sections $meta.Resource)}}
+              <th class="qor-product__meta mdl-data-table__cell--non-numeric" data-input-name="{{$meta.Name}}">{{meta_label $meta}}</th>
+            {{end}}
+            <th></th>
+          </thead>
+          <tbody>
+            {{if $current_values}}
+              {{range $index, $value := $current_values}}
+              {{$primaryKey := primary_key_of $value}}
+
+                <tr class="qor-product-init" {{if $primaryKey}}variants-id="qor_variants_id_{{$primaryKey}}_"{{end}}>
+                  {{range $meta := convert_sections_to_metas $meta.Resource (edit_sections $meta.Resource)}}
+                    <td class="mdl-data-table__cell--non-numeric" data-variant-type="{{$meta.Name}}" data-variant-value="{{render_meta $value $meta "index"}}" data-input-name="{{printf "%v[%v].%v" $inputName $index $meta.Name}}">
+                      {{render_meta $value $meta "index"}}
+                    </td>
+                  {{end}}
+                  <td width="120px">
+                    <button type="button" class="mdl-button mdl-js-button qor-product__action--add" style="display: none;">
+                      {{t "qor_admin.form.actions.add" "Add"}}
+                    </button>
+                    <button type="button" id="qor-product-actions-for-{{$index}}" class="mdl-button mdl-js-button mdl-button--icon qor-product__action">
+                      <i class="material-icons">more_vert</i>
+                    </button>
+                    <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="qor-product-actions-for-{{$index}}">
+                      <li class="mdl-menu__item" qor-icon-name="Edit">
+                        <a href="javascript://" class="qor-product__action--edit">{{t "qor_admin.form.actions.edit" "Edit"}}</a>
+                      </li>
+                      <li class="mdl-menu__item" qor-icon-name="Delete">
+                        <a href="javascript://" class="qor-product__action--delete" data-confirm="{{t "qor_variations.confirm.are_you_sure" "Are You Sure?"}}" data-confirm-ok="{{t "qor_variations.confirm.delete" "delete"}}" data-confirm-cancel="{{t "qor_variations.confirm.cancel" "cancel"}}">Delete</a>
+                      </li>
+                    </ul>
+                  </td>
+                </tr>
+              {{end}}
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="qor-fieldset--inits">
+        {{range $index, $value := $current_values }}
+        {{$primaryKey := primary_key_of $value}}
+          <fieldset class="qor-fieldset qor-fieldset--init qor-product-init hidden" {{if $primaryKey}}fieldset-variants-id="qor_variants_id_{{$primaryKey}}_"{{end}}>
+            {{if has_delete_permission $meta}}
+              <button class="mdl-button qor-button--muted mdl-button--icon qor-fieldset__delete" type="button">
+                <i class="material-icons md-18">delete</i>
+              </button>
+            {{end}}
+            {{render_nested_form $value (edit_sections $meta.Resource) $index}}
+          </fieldset>
+        {{end}}
+      </div>
+
+      {{if has_create_permission .Meta}}
+        <fieldset class="qor-fieldset qor-fieldset--new">
+          <button class="mdl-button qor-button--muted mdl-button--icon qor-fieldset__delete" type="button">
+            <i class="material-icons md-18">delete</i>
+          </button>
+          {{if $current_values}}
+            {{render_nested_form $meta.Resource.NewStruct (new_sections $meta.Resource) (len $current_values)}}
+          {{else}}
+            {{render_nested_form $meta.Resource.NewStruct (new_sections $meta.Resource) 0}}
+          {{end}}
+        </fieldset>
+
+        <button class="mdl-button mdl-button--primary mdl-js-ripple-effect qor-fieldset__add hidden" type="button">
+          {{t (printf "%v.attributes.add_%v" .BaseResource.ToParam (singular (meta_label .Meta))) (printf "Add %v" (singular (meta_label .Meta)))}}
+        </button>
+      {{end}}
+    </div>
+  </div>
+</div>
+
+{{javascript_tag "qor_variations"}}
+{{stylesheet_tag "qor_variations"}}

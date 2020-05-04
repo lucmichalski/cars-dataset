@@ -1,0 +1,25 @@
+.qor-frequency__week {
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    li {
+        float: left;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        width: 14.28%;
+        border-right: 2px solid rgba(0, 0, 0, 0.12);
+        box-sizing: border-box;
+        cursor: pointer;
+        list-style-type: none;
+        &:last-child {
+            border: 0;
+        }
+        &.selected {
+            background-color: rgb(33, 150, 243);
+            color: #fff;
+            border-color: rgb(33, 150, 243);
+        }
+    }
+}

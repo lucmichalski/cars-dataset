@@ -1,0 +1,28 @@
+<div class="qor-product__property-selector" data-variant-type="{{.InputName}}">
+  <label class="qor-field__label" for="{{.InputId}}">
+    {{meta_label .Meta}}
+  </label>
+
+  <div class="qor-field__block qor-field__edit  qor-field__selectone" {{if (eq .Meta.Config.SelectMode "bottom_sheet")}} data-toggle="qor.selectone"{{end}}>
+    {{if (eq .Meta.Config.SelectMode "bottom_sheet")}}
+      <a  href="javascript://" class="mdl-button mdl-button--primary qor-field__selectmany-trigger" data-select-modal="many" {{if .InputId}}data-select-id="#{{.InputId}}"{{end}} data-select-listing-url="{{url_for .Meta.Config.RemoteDataResource}}">
+        {{t "qor_admin.form.add_items" "ADD ITEMS"}}
+      </a>
+
+      <select class="qor-field__input qor-field__input-selector qor-field__selectmany-input hidden" id="{{.InputId}}" name="{{.InputName}}" multiple {{if not (has_update_permission .Meta)}}disabled{{end}}>
+      </select>
+    {{else}}
+      <select class="qor-field__input qor-field__input-selector hidden" id="{{.InputId}}" data-toggle="qor.chooser" data-placeholder="{{t "qor_admin.form.select_some_options" "Select some Options"}}" name="{{.InputName}}" multiple {{if not (has_update_permission .Meta)}}disabled{{end}} {{if .Meta.Config.RemoteDataResource}}data-remote-data="true" data-ajax--url="{{url_for .Meta.Config.RemoteDataResource}}"{{end}}>
+        {{if not .Meta.Config.RemoteDataResource}}
+          {{if .Meta.Config.AllowBlank}}
+            <option></option>
+          {{end}}
+
+          {{range $values := (.Meta.Config.GetCollection .ResourceValue .Context)}}
+            <option value="{{index $values 0}}">{{index $values 1}}</option>
+          {{end}}
+        {{end}}
+      </select>
+    {{end}}
+  </div>
+</div>

@@ -1,0 +1,139 @@
+{{$frequency := raw_value_of .ResourceValue .Meta}}
+
+<div class="qor-fieldset" data-toggle="qor.metas.frequency">
+  <div class="qor-form-section-rows qor-section-columns-2 clearfix">
+    <div class="qor-field">
+      <div class="mdl-textfield mdl-textfield--full-width mdl-js-textfield">
+        <label class="qor-field__label" for="{{.InputId}}">
+          {{meta_label .Meta}}
+        </label>
+
+        <div class="qor-field__show">
+          {{.Value}}
+        </div>
+
+        <select class="qor-field__input qor-frequency__selector" data-toggle="qor.chooser" name="{{.InputName}}.IntervalUnit">
+          <option value="once" {{if eq $frequency.IntervalUnit "once"}}selected{{end}}>once</option>
+          <option value="daily" {{if eq $frequency.IntervalUnit "daily"}}selected{{end}}>daily</option>
+          <option value="weekly" {{if eq $frequency.IntervalUnit "weekly"}}selected{{end}}>weekly</option>
+          <option value="monthly" {{if eq $frequency.IntervalUnit "monthly"}}selected{{end}}>monthly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="qor-field">
+      <div class="mdl-textfield mdl-textfield--full-width mdl-js-textfield">
+        <label class="qor-field__label" for="{{.InputId}}">
+          Active for
+        </label>
+
+        <div class="qor-field__show">
+          {{.Value}}
+        </div>
+
+        <select class="qor-field__input qor-frequency__activefor" data-toggle="qor.chooser" name="{{.InputName}}.ActiveMonths">
+          <option value="forever" {{if eq $frequency.ActiveMonths "forever"}}selected{{end}}>Forever</option>
+          <option value="1" {{if eq $frequency.ActiveMonths "1"}}selected{{end}}>1 month</option>
+          <option value="3" {{if eq $frequency.ActiveMonths "3"}}selected{{end}}>3 months</option>
+          <option value="6" {{if eq $frequency.ActiveMonths "6"}}selected{{end}}>6 months</option>
+          <option value="12" {{if eq $frequency.ActiveMonths "12"}}selected{{end}}>12 months</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="qor-frequency__monthly">
+    <div class="qor-field">
+      <div class="mdl-textfield mdl-js-textfield">
+        <label class="qor-field__label">
+          Day of month
+        </label>
+
+        <div class="qor-field__show">
+        </div>
+
+        <select class="qor-field__input" data-toggle="qor.chooser" name="{{.InputName}}.MonthDay">
+          <option value="1" {{if eq $frequency.MonthDay 1}}selected{{end}}>1</option>
+          <option value="2" {{if eq $frequency.MonthDay 2}}selected{{end}}>2</option>
+          <option value="3" {{if eq $frequency.MonthDay 3}}selected{{end}}>3</option>
+          <option value="4" {{if eq $frequency.MonthDay 4}}selected{{end}}>4</option>
+          <option value="5" {{if eq $frequency.MonthDay 5}}selected{{end}}>5</option>
+          <option value="6" {{if eq $frequency.MonthDay 6}}selected{{end}}>6</option>
+          <option value="7" {{if eq $frequency.MonthDay 7}}selected{{end}}>7</option>
+          <option value="8" {{if eq $frequency.MonthDay 8}}selected{{end}}>8</option>
+          <option value="9" {{if eq $frequency.MonthDay 9}}selected{{end}}>9</option>
+          <option value="10" {{if eq $frequency.MonthDay 10}}selected{{end}}>10</option>
+          <option value="11" {{if eq $frequency.MonthDay 11}}selected{{end}}>11</option>
+          <option value="12" {{if eq $frequency.MonthDay 12}}selected{{end}}>12</option>
+          <option value="13" {{if eq $frequency.MonthDay 13}}selected{{end}}>13</option>
+          <option value="14" {{if eq $frequency.MonthDay 14}}selected{{end}}>14</option>
+          <option value="15" {{if eq $frequency.MonthDay 15}}selected{{end}}>15</option>
+          <option value="16" {{if eq $frequency.MonthDay 16}}selected{{end}}>16</option>
+          <option value="17" {{if eq $frequency.MonthDay 17}}selected{{end}}>17</option>
+          <option value="18" {{if eq $frequency.MonthDay 18}}selected{{end}}>18</option>
+          <option value="19" {{if eq $frequency.MonthDay 19}}selected{{end}}>19</option>
+          <option value="20" {{if eq $frequency.MonthDay 20}}selected{{end}}>20</option>
+          <option value="21" {{if eq $frequency.MonthDay 21}}selected{{end}}>21</option>
+          <option value="22" {{if eq $frequency.MonthDay 22}}selected{{end}}>22</option>
+          <option value="23" {{if eq $frequency.MonthDay 23}}selected{{end}}>23</option>
+          <option value="24" {{if eq $frequency.MonthDay 24}}selected{{end}}>24</option>
+          <option value="25" {{if eq $frequency.MonthDay 25}}selected{{end}}>25</option>
+          <option value="26" {{if eq $frequency.MonthDay 26}}selected{{end}}>26</option>
+          <option value="27" {{if eq $frequency.MonthDay 27}}selected{{end}}>27</option>
+          <option value="28" {{if eq $frequency.MonthDay 28}}selected{{end}}>28</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="qor-frequency__weekly" style="display:;">
+    <div class="qor-field">
+      <div class="mdl-textfield mdl-textfield--full-width mdl-js-textfield">
+        <label class="qor-field__label">
+          Day of week
+        </label>
+
+        <div class="qor-field__show">
+        </div>
+
+        <select class="qor-field__input qor-frequency__weekly--input" style="display: none;" name="{{.InputName}}.WeekDay">
+          <option value="1" {{if eq $frequency.WeekDay 1}}selected{{end}}>Mon</option>
+          <option value="2" {{if eq $frequency.WeekDay 2}}selected{{end}}>Tue</option>
+          <option value="3" {{if eq $frequency.WeekDay 3}}selected{{end}}>Wed</option>
+          <option value="4" {{if eq $frequency.WeekDay 4}}selected{{end}}>Thu</option>
+          <option value="5" {{if eq $frequency.WeekDay 5}}selected{{end}}>Fri</option>
+          <option value="6" {{if eq $frequency.WeekDay 6}}selected{{end}}>Sat</option>
+          <option value="0" {{if eq $frequency.WeekDay 0}}selected{{end}}>Sun</option>
+        </select>
+
+        <ul class="qor-frequency__week clearfix">
+          <li value="1" {{if eq $frequency.WeekDay 1}}class="selected"{{end}}>Mon</li>
+          <li value="2" {{if eq $frequency.WeekDay 2}}class="selected"{{end}}>Tue</li>
+          <li value="3" {{if eq $frequency.WeekDay 3}}class="selected"{{end}}>Wed</li>
+          <li value="4" {{if eq $frequency.WeekDay 4}}class="selected"{{end}}>Thu</li>
+          <li value="5" {{if eq $frequency.WeekDay 5}}class="selected"{{end}}>Fri</li>
+          <li value="6" {{if eq $frequency.WeekDay 6}}class="selected"{{end}}>Sat</li>
+          <li value="0" {{if eq $frequency.WeekDay 0}}class="selected"{{end}}>Sun</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="qor-frequency__daily qor-frequency__weekly qor-frequency__monthly" style="display:;">
+    <div class="qor-field">
+      <div class="mdl-textfield mdl-textfield--full-width mdl-js-textfield">
+        <label class="qor-field__label">
+          Start At
+        </label>
+
+        <div class="qor-field__show">
+        </div>
+
+        <input class="mdl-textfield__input" name="{{.InputName}}.StartAt" value="{{if $frequency.StartAt}}{{$frequency.StartAt}}{{else}}8:00{{end}}"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{javascript_tag "frequency"}}
+{{stylesheet_tag "frequency"}}
