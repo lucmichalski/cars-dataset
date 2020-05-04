@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/k0kubun/pp"	
+	"github.com/k0kubun/pp"
 	"github.com/karrick/godirwalk"
 	log "github.com/sirupsen/logrus"
 )
@@ -76,7 +76,7 @@ func dispatch(fp string) error {
 			destFileNameTXT := filepath.Join(datasetNoCars, path.Base(fp))
 			destFileNameIMG := filepath.Join(datasetNoCars, strings.Replace(path.Base(fp), ".txt", ".jpg", -1))
 			copy(fp, destFileNameTXT)
-			copy(srcFileNameIMG, destFileNameIMG)			
+			copy(srcFileNameIMG, destFileNameIMG)
 		}
 
 	}

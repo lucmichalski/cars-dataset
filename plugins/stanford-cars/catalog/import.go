@@ -144,7 +144,7 @@ func ImportFromURL(cfg *config.Config) error {
 				carImage = strings.Replace(carImage, "/opt/", "", -1)
                                 carImage = strings.Replace(carImage, "./shared/datasets/stanford-cars/cars_train/", "", -1)
 
-				proxyURL := fmt.Sprintf("http://51.91.21.67:9003/labelme?url=%s", carImage)
+				proxyURL := fmt.Sprintf("http://51.91.21.67:9007/labelme?url=%s", carImage)
 				log.Println("proxyURL:", proxyURL)
 				if content, err := utils.GetJSON(proxyURL); err != nil {
 					fmt.Printf("open file failure, got err %v", err)

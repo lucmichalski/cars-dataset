@@ -18,6 +18,7 @@ type Config struct {
 	DryMode         bool
 	IsClean         bool
 	AnalyzerURL     string
+	ProxyAddress    string
 	CatalogURL      string
 	ImageDirs       []string
 	DumpDir         string   `default:"./shared/dump"`
