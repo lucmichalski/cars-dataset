@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"encoding/json"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	// "github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+        // "github.com/gocolly/colly/v2/proxy"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
 
@@ -43,9 +45,13 @@ func Extract(cfg *config.Config) error {
 			regexp.MustCompile("https://www\\.thecarconnection\\.com/photos/(.*)"),
 		),
 	)
-
-	// d := c.Clone()
-
+	/*
+        rp, err := proxy.RoundRobinProxySwitcher("http://localhost:8119")
+        if err != nil {
+                log.Fatal(err)
+        }
+        c.SetProxyFunc(rp)
+	*/
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
 		cfg.ConsumerThreads,
@@ -54,7 +60,25 @@ func Extract(cfg *config.Config) error {
 		},
 	)
 
-	// c.DisableCookies()
+	if _, err := os.Stat("shared/queue/thecarconnection.com_sitemap.txt"); !os.IsNotExist(err) {
+		file, err := os.Open("shared/queue/thecarconnection.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
+
+		reader := csv.NewReader(file)
+		reader.Comma = ';'
+		reader.LazyQuotes = true
+		data, err := reader.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		utils.Shuffle(data)
+		for _, loc := range data {
+			q.AddURL(loc[0])
+		}
+	}
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
@@ -169,29 +193,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			// comment temprorarly as we develop on local
-			proxyURL := fmt.Sprintf("http://localhost:9004/crop?url=%s", carImage.Images.Large.URL)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9004/labelme?url=%s", strings.Replace( carImage.Images.Large.URL, " ", "%20", -1))
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
+				if string(content) == "" {
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage.Images.Large.URL}
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
+					continue
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage.Images.Large.URL, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+			    	bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage.Images.Large.URL, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue
@@ -261,8 +296,8 @@ func Extract(cfg *config.Config) error {
 		log.Infoln("extractSitemapIndex...")
 		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
 		if err != nil {
-			log.Fatal("ExtractSitemapIndex:", err)
-			return err
+			log.Warnln("ExtractSitemapIndex:", err)
+			// return err
 		}
 
 		utils.Shuffle(sitemaps)
@@ -272,8 +307,9 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ", err)
-					return err
+					log.Warnln("ExtractSitemapGZ", err)
+					continue
+					// return err
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
