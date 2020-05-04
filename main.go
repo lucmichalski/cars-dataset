@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"time"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -335,7 +336,15 @@ func main() {
 		router.Static("/public", "./public")
 
 		fmt.Println("Listening on: 9008")
-		log.Fatal(router.Run(fmt.Sprintf("%s:%s", "", "9008")))
+	        s := &http.Server{
+	                Addr:           ":9008",
+	                Handler:        router,
+	                ReadTimeout:    10 * time.Second,
+	                WriteTimeout:   10 * time.Second,
+	                MaxHeaderBytes: 1 << 20,
+	        }
+	        s.ListenAndServe()
+		// log.Fatal(router.Run(fmt.Sprintf("%s:%s", "", "9008")))
 		// http.ListenAndServe(":9008", mux)
 
 	}

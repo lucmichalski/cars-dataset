@@ -52,8 +52,8 @@ plugins:
 	#GOARCH=amd64 PLUGIN=buyacar.co.uk make plugin
 	GOARCH=amd64 PLUGIN=yamaha-occasion.com make plugin
 	GOARCH=amd64 PLUGIN=motorcycles.autotrader.com.v2 make plugin
-	GOARCH=amd64 PLUGIN=motorcycles.autotrader.com make plugin
-	GOARCH=amd64 PLUGIN=classics.autotrader.com make plugin
+	# GOARCH=amd64 PLUGIN=motorcycles.autotrader.com make plugin
+	# GOARCH=amd64 PLUGIN=classics.autotrader.com make plugin
 	GOARCH=amd64 PLUGIN=classics.autotrader.com.v2 make plugin
 	GOARCH=amd64 PLUGIN=carsdirect.com make plugin
 	GOARCH=amd64 PLUGIN=stanford-cars make plugin

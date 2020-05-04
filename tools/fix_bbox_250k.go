@@ -3,23 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
-	"path/filepath"
-	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/nozzle/throttler"
 	"github.com/qor/media"
 	"github.com/qor/validations"
+	"github.com/k0kubun/pp"
 
+	"github.com/lucmichalski/cars-dataset/pkg/utils"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
 )
 
 func main() {
 
+	// Instanciate DB
 	DB, err := gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
 	if err != nil {
 		log.Fatal(err)
@@ -56,94 +55,81 @@ func main() {
 		Description string
 	}
 
-	// instanciate throttler
-	t := throttler.New(48, count.Count)
-
-	counter := 0
-	imgCounter := 0
-
-	var results []res
-	DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles WHERE class='car'").Scan(&results)
-	for _, result := range results {
-
-		go func(r res) error {
-			defer t.Done(nil)
-
-			if r.Images == "" {
-				return nil
-			}
-
-			var ep []entryProperty
-			// fmt.Println(result.Images)
-			if err := json.Unmarshal([]byte(r.Images), &ep); err != nil {
-				log.Fatalln("unmarshal error, ", err)
-			}
-
-			//if len(ep) < 2 {
-			//      return nil
-			//}
-
-			// prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
-			prefixPath := filepath.Join("./", "datasets", "cars", strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year)
-			os.MkdirAll(prefixPath, 0755)
-			// pp.Println("prefixPath:", prefixPath)
-
-			for _, entry := range ep {
-
-				// get image Info (to test)
-				var vi models.VehicleImage
-				err := DB.First(&vi, entry.ID).Error
-				if err != nil {
-					log.Warnln("VehicleImage", err)
-					continue
-				}
-				// fmt.Println("image checksum", vi.Checksum)
-
-				sourceFile := filepath.Join("./", "public", entry.Url)
-				// pp.Println("sourceFile:", sourceFile)
-
-				input, err := ioutil.ReadFile(sourceFile)
-				if err != nil {
-					log.Warnln("reading file error, ", err)
-					continue
-				}
-
-				destinationFile := filepath.Join(prefixPath, vi.Checksum+filepath.Ext(entry.Url))
-				// destinationFile := filepath.Join(prefixPath, strconv.Itoa(entry.ID)+"-"+filepath.Base(entry.Url))
-				err = ioutil.WriteFile(destinationFile, input, 0644)
-				if err != nil {
-					// return err
-					log.Fatalln("creating file error, ", err)
-				}
-				// pp.Println("destinationFile:", destinationFile)
-
-				csvDataset.Write([]string{r.Name, strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year, destinationFile})
-				csvDataset.Flush()
-
-				imgCounter++
-			}
-
-			percent := (counter * 100) / count.Count
-			fmt.Printf("REF COUNTER=%d/%d (%.2f%), IMG COUNTER=%d\n", counter, count.Count, percent, imgCounter)
-			counter++
-
-			return nil
-
-		}(result)
-
-		t.Throttle()
-
+	type imgFile struct {
+		Description  string `json:"Description"`
+		FileName     string `json:"FileName"`
+		SelectedType string `json:"SelectedType"`
+		URL          string `json:"Url"`
+		Video        string `json:"Video"`		
 	}
 
-	// throttler errors iteration
-	if t.Err() != nil {
-		// Loop through the errors to see the details
-		for i, err := range t.Errs() {
-			log.Printf("error #%d: %s", i, err)
+	
+
+	var results []models.VehicleImage
+	// wrong, it is vehicle_images to select the first 250k
+	DB.Raw("select * FROM vehicle_images WHERE id>0 and id<250000").Scan(&results)
+	for _, result := range results {
+
+		//var imgfile imgFile
+		pp.Println("file: ", result.File.String())
+		//if err := json.Unmarshal([]byte(result.File.String()), &imgfile); err != nil {
+		//	log.Fatalln("unmarshal error, ", err)
+		//}
+		imageURL := result.File.String()
+
+		pp.Println("Checksum:", result.Checksum, "BBox:", result.BBox, "Source:", result.Source, "imgfile", imageURL)
+
+		if imageURL == "" {
+			continue
 		}
-		log.Fatal(t.Err())
+
+		imageURL = fmt.Sprintf("http://51.91.21.67:9008%s", imageURL)
+                log.Println("imageURL:", imageURL)
+		proxyURL := fmt.Sprintf("http://51.91.21.67:9007/labelme?url=%s", imageURL)
+		log.Println("proxyURL:", proxyURL)
+		if content, err := utils.GetJSON(proxyURL); err != nil {
+			fmt.Printf("open file failure, got err %v", err)
+		} else {
+
+			if string(content) == "" {
+				continue
+			}
+
+			var detection *models.Labelme
+			pp.Println(string(content))
+			if err := json.Unmarshal(content, &detection); err != nil {
+				log.Warnln("unmarshal error, ", err)
+				continue
+			}
+
+			_, checksum, err := utils.DecodeToFile(imageURL, detection.ImageData)
+			if err != nil {
+				log.Fatalln("decodeToFile error, ", err)
+			}
+
+			if len(detection.Shapes) != 1 {
+				continue
+			}
+
+			// we expect online one focused image
+			maxX := detection.Shapes[0].Points[0][0]
+			maxY := detection.Shapes[0].Points[0][1]
+			minX := detection.Shapes[0].Points[1][0]
+			minY := detection.Shapes[0].Points[1][1]
+			bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+			// image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+			// DB.First(&result)
+			result.Checksum = checksum
+			result.BBox = bbox
+			// DB.Save(&result)
+			pp.Println(result)
+
+		}
+
 	}
 
 	os.Exit(0)
 
 }
+

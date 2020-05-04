@@ -118,6 +118,7 @@ github.com/oschwald/geoip2-golang v1.4.0/go.mod h1:8QwxJvRImBH+Zl6Aa6MaIcs5YdlZS
 github.com/oschwald/maxminddb-golang v1.6.0 h1:KAJSjdHQ8Kv45nFIbtoLGrGWqHFajOIm7skTyz/+Dls=
 github.com/oschwald/maxminddb-golang v1.6.0/go.mod h1:DUJFucBg2cvqx42YmDa/+xHvb0elJtOm3o4aFQ/nb/w=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
+github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qor/admin v0.0.0-20200315024928-877b98a68a6f h1:U5CYGBUdxvfhmaPIqnFPaTbNza3ihKo/Oy9YlvwHxE4=
