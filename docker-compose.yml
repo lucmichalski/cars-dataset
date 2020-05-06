@@ -378,12 +378,45 @@ services:
     restart: unless-stopped
     command: ["./dede", "-port", "5003", "-host", "0.0.0.0"]
 
+  telegraf:
+    image: telegraf:1.14-alpine
+    volumes:
+    - ./.config/telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+    - influxdb
+    links:
+    - influxdb
+    ports:
+    - '8125:8125/udp'
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    ports:
+    - '8086:8086'
+    volumes:
+    - influxdb_data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:6.7.3
+    depends_on:
+    - influxdb
+    links:
+    - influxdb
+    ports:
+    - '3000:3000'
+    volumes:
+    - grafana_data:/var/lib/grafana
+    - ./.config/grafana/provisioning/:/etc/grafana/provisioning/
+    - ./.config/grafana/dashboards/:/var/lib/grafana/dashboards/
+
 networks:
   internal:
   web:
     external: true
 
 volumes:
+  grafana_data:
+  influxdb_data:
   db-data:
   cache-data:
   imaginary-data:
