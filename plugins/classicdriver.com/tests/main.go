@@ -13,8 +13,8 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.classicdriver.com", "classicdriver.com"},
 		URLs: []string{
-			// "https://www.classicdriver.com/en/car/ferrari/308/1974/388412",
-			"https://www.classicdriver.com/en/sitemap.xml?page=1",
+			"https://www.classicdriver.com/en/car/ferrari/308/1974/388412",
+			//"https://www.classicdriver.com/en/sitemap.xml?page=1",
 		},
 		//	CacheDir:        "../../../shared/data",
 		QueueMaxSize:    1000000,

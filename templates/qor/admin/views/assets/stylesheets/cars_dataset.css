@@ -1,40 +1,3 @@
-[qor-icon-name*="1001pneus"]>a::before {
-  	content: url("https://staticjn.1001pneus.fr/images/favicon.ico")!important;
-	/*transform: scale(.5);*/
-}
-
-[qor-icon-name*="allopneus.com"] > a::before {
-	content: url("https://www.allopneus.com/fstrz/r/s/static.allopneus.com/favicon.ico?frz-v=176")!important;
-	transform: scale(.5);
-}
-
-[qor-icon-name*="pneus-online.fr"] > a::before {
-  	content: url("https://img1-pneusonlinesuiss.netdna-ssl.com/assets/ico/favicon.png")!important;
-  	transform: scale(.5);
-}
-
-[qor-icon-name*="123pneus.fr"] > a::before {
-    content: url("https://www.123pneus.fr/favicon.ico")!important;
-    /*transform: scale(.5);*/
-}
-
-[qor-icon-name*="Crawl"] > a::before {
-    content: 'web';
-}
-
-[qor-icon-name*="drivearabia.com"] > a::before {
-    content: url("https://www.drivearabia.com/app/themes/drivearabia/assets/img/favicon/favicon-57.png")!important;
-    transform: scale(.3);
-}
-
-[qor-icon-name*="norauto.fr"] > a::before {
-    content: url("https://s1.medias-norauto.fr/images/favicon/FR-favicon-16x16.png")!important;
-}
-
-[qor-icon-name*="feuvert.fr"] > a::before {
-    content: url("https://fvstorageprod.blob.core.windows.net/feuvert/content/Release-18/images/favicon.png")!important;
-}
-
 [qor-icon-name*="oscaro.com"] > a::before {
     content: url("https://oscaro.media/mu/layout/favicon/blue/icoscaro76.png")!important;
     transform: scale(.2);
@@ -50,25 +13,3 @@
   display: flex;
   position: absolute;
 }
-
-/*
-[qor-icon-name*="Review"] > a::before {
-  	content: 'rate_review';
-}
-
-[qor-icon-name*="Categories"] > a::before {
-  	content: 'category';
-}
-
-[qor-icon-name*="Vehicle"] > a::before {
-  	content: 'directions_car';
-}
-
-[qor-icon-name*="Brand"] > a::before {
-  	content: 'branding_watermark';
-}
-
-[qor-icon-name*="Website"] > a::before {
-  	content: 'web';
-}
-*/

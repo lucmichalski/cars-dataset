@@ -140,7 +140,7 @@ func Sitemap(cfg *config.Config) error {
 
 func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 40 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
@@ -202,7 +202,7 @@ func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 
 func ExtractSitemapGZ(rawUrl string) ([]string, error) {
 	client := &http.Client{
-		Timeout: 20 * time.Second,
+		Timeout: 40 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
@@ -261,7 +261,7 @@ func ExtractSitemapGZ(rawUrl string) ([]string, error) {
 func ExtractSitemap(rawUrl string) ([]string, error) {
 
 	client := &http.Client{
-		Timeout: 20 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)

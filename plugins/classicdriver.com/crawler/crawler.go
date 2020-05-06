@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"encoding/json"
+	"encoding/csv"
 	// "encoding/xml"
 	"fmt"
 	"os"
@@ -50,7 +51,25 @@ func Extract(cfg *config.Config) error {
 		},
 	)
 
-	// c.DisableCookies()
+	if _, err := os.Stat("shared/queue/classicdriver.com_sitemap.txt"); !os.IsNotExist(err) {
+		file, err := os.Open("shared/queue/classicdriver.com_sitemap.txt")
+		if err != nil {
+			return err
+		}
+
+		reader := csv.NewReader(file)
+		reader.Comma = ';'
+		reader.LazyQuotes = true
+		data, err := reader.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		utils.Shuffle(data)
+		for _, loc := range data {
+			q.AddURL(loc[0])
+		}
+	}
 
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
@@ -253,8 +272,9 @@ func Extract(cfg *config.Config) error {
 		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
 		pp.Println(sitemaps)
 		if err != nil {
-			log.Fatal("ExtractSitemapIndex:", err)
-			return err
+			log.Warnln("ExtractSitemapIndex:", err)
+			// continue
+			// return err
 		}
 
 		utils.Shuffle(sitemaps)
@@ -264,8 +284,9 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ", err)
-					return err
+					log.Warnln("ExtractSitemapGZ", err)
+					continue
+					//return err
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
