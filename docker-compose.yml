@@ -17,13 +17,13 @@ services:
     command: ["/bin/bash"]
 
   yolact-sidekiq: &yolact_base
+    image: yolact-minimal:gpu-latest
     build:
       context: .docker/yolact-mini
       dockerfile: Dockerfile.gpu
-    image: yolact-minimal:gpu-latest
     working_dir: /yolact
     volumes:
-    - ./.docker/yolact-mini/server:/yolact/server
+    - ./.docker/yolact-mini/server.py:/yolact/server.py
     - yolact-models:/yolact/weights
     - yolact-results:/yolact/results
     command: ./scripts/download_data.sh
@@ -32,9 +32,12 @@ services:
     <<: *yolact_base
     ports:
     - "8000:8000"
+    environment:
+    - CUDA_VISIBLE_DEVICES=1
     networks:
     - internal
     - web
+    command: ["python3", "./server.py", "--trained_model=res101_coco_800000.pth"]
 
   tensorflow:
     image: tensorflow/tensorflow:latest-gpu-py3

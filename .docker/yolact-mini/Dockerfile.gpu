@@ -5,7 +5,7 @@
 # pytorch       latest (pip)
 # ==================================================================
 
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
 ENV LANG C.UTF-8
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade --no-cache-dir --retries 10 --timeout 60" && \
@@ -34,6 +34,9 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         git \
         vim \
         libssl-dev \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
         curl \
         nano \
         bash \
@@ -110,12 +113,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/*
 
 # ==================================================================
-# install nmslib
+# install dependencies
 # ------------------------------------------------------------------
-RUN pip install --no-binary :all: nmslib
+RUN pip install requests werkzeug flask Image
 
 # ==================================================================
-# install imsearch
+# install yolact
 # ------------------------------------------------------------------
 WORKDIR /yolact
 COPY . /yolact

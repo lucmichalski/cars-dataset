@@ -160,6 +160,7 @@ if __name__ == '__main__':
     # Load model 
     parser = argparse.ArgumentParser(description='YOLACT COCO Evaluation')
     parser.add_argument('--trained_model', default='weights/yolact_base_54_800000.pth', type=str)
+    parser.add_argument('--gpu', default=0, type=int, help='GPU device ID (eg: 0 or 1)')
     parser.add_argument('--visual_top_k', default=100, type=int, help='Further restrict the number of predictions to parse')
     parser.add_argument('--traditional_nms', default=False, action='store_true', help='Whether to use traditional nms.')
     parser.add_argument('--hide_mask', default=False, action='store_true', help='Whether to display masks')
@@ -182,12 +183,14 @@ if __name__ == '__main__':
 
     update_config(config)
     print(f'\nUsing \'{config}\' according to the trained_model.\n')
+    print("gpu id", args.gpu)
 
     with torch.no_grad():
         cuda = torch.cuda.is_available()
         if cuda:
             cudnn.benchmark = True
             cudnn.fastest = True
+            # torch.cuda.set_device(args.gpu)
             torch.set_default_tensor_type('torch.cuda.FloatTensor')
         else:
             torch.set_default_tensor_type('torch.FloatTensor')
