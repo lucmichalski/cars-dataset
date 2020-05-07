@@ -1,7 +1,8 @@
 version: "3.4"
 services:
+
   cassandra:
-    image: docker.pkg.github.com/dioptre/elassandra-docker/elassandra:latest
+    image: sfproductlabs/elassandra:latest
     expose:
       - "9042"
     ports:
@@ -9,11 +10,16 @@ services:
       - "9160:9160"
     network_mode: host  
     # hostname: cassandra
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1    
     container_name: cassandra
     volumes: 
-      - ./.setup:/tmp/.csetup
+    - ./.setup:/tmp/.csetup
     command: >
              bash -c "((sleep 90s && cqlsh --ssl -f /tmp/.csetup/schema.1.cql &) && (/docker-entrypoint.sh cassandra -f))"
+
   scrp:
     build: ./src
     expose:
@@ -22,9 +28,9 @@ services:
     # hostname: cassandra
     container_name: scrp
     volumes: 
-      - ./.setup:/tmp/.csetup
-      - ./bin:/tmp/.scrp
-      - ./.data:/tmp/consul
+    - ./.setup:/tmp/.csetup
+    - ./bin:/tmp/.scrp
+    - ./.data:/tmp/consul
     command: >
              bash -c "cp /tmp/.csetup/keys/backend.* /tmp/.scrp/ && cp /tmp/.csetup/keys/frontend.* /tmp/.scrp/ && cp /tmp/.csetup/keys/backend.* /app/scrp/ && cp /tmp/.csetup/keys/frontend.* /app/scrp/ && tail -F something"
     # GOCQL_HOST_LOOKUP_PREFER_V4=true ./gsvc localhost false false /tmp/.csetup/keys/rootCa.crt /tmp/.csetup/keys/cassandra-client.crt /tmp/.csetup/keys/cassandra-client.key
