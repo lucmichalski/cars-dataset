@@ -22,7 +22,7 @@
                 <tr data-primary-key="{{$primaryKey}}" data-media-library-url="{{url_for $result $resource}}">
                   <td>
                     <div class="mdl-card mdl-shadow--2dp qor-table--medialibrary-item">
-                      <input type="checkbox" name="{{$uniqueKey}}" value=0> Delete
+                      <!--<input type="checkbox" name="{{$primaryKey}}" value=0> Delete-->
                       <div class="mdl-card__supporting-text qor-table--ml-slideout" data-url="{{url_for $result $resource}}">
                         {{range $meta := $metas}}
                           <p data-heading="{{$meta.Name}}">{{render_meta $result $meta}}</p>
@@ -51,7 +51,6 @@
                 </tr>
               {{end}}
               
-
               {{else}}
                 <tr>
                   <td>

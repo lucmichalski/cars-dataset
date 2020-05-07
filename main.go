@@ -261,7 +261,7 @@ func main() {
 			Operations: []string{"contains"},
 			Config:     &admin.SelectOneConfig{Collection: [][]string{{"video", "Video"}, {"image", "Image"}, {"file", "File"}, {"video_link", "Video Link"}}},
 		})
-		VehicleImagesResource.IndexAttrs("File", "Title")
+		VehicleImagesResource.IndexAttrs("File", "Title", "BBox")
 
 		VehicleImagesResource.UseTheme("grid")
 

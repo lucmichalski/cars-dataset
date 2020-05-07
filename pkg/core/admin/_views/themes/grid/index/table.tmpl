@@ -24,6 +24,8 @@
                     <div class="mdl-card mdl-shadow--2dp qor-table--medialibrary-item">
                       <div class="mdl-card__supporting-text qor-table--ml-slideout" data-url="{{url_for $result $resource}}">
                         {{range $meta := $metas}}
+                          meta: {{ printf "%#v" $meta }}
+                          result: {{ printf "%#v" $result }}
                           <p data-heading="{{$meta.Name}}">{{render_meta $result $meta}}</p>
                         {{end}}
                       </div>

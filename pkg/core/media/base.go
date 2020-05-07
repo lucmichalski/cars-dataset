@@ -32,6 +32,10 @@ type CropOption struct {
 	X, Y, Width, Height int
 }
 
+type BboxOption struct {
+	MaxX, MaxY, MinX, MinY int
+}
+
 // FileHeader is an interface, for matched values, when call its `Open` method will return `multipart.File`
 type FileHeader interface {
 	Open() (multipart.File, error)
@@ -50,6 +54,7 @@ type Base struct {
 	FileName    string
 	Url         string
 	CropOptions map[string]*CropOption `json:",omitempty"`
+	BBoxOptions map[string]*BboxOption `json:",omitempty"`
 	Delete      bool                   `json:"-"`
 	Crop        bool                   `json:"-"`
 	FileHeader  FileHeader             `json:"-"`
@@ -106,6 +111,7 @@ func (b *Base) Scan(data interface{}) (err error) {
 		b.Url = ""
 		b.FileName = ""
 		b.CropOptions = nil
+		b.BBoxOptions = nil
 	}
 	return
 }
@@ -212,6 +218,9 @@ func (b *Base) Cropped(values ...bool) (result bool) {
 func (b *Base) NeedCrop() bool {
 	return b.Crop
 }
+
+// Add a function to crop MaX, MaxY, MinX, MinY
+// How to 
 
 // GetCropOption get crop options
 func (b *Base) GetCropOption(name string) *image.Rectangle {

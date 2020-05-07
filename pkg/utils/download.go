@@ -14,8 +14,6 @@ import (
 
 	"github.com/h2non/filetype"
 	"github.com/k0kubun/pp"
-
-	// "github.com/cavaliercoder/grab"
 	"github.com/pkg/errors"
 
 	"github.com/lucmichalski/cars-dataset/pkg/grab"

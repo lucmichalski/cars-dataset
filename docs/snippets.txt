@@ -11,6 +11,49 @@ Thanks in advance for any insights or inputs on that topic.
 Cheers,
 X
 
+## grpc
+https://github.com/jemgunay/grpc-examples/blob/master/client/main.go
+https://github.com/jecklgamis/grpc-go-example/blob/master/cmd/client/client.go
+https://github.com/coreydaley/crawler
+https://github.com/jjmengze/traffic-bot/blob/104f1d58d8ccb121bc60a8a07cae64b589753e00/pkg/apis/tra/v1alpha1/train.go
+https://github.com/sfproductlabs/scrp
+https://github.com/kpolley/RELK
+
+
+MaxX
+615,392,16,212
+
+original: http://51.91.21.67:9008/system/vehicle_images/1665021/file.jpg
+bbox: http://51.91.21.67:9006/bbox?url=http://51.91.21.67:9008/system/vehicle_images/1665021/file.jpg
+
+taille original: 640x480
+taille reduit: 200x150
+
+maxX = 615
+maxY = 392
+minX = 16
+minY = 212
+
+## Plugins
+
+https://www.motorbike-online.com/listings/1966-lambretta-sx-200/
+
+https://www.classic-trader.com/
+https://cdn.classic-trader.com/I/sitemap/sitemap.xml
+https://www.classic-trader.com/uk/cars/listing/porsche/911/911-carrera-s/1997/186152
+
+.data-list .data-item
+.label
+.value
+
+.slides .slide-image img
+
+https://www.classicdriver.com
+https://www.classicdriver.com/en/sitemap.xml
+https://www.classicdriver.com/en/bike/iso/scooter-125-cc/1953/478650
+
+.pane-content .field-name-field-manufactured-year .field-item
+
 ------------------------------------------------------------------------------------------------------
 ssh -i ~/.ssh/ovh ubuntu@51.91.21.67
 
@@ -18,18 +61,25 @@ ssh -i ~/.ssh/ovh ubuntu@51.91.21.67
 cp shared/queue/cars.com_sitemap.txt.4 shared/queue/cars.com_sitemap.txt
 go run main.go --plugins cars.com --extract --no-cache --clean --verbose
 
-
+## starting bots
+go run main.go --plugins thecarconnection.com --extract --no-cache --clean --verbose
 go run main.go --plugins motorcycles.autotrader.com.v2 --extract --no-cache --clean --verbose
 
-# 9007
 
+$("p[data-heading=File]")
+
+## comprehensive cars
 http://mmlab.ie.cuhk.edu.hk/datasets/comp_cars/instruction.txt
 pass: d89551fd190e38
-
+missing year attribute :-()
 
 ## download/upload to/from grdive
 https://github.com/odeke-em/drive#listing
 
+### darknet7
+docker run --name darknet7 --runtime=nvidia -d -p 9008:9008 -e DARKNET_PORT=9008 -v /home/ubuntu/cars-dataset/darknet:/darknet -v /home/ubuntu/cars-dataset/models:/darknet/models lucmichalski/darknet:gpu-latest sh -c go run server.go --config-file=./models/stanford-1class.cfg --weights-file=./models/stanford-1class_final.weights --gpus 1
+
+### darknet6
 docker run --name darknet6 --runtime=nvidia -d -p 9007:9007 -e DARKNET_PORT=9007 -v /home/ubuntu/cars-dataset/darknet:/darknet -v /home/ubuntu/cars-dataset/models:/darknet/models lucmichalski/darknet:gpu-latest sh -c go run server.go --config-file=./models/stanford-1class.cfg --weights-file=./models/stanford-1class_final.weights
 
 ------------------------------------------------------------------------------------------------------
@@ -51,6 +101,8 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 
 
 ??????
+
+go run main.go --plugins carsdirect.com --no-cache --clean --verbose
 
 ------------------------------------------------------------------------------------------------------
 car (0): 98.1139% | start point: (159,103) | end point: (553, 489)
@@ -233,6 +285,67 @@ drwxr-xr-x 2 root   root         4096 Apr 27 06:48 yolo-cars-opencv
 -rw-r--r-- 1 root   root        12195 Apr 27 15:35 yolo-obj.cfg
 -rw-r--r-- 1 root   root    170038676 Apr 27 15:35 yolov4.conv.137
 
+# devops
+
+## articles
+https://towardsdatascience.com/get-system-metrics-for-5-min-with-docker-telegraf-influxdb-and-grafana-97cfd957f0ac
+
+## links
+https://github.com/nicolargo/docker-influxdb-grafana
+https://github.com/kbastani/spark-neo4j
+https://github.com/Kartonatic/tfm
+https://github.com/blacktop/docker-elasticsearch-alpine
+https://github.com/kbastani/spark-neo4j
+https://github.com/pires/go-proxyproto
+https://github.com/xeraa/elastic-docker
+https://github.com/Cyb3rWard0g/HELK
+
+## stack
+https://github.com/NuroDev/jarvis
+
+## traefik
+https://github.com/pomazanbohdan/EFK-traefik-portainer
+https://github.com/Cyb3rWard0g/docker-caldera
+https://github.com/deviantony/docker-elk (clean !)
+https://github.com/spujadas/elk-docker
+https://github.com/htpcBeginner/docker-traefik
+https://github.com/VioletVivirand/traefik-docker-demo
+
+## elastic docker stack
+https://github.com/xeraa/elastic-docker (nice !)
+https://github.com/g3offrey/docker-elastic-monitoring/blob/master/docker-compose.yml
+
+## elastic postresql
+https://github.com/tartemov/docker-postgres-elk
+	- https://github.com/tartemov/docker-postgres-elk/blob/master/docker-compose.yml
+
+## big data elk haddop
+https://github.com/kpolley/RELK (!interesting)
+
+## docker elastic search spark
+https://github.com/panggd/docker-elasticsearch
+https://github.com/mydavidlew/dockers/blob/master/hadoop/docker-compose.yml
+
+## flink example
+https://github.com/alpinegizmo/flink-containers-example (nice !)
+https://github.com/melentye/flink-docker (nice !)
+https://github.com/jianyuanzh/flink-playground
+
+## hadoop + hive
+https://github.com/jobmthomas/Docker-Bigdata (nice !)
+https://github.com/loum/hadoop-hive
+https://github.com/loum/hadoop-pseudo
+
+
+## zookeper + beam
+https://github.com/akshatashan/dockers (nice !)
+https://github.com/rejux/docker_hadoop_cluster_light
+
+## yolo + nifi
+https://community.cloudera.com/t5/Community-Articles/Integrating-Darknet-YOLOv3-Into-Apache-NiFi-Workflows/ta-p/248324
+https://github.com/tspannhw/nifi-yolo3
+https://community.cloudera.com/t5/Community-Articles/Integrating-Keras-TensorFlow-YOLOv3-Into-Apache-NiFi/ta-p/248418
+
 
 ./darknet detector map data/obj.data yolo-obj.cfg backup/yolo-obj_final.weights
 
@@ -271,6 +384,8 @@ https://github.com/jolibrain/deepdetect/tree/master/docker
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/stanford_train/
 
 /Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/car/
+
+/Applications/labelme.app/Contents/MacOS/labelme --nodata --autosave /Volumes/HardDrive/go/src/github.com/lucmichalski/cars-dataset/shared/dataset/motorbikes
 
 ## cuda + pytorch
 https://discuss.pytorch.org/t/docker-torch-cuda-is-available-returns-false/47282
@@ -538,6 +653,30 @@ if err != nil {
 }
 c.SetProxyFunc(rp)
 
+curl --proxy localhost:8119 https://www.classicdriver.com/en/sitemap.xml
+curl --proxy localhost:5566 https://www.classicdriver.com/en/sitemap.xml
+curl -x socks5h://localhost:1080 https://httpbin.org/ip
+
+-o sitemap.xml https://www.classicdriver.com/en/sitemap.xml
+
+curl -x socks5h://localhost:1080 -o sitemap_1.xml https://www.classicdriver.com/en/sitemap.xml?page=1 && \
+curl -x socks5h://localhost:1080 -o sitemap_3.xml https://www.classicdriver.com/en/sitemap.xml?page=2 && \
+curl -x socks5h://localhost:1080 -o sitemap_3.xml https://www.classicdriver.com/en/sitemap.xml?page=3 && \
+curl -x socks5h://localhost:1080 -o sitemap_4.xml https://www.classicdriver.com/en/sitemap.xml?page=4 && \
+curl -x socks5h://localhost:1080 -o sitemap_5.xml https://www.classicdriver.com/en/sitemap.xml?page=5 && \
+curl -x socks5h://localhost:1080 -o sitemap_6.xml https://www.classicdriver.com/en/sitemap.xml?page=6 && \
+curl -x socks5h://localhost:1080 -o sitemap_7.xml https://www.classicdriver.com/en/sitemap.xml?page=7 && \
+curl -x socks5h://localhost:1080 -o sitemap_8.xml https://www.classicdriver.com/en/sitemap.xml?page=8 && \
+curl -x socks5h://localhost:1080 -o sitemap_9.xml https://www.classicdriver.com/en/sitemap.xml?page=9 && \
+curl -x socks5h://localhost:1080 -o sitemap_10.xml https://www.classicdriver.com/en/sitemap.xml?page=10 && \
+curl -x socks5h://localhost:1080 -o sitemap_11.xml https://www.classicdriver.com/en/sitemap.xml?page=11 && \
+curl -x socks5h://localhost:1080 -o sitemap_12.xml https://www.classicdriver.com/en/sitemap.xml?page=12 && \
+curl -x socks5h://localhost:1080 -o sitemap_13.xml https://www.classicdriver.com/en/sitemap.xml?page=13 && \
+curl -x socks5h://localhost:1080 -o sitemap_14.xml https://www.classicdriver.com/en/sitemap.xml?page=14
+
+curl -x socks5h://localhost:1080 -o sitemap.xml https://www.classicdriver.com/en/sitemap.xml
+
+
 curl --socks5 localhost:5566 -o test3.html https://motorcycles.autotrader.com/motorcycles/2019/bmw/c400x/200865678
 curl --proxy localhost:8118 http://httpbin.org/ip
 
@@ -588,6 +727,8 @@ darknet_1      | main.server.func3(0xc0004c9260)
 /usr/local/share/android-sdk
 
 find . -maxdepth 1 -type f -name "*.jpg" | head -5702 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
+
+find . -maxdepth 1 -type f -name "*.jpg" | head -5702 | xargs cp -t /home/ubuntu/cars-dataset/shared/datasets/yolo-cars/negative/
 find . -maxdepth 1 -type f -name "*.jpg" | wc -l
 
 369 negative cars
@@ -606,6 +747,19 @@ cd plugins/stanford-cars && GOOS=linux GOARCH=amd64 go build -buildmode=plugin -
 
 ~/cars-dataset/shared/datasets/5classes/train2017_stanford
 
+## kafka + go 
+https://github.com/parinpan/sturectory/blob/master/docker-compose.yml
+https://github.com/MAGE001/sample-crawler
+
+## kafka + gocolly
+https://github.com/Veerse/reezocar_test/blob/master/producer/main.go
+https://github.com/Veerse/reezocar_test/blob/master/consumer/main.go
+https://github.com/alexmorten/instascraper/blob/master/scraper/scraper.go
+https://github.com/velann21/crawler/blob/master/main.go
+https://github.com/velann21/crawler/blob/master/pkg/service/crawl_service/amazon_crwl_service.go
+https://github.com/codeuniversity/smag-mvp/blob/master/insta/scraper/user/scraper.go
+https://github.com/mouminoux/kafka-doc/blob/master/main.go
+https://github.com/wlcn/yq-colly/blob/master/taihe/taihe_kafka.go#L234
 
 
 convert them
