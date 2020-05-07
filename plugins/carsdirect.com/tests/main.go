@@ -34,6 +34,7 @@ func main() {
 	cfg := &config.Config{
 		AllowedDomains: []string{"www.carsdirect.com", "carsdirect.com"},
 		URLs: []string{
+			"https://www.carsdirect.com/2018/aston-martin/db11/pictures",
 			"https://www.carsdirect.com/2020/alfa-romeo/4c-spider/pictures",
 			"https://www.carsdirect.com/used_cars/vehicle-detail/ul1991057178/toyota/camry?source=UsedCarListings&savedVehicleId=",
 			"https://www.carsdirect.com/2001/acura/cl/pictures",

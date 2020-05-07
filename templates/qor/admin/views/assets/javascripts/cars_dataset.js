@@ -118,10 +118,27 @@ $(document).ready(function() {
   });
 
   var gridImages = $("p[data-heading=File] img")
-  for (let i = 0; i < gridImages.length; i++) {
-    localSrc = gridImages[i].src
-    gridImages[i].src = localSrc.replace('127.0.0.1:9008', '51.91.21.67:9008');
-  }
+  console.log("gridImages:", gridImages);
+
+  var generateBoundingBoxes = function(str) {
+    var gridImages = $("p[data-heading=File] img")
+    for (let i = 0; i < gridImages.length; i++) {
+      gridImages[i].src = 'http://51.91.21.67:9008'+ gridImages[i].src
+    }    
+  };
+
+  // generateBoundingBoxes()
+
+  /*
+    // ref.
+    // https://stackoverflow.com/questions/4839993/how-to-draw-polygons-on-an-html5-canvas
+    // https://www.w3schools.com/tags/canvas_rect.asp
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+    ctx.beginPath();
+    ctx.rect(20, 20, 150, 100);
+    ctx.stroke();
+  */
 
 });
 

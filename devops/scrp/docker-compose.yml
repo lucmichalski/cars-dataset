@@ -1,0 +1,148 @@
+version: "3.4"
+services:
+
+  cassandra:
+    image: sfproductlabs/elassandra:latest
+    expose:
+      - "9042"
+    ports:
+      - "9042:9042"
+      - "9160:9160"
+    network_mode: host  
+    # hostname: cassandra
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1    
+    container_name: cassandra
+    volumes: 
+    - ./.setup:/tmp/.csetup
+    command: >
+             bash -c "((sleep 90s && cqlsh --ssl -f /tmp/.csetup/schema.1.cql &) && (/docker-entrypoint.sh cassandra -f))"
+
+  scrp:
+    build: ./src
+    expose:
+      - "80"
+    network_mode: host  
+    # hostname: cassandra
+    container_name: scrp
+    volumes: 
+    - ./.setup:/tmp/.csetup
+    - ./bin:/tmp/.scrp
+    - ./.data:/tmp/consul
+    command: >
+             bash -c "cp /tmp/.csetup/keys/backend.* /tmp/.scrp/ && cp /tmp/.csetup/keys/frontend.* /tmp/.scrp/ && cp /tmp/.csetup/keys/backend.* /app/scrp/ && cp /tmp/.csetup/keys/frontend.* /app/scrp/ && tail -F something"
+    # GOCQL_HOST_LOOKUP_PREFER_V4=true ./gsvc localhost false false /tmp/.csetup/keys/rootCa.crt /tmp/.csetup/keys/cassandra-client.crt /tmp/.csetup/keys/cassandra-client.key
+    # /tmp/.scrp/consul agent -config-file /tmp/.scrp/consul.json -bind 127.0.0.1 -bootstrap-expect 1
+    # /tmp/.scrp/traefik -c /tmp/.scrp/traefik.toml
+    # ./gcli https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
+      - target: 8080
+        published: 8080
+        mode: host
+      - target: 8500
+        published: 8500
+        mode: host
+      - "9042:9042"
+      - "9160:9160"        
+             
+#   traefik_init:
+#     image: traefik:1.5
+#     command:
+#       - "storeconfig"
+#       - "--api"
+#       - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
+#       - "--entrypoints=Name:https Address::443 TLS"
+#       - "--defaultentrypoints=http,https"
+#       - "--acme"
+#       - "--acme.storage=traefik/acme/account"
+#       - "--acme.entryPoint=https"
+#       - "--acme.httpChallenge.entryPoint=http"
+#       - "--acme.OnHostRule=true"
+#       - "--acme.onDemand=false"
+#       - "--acme.email=foobar@example.com"
+#       - "--docker"
+#       - "--docker.swarmmode"
+#       - "--docker.domain=example.com"
+#       - "--docker.watch"
+#       - "--consul"
+#       - "--consul.endpoint=consul:8500"
+#       - "--consul.prefix=traefik"
+#     networks:
+#       - traefik
+#     deploy:
+#       restart_policy:
+#         condition: on-failure
+#     depends_on:
+#       - consul
+#   traefik:
+#     image: traefik:1.5
+#     depends_on:
+#       - traefik_init
+#       - consul
+#     command:
+#       - "--consul"
+#       - "--consul.endpoint=consul:8500"
+#       - "--consul.prefix=traefik"
+#     volumes:
+#       - /var/run/docker.sock:/var/run/docker.sock
+#     networks:
+#       - webgateway
+#       - traefik
+#     ports:
+#       - target: 80
+#         published: 80
+#         mode: host
+#       - target: 443
+#         published: 443
+#         mode: host
+#       - target: 8080
+#         published: 8080
+#         mode: host
+#     deploy:
+#       mode: global
+#       placement:
+#         constraints:
+#           - node.role == manager
+#       update_config:
+#         parallelism: 1
+#         delay: 10s
+#       restart_policy:
+#         condition: on-failure
+#   consul:
+#     image: consul
+#     command: agent -server -bootstrap-expect=1
+#     volumes:
+#       - ./.data:/consul/data
+#     environment:
+#       - CONSUL_LOCAL_CONFIG={"datacenter":"us_east2","server":true}
+#       - CONSUL_BIND_INTERFACE=eth0
+#       - CONSUL_CLIENT_INTERFACE=eth0
+#     deploy:
+#       replicas: 1
+#       placement:
+#         constraints:
+#           - node.role == manager
+#       restart_policy:
+#         condition: on-failure
+#     networks:
+#       - traefik
+
+# networks:
+#   webgateway:
+#     driver: overlay
+#     external: true
+#   traefik:
+#     driver: overlay
+
+# volumes:
+#   consul-data:
+#       driver: [not local]

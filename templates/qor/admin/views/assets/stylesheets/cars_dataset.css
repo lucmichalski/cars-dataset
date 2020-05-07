@@ -10,25 +10,3 @@ canvas {
   display: flex;
   position: absolute;
 }
-
-/*
-[qor-icon-name*="Review"] > a::before {
-  	content: 'rate_review';
-}
-
-[qor-icon-name*="Categories"] > a::before {
-  	content: 'category';
-}
-
-[qor-icon-name*="Vehicle"] > a::before {
-  	content: 'directions_car';
-}
-
-[qor-icon-name*="Brand"] > a::before {
-  	content: 'branding_watermark';
-}
-
-[qor-icon-name*="Website"] > a::before {
-  	content: 'web';
-}
-*/

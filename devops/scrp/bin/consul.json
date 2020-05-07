@@ -1,0 +1,16 @@
+{
+  "datacenter": "east-aws",
+  "data_dir": "/tmp/consul",
+  "log_level": "INFO",
+  "server": true,
+  "addresses": {
+    "https": "0.0.0.0"
+  },
+  "ports": {
+    "https": 4444
+  },
+  "key_file": "backend.key",
+  "cert_file": "backend.cert",
+  "ca_file": "backend.cert",
+  "verify_incoming" : true
+}

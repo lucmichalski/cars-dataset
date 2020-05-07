@@ -16,6 +16,30 @@ services:
     - ./models:/opt/models
     command: ["/bin/bash"]
 
+  yolact-sidekiq: &yolact_base
+    image: yolact-minimal:gpu-latest
+    build:
+      context: .docker/yolact-mini
+      dockerfile: Dockerfile.gpu
+    working_dir: /yolact
+    volumes:
+    - ./.docker/yolact-mini/utils/output_utils.py:/yolact/utils/output_utils.py
+    - ./.docker/yolact-mini/server.py:/yolact/server.py
+    - yolact-models:/yolact/weights
+    - yolact-results:/yolact/results
+    command: ./scripts/download_data.sh
+
+  yolact-mini:
+    <<: *yolact_base
+    ports:
+    - "8000:8000"
+    environment:
+    - CUDA_VISIBLE_DEVICES=1
+    networks:
+    - internal
+    - web
+    command: ["python3", "./server.py", "--trained_model=res101_coco_800000.pth", "--show_lincomb", "--cutout"]
+
   tensorflow:
     image: tensorflow/tensorflow:latest-gpu-py3
     command: ["bash"]
@@ -174,8 +198,8 @@ services:
     tty: true
     environment:
     - SOCKD_WORKERS=10
-    volumes:
-    - ./shared/logs/protovpn/pvpn-cli.log:/root/.pvpn-cli/pvpn-cli.log
+    # volumes:
+    # - ./shared/logs/protovpn/pvpn-cli.log:/root/.pvpn-cli/pvpn-cli.log
     # - ./shared/logs/protovpn/ovpn.log:/root/.pvpn-cli/ovpn.log
     ports:
     - "1080:1080"
@@ -355,12 +379,45 @@ services:
     restart: unless-stopped
     command: ["./dede", "-port", "5003", "-host", "0.0.0.0"]
 
+  telegraf:
+    image: telegraf:1.14-alpine
+    volumes:
+    - ./.config/telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+    - influxdb
+    links:
+    - influxdb
+    ports:
+    - '8125:8125/udp'
+
+  influxdb:
+    image: influxdb:1.8-alpine
+    ports:
+    - '8086:8086'
+    volumes:
+    - influxdb_data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:6.7.3
+    depends_on:
+    - influxdb
+    links:
+    - influxdb
+    ports:
+    - '3000:3000'
+    volumes:
+    - grafana_data:/var/lib/grafana
+    - ./.config/grafana/provisioning/:/etc/grafana/provisioning/
+    - ./.config/grafana/dashboards/:/var/lib/grafana/dashboards/
+
 networks:
   internal:
   web:
     external: true
 
 volumes:
+  grafana_data:
+  influxdb_data:
   db-data:
   cache-data:
   imaginary-data:
@@ -375,3 +432,13 @@ volumes:
       type: none
       o: bind
       device: ${PWD}/public
+  yolact-models:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/models/yolact/weights
+  yolact-results:
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/shared/yolact/results
