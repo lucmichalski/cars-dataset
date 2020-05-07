@@ -123,7 +123,7 @@ $(document).ready(function() {
     }    
   };
 
-  generateBoundingBoxes()
+  // generateBoundingBoxes()
 
   /*
     // ref.

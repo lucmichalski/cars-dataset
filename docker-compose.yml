@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile.gpu
     working_dir: /yolact
     volumes:
+    - ./.docker/yolact-mini/utils/output_utils.py:/yolact/utils/output_utils.py
     - ./.docker/yolact-mini/server.py:/yolact/server.py
     - yolact-models:/yolact/weights
     - yolact-results:/yolact/results
@@ -37,7 +38,7 @@ services:
     networks:
     - internal
     - web
-    command: ["python3", "./server.py", "--trained_model=res101_coco_800000.pth"]
+    command: ["python3", "./server.py", "--trained_model=res101_coco_800000.pth", "--show_lincomb", "--cutout"]
 
   tensorflow:
     image: tensorflow/tensorflow:latest-gpu-py3

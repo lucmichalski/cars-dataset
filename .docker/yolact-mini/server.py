@@ -105,13 +105,30 @@ def process():
         img_name = destFile.split('/')[-1]
         app.logger.warning('img_name=(%s)', img_name)
 
-        img_origin = torch.from_numpy(cv2.imread(destFile)).float()
+        # img_origin = cv2.imread(one_img)
+        # img_tensor = torch.from_numpy(img_origin).float()
+
+        img_origin = cv2.imread(destFile)
+	#		torch.from_numpy(img_origin).float()
+        img_tensor = torch.from_numpy(img_origin).float()
         if cuda:
-            img_origin = img_origin.cuda()
-        img_h, img_w = img_origin.shape[0], img_origin.shape[1]
-        img_trans = FastBaseTransform()(img_origin.unsqueeze(0))
+            # img_origin = img_origin.cuda()
+            img_tensor = img_tensor.cuda()
+
+        img_h, img_w = img_tensor.shape[0], img_tensor.shape[1]
+        img_trans = FastBaseTransform()(img_tensor.unsqueeze(0))
+
         net_outs = net(img_trans)
         nms_outs = NMS(net_outs, args.traditional_nms)
+
+        show_lincomb = bool(args.show_lincomb)
+        results = after_nms(nms_outs, img_h, img_w, show_lincomb=show_lincomb, crop_masks=not args.no_crop,
+                                visual_thre=args.visual_thre, img_name=img_name)
+
+        # img_h, img_w = img_origin.shape[0], img_origin.shape[1]
+        # img_trans = FastBaseTransform()(img_origin.unsqueeze(0))
+        # net_outs = net(img_trans)
+        # nms_outs = NMS(net_outs, args.traditional_nms)
 
         app.logger.warning('img_h=(%s)', img_h)
         app.logger.warning('img_w=(%s)', img_w)
@@ -122,7 +139,7 @@ def process():
         app.logger.warning('args.visual_thre=(%s)', args.visual_thre)
         app.logger.warning('args=(%s)', args)
 
-        show_lincomb = bool(args.show_lincomb)
+        # show_lincomb = bool(args.show_lincomb)
         with timer.env('after nms'):
             results = after_nms(nms_outs, img_h, img_w, show_lincomb=show_lincomb, crop_masks=not args.no_crop,
                                 visual_thre=args.visual_thre, img_name=img_name)
@@ -130,7 +147,8 @@ def process():
                 torch.cuda.synchronize()
 
         # app.logger.warning('results=(%s)', results)
-        img_numpy = draw_img(results, img_origin, args)
+        # img_numpy = draw_img(results, img_origin, args)
+        img_numpy = draw_img(results, img_origin, img_name, args)
 
         cv2.imwrite(f'results/images/{img_name}', img_numpy)
         # print(f'\r{i + 1}/{num}', end='')
@@ -160,22 +178,21 @@ if __name__ == '__main__':
     # Load model 
     parser = argparse.ArgumentParser(description='YOLACT COCO Evaluation')
     parser.add_argument('--trained_model', default='weights/yolact_base_54_800000.pth', type=str)
-    parser.add_argument('--gpu', default=0, type=int, help='GPU device ID (eg: 0 or 1)')
-    parser.add_argument('--visual_top_k', default=100, type=int, help='Further restrict the number of predictions to parse')
     parser.add_argument('--traditional_nms', default=False, action='store_true', help='Whether to use traditional nms.')
     parser.add_argument('--hide_mask', default=False, action='store_true', help='Whether to display masks')
     parser.add_argument('--hide_bbox', default=False, action='store_true', help='Whether to display bboxes')
     parser.add_argument('--hide_score', default=False, action='store_true', help='Whether to display scores')
+    parser.add_argument('--cutout', default=False, action='store_true', help='Whether to cut out each object')
     parser.add_argument('--show_lincomb', default=False, action='store_true',
-                        help='Whether to show the generating process of masks.')
+                    help='Whether to show the generating process of masks.')
     parser.add_argument('--no_crop', default=False, action='store_true',
-                        help='Do not crop output masks with the predicted bounding box.')
+                    help='Do not crop output masks with the predicted bounding box.')
     parser.add_argument('--image', default=None, type=str, help='The folder of images for detecting.')
     parser.add_argument('--video', default=None, type=str,
-                        help='The path of the video to evaluate. Pass a number to use the related webcam.')
+                    help='The path of the video to evaluate. Pass a number to use the related webcam.')
     parser.add_argument('--real_time', default=False, action='store_true', help='Show the detection results real-timely.')
     parser.add_argument('--visual_thre', default=0.3, type=float,
-                        help='Detections with a score under this threshold will be removed.')
+                    help='Detections with a score under this threshold will be removed.')
 
     args = parser.parse_args()
     strs = args.trained_model.split('_')
@@ -183,25 +200,24 @@ if __name__ == '__main__':
 
     update_config(config)
     print(f'\nUsing \'{config}\' according to the trained_model.\n')
-    print("gpu id", args.gpu)
 
-    with torch.no_grad():
-        cuda = torch.cuda.is_available()
-        if cuda:
-            cudnn.benchmark = True
-            cudnn.fastest = True
-            # torch.cuda.set_device(args.gpu)
-            torch.set_default_tensor_type('torch.cuda.FloatTensor')
-        else:
-            torch.set_default_tensor_type('torch.FloatTensor')
+    # with torch.no_grad():
+    cuda = torch.cuda.is_available()
+    if cuda:
+       cudnn.benchmark = True
+       cudnn.fastest = True
+       # torch.cuda.set_device(args.gpu)
+       torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    else:
+       torch.set_default_tensor_type('torch.FloatTensor')
 
-        net = Yolact()
-        net.load_weights('weights/' + args.trained_model, cuda)
-        net.eval()
-        print('Model loaded.\n')
+    net = Yolact()
+    net.load_weights('weights/' + args.trained_model, cuda)
+    net.eval()
+    print('Model loaded.\n')
 
-        if cuda:
-            net = net.cuda()
+    if cuda:
+       net = net.cuda()
 
     port = 8000
     host = '0.0.0.0'

@@ -81,7 +81,7 @@ def traditional_nms(boxes, masks, scores, iou_threshold=0.5, conf_thresh=0.05):
         if cls_scores.size(0) == 0:
             continue
 
-        preds = torch.cat([boxes[conf_mask], cls_scores[:, None]], dim=1).cpu().numpy()
+        preds = torch.cat([boxes[conf_mask], cls_scores[:, None]], dim=1).detach().cpu().numpy()
         keep = cnms(preds, iou_threshold)
         keep = torch.Tensor(keep, device=boxes.device).long()
 
@@ -190,7 +190,7 @@ def draw_lincomb(proto_data, masks, img_name):
     for kdx in range(1):
         jdx = kdx + 0
         import matplotlib.pyplot as plt
-        coeffs = masks[jdx, :].cpu().numpy()
+        coeffs = masks[jdx, :].cpu().detach().numpy()
         idx = np.argsort(-np.abs(coeffs))
 
         coeffs_sort = coeffs[idx]
@@ -204,14 +204,14 @@ def draw_lincomb(proto_data, masks, img_name):
                 i = arr_w * y + x
 
                 if i == 0:
-                    running_total = proto_data[:, :, idx[i]].cpu().numpy() * coeffs_sort[i]
+                    running_total = proto_data[:, :, idx[i]].cpu().detach().numpy() * coeffs_sort[i]
                 else:
-                    running_total += proto_data[:, :, idx[i]].cpu().numpy() * coeffs_sort[i]
+                    running_total += proto_data[:, :, idx[i]].cpu().detach().numpy() * coeffs_sort[i]
 
                 running_total_nonlin = (1 / (1 + np.exp(-running_total)))
 
                 arr_img[y * p_h:(y + 1) * p_h, x * p_w:(x + 1) * p_w] = (proto_data[:, :, idx[i]] / torch.max(
-                    proto_data[:, :, idx[i]])).cpu().numpy() * coeffs_sort[i]
+                    proto_data[:, :, idx[i]])).cpu().detach().numpy() * coeffs_sort[i]
                 arr_run[y * p_h:(y + 1) * p_h, x * p_w:(x + 1) * p_w] = (running_total_nonlin > 0.5).astype(np.float)
 
         plt.imshow(arr_img)
@@ -219,7 +219,7 @@ def draw_lincomb(proto_data, masks, img_name):
 
 
 def draw_img(results, img_origin, img_name, args, fps=None):
-    class_ids, classes, boxes, masks = [x.cpu().numpy() for x in results]
+    class_ids, classes, boxes, masks = [x.cpu().detach().numpy() for x in results]
     num_detected = class_ids.shape[0]
 
     if num_detected == 0:
