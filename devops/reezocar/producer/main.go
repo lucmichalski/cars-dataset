@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/v2"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"log"
 	"strconv"

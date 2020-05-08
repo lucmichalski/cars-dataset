@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/gocolly/colly"
+	"github.com/gocolly/colly/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"strconv"

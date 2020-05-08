@@ -43,7 +43,7 @@ func main () {
 		log.Panic(err)
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	if err = client.Ping(ctx, readpref.Primary()); err != nil {
 		log.Panic(err)
 	}
