@@ -42,6 +42,7 @@ plugin:
 ## plugins			:	Build all qorpress plugins
 plugins:
 	#GOARCH=amd64 PLUGIN=cardealpage.com make plugin
+	GOARCH=amd64 PLUGIN=classic-trader.com make plugin
 	GOARCH=amd64 PLUGIN=classicdriver.com make plugin
 	GOARCH=amd64 PLUGIN=thecarconnection.com make plugin
 	GOARCH=amd64 PLUGIN=vmmrdb make plugin
