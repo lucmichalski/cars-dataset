@@ -16,11 +16,11 @@ import (
 )
 
 var Tables = []interface{}{
-	&models.SettingCarsCom{},
+	&models.SettingClassicTraderCom{},
 }
 
 var Resources = []interface{}{
-	&models.SettingCarsCom{},
+	&models.SettingClassicTraderCom{},
 }
 
 type classicTraderPlugin string

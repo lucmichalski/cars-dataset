@@ -14,7 +14,6 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/qor/media/media_library"
 	log "github.com/sirupsen/logrus"
-	ccsv "github.com/tsak/concurrent-csv-writer"
 
 	"github.com/lucmichalski/cars-dataset/pkg/config"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -77,17 +76,6 @@ func Extract(cfg *config.Config) error {
 		}
 	}
 
-	// save discovered links
-	csvSitemap, err := ccsv.NewCsvWriter("shared/queue/classic-trader.com_sitemap.txt")
-	if err != nil {
-		panic("Could not open `csvSitemap.csv` for writing")
-	}
-
-	// Flush pending writes and close file upon exit of Sitemap()
-	defer csvSitemap.Close()
-
-	// c.DisableCookies()
-
 	// Create a callback on the XPath query searching for the URLs
 	c.OnXML("//sitemap/loc", func(e *colly.XMLElement) {
 		q.AddURL(e.Text)
@@ -102,18 +90,6 @@ func Extract(cfg *config.Config) error {
 		fmt.Println("error:", err, r.Request.URL, r.StatusCode)
 		q.AddURL(r.Request.URL.String())
 	})
-
-	/*
-		c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
-			link := e.Attr("href")
-			if strings.Contains(link, "listing") {
-				fmt.Printf("Link found: %s\n", e.Request.AbsoluteURL(link))
-				csvSitemap.Write([]string{e.Request.AbsoluteURL(link)})
-				csvSitemap.Flush()
-				q.AddURL(e.Request.AbsoluteURL(link))
-			}
-		})
-	*/
 
 	c.OnHTML(`html`, func(e *colly.HTMLElement) {
 		if !strings.Contains(e.Request.Ctx.Get("url"), "listing") {
@@ -185,10 +161,11 @@ func Extract(cfg *config.Config) error {
 		})
 
 		pp.Println(vehicle)
-
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
 		}
+
+		vehicle.Name = vehicle.Manufacturer + " " + vehicle.Modl + " " + vehicle.Year
 
 		// Pictures
 		for _, carImage := range carDataImage {
@@ -301,8 +278,8 @@ func Extract(cfg *config.Config) error {
 		log.Infoln("extractSitemapIndex...")
 		sitemaps, err := prefetch.ExtractSitemapIndex(cfg.URLs[0])
 		if err != nil {
-			log.Fatal("ExtractSitemapIndex:", err)
-			return err
+			log.Warnln("ExtractSitemapIndex:", err)
+			// return err
 		}
 
 		// var links []string
@@ -313,8 +290,9 @@ func Extract(cfg *config.Config) error {
 				log.Infoln("extract sitemap gz compressed...")
 				locs, err := prefetch.ExtractSitemapGZ(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
-					return err
+					log.Warnln("ExtractSitemapGZ: ", err, "sitemap: ", sitemap)
+					continue
+					//return err
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
@@ -325,8 +303,9 @@ func Extract(cfg *config.Config) error {
 			} else {
 				locs, err := prefetch.ExtractSitemap(sitemap)
 				if err != nil {
-					log.Fatal("ExtractSitemap", err)
-					return err
+					log.Warnln("ExtractSitemap", err)
+					continue
+					// return err
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
