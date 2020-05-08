@@ -19,6 +19,21 @@ https://github.com/jjmengze/traffic-bot/blob/104f1d58d8ccb121bc60a8a07cae64b5897
 https://github.com/sfproductlabs/scrp
 https://github.com/kpolley/RELK
 
+## pulsar
+https://github.com/ZhenghengLi/docker-pulsar
+https://github.com/cornelk/pulsar-docker-standalone
+https://github.com/rudh24/pulsar-stack-docker-compose/blob/master/docker-compose.yml
+https://github.com/vivekvenkris/pulsar_folder
+https://github.com/killzoner/randokiak (k8s, docker-compose)
+https://github.com/apache/pulsar-client-go
+https://github.com/streamnative/pulsarctl
+https://github.com/yogonza524/apache-pulsar-golang (simple demo in golang)
+https://github.com/kafkaesque-io/sample-pulsar-go-client (sample pulsar client)
+https://github.com/kafkaesque-io/pulsar-beam (docker-compose)
+
+
+## kafka
+https://github.com/simplesteph/kafka-stack-docker-compose
 
 MaxX
 615,392,16,212
