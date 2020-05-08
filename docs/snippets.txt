@@ -11,6 +11,31 @@ Thanks in advance for any insights or inputs on that topic.
 Cheers,
 X
 
+## news scraping
+https://business.financialpost.com
+https://www.lesechos.fr/
+https://wireapi.reuters.com/v3/feed/url/www.reuters.com/news/world?last_ad=1&since=1588709729062636002
+https://fcpablog.com/page/%d
+https://www.devex.com/api/public/search/articles?page[number]=%d&page[size]=%d
+https://seekingalpha.com/news/trending_news
+https://seekingalpha.com/trending_premium_headlines
+https://seekingalpha.com/get_trending_articles
+https://www.theasset.com/
+https://www.wsj.com/
+
+## jl news
+https://www.theasset.com/
+https://seekingalpha.com/
+https://www.devex.com/
+https://fcpablog.com/
+https://www.wsj.com/
+https://www.barrons.com/
+https://www.reuters.com/news/world
+https://www.bloomberg.com/
+https://www.ft.com/
+https://business.financialpost.com/
+https://www.lesechos.fr/
+
 ## grpc
 https://github.com/jemgunay/grpc-examples/blob/master/client/main.go
 https://github.com/jecklgamis/grpc-go-example/blob/master/cmd/client/client.go
@@ -30,10 +55,26 @@ https://github.com/streamnative/pulsarctl
 https://github.com/yogonza524/apache-pulsar-golang (simple demo in golang)
 https://github.com/kafkaesque-io/sample-pulsar-go-client (sample pulsar client)
 https://github.com/kafkaesque-io/pulsar-beam (docker-compose)
-
+https://github.com/kafkaesque-io/pulsar-monitor
 
 ## kafka
 https://github.com/simplesteph/kafka-stack-docker-compose
+https://github.com/rohan-luthra/service-restaurant-go
+https://github.com/walmartdigital/kafka-autoconnector
+https://github.com/fhmq/hmq
+https://github.com/kafka-go-streams/kafka-go-streams
+https://github.com/knative-sandbox/eventing-kafka
+https://github.com/Shopify/sarama
+https://github.com/bptlab/cepta
+https://github.com/ryarnyah/kafka-offset
+https://github.com/birdayz/kaf
+https://github.com/nytimes/gizmo
+https://github.com/honorjoey/gin-xorm
+https://github.com/segmentio/kafka-go
+https://github.com/kudobuilder/kudo
+https://github.com/daheige/kafka-demo
+https://github.com/oleg-balunenko/kafka-dump
+https://github.com/etf1/kafka-transformer
 
 MaxX
 615,392,16,212
@@ -350,7 +391,6 @@ https://github.com/jianyuanzh/flink-playground
 https://github.com/jobmthomas/Docker-Bigdata (nice !)
 https://github.com/loum/hadoop-hive
 https://github.com/loum/hadoop-pseudo
-
 
 ## zookeper + beam
 https://github.com/akshatashan/dockers (nice !)
