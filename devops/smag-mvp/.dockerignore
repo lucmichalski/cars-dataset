@@ -1,0 +1,22 @@
+# IDE stuf
+.vscode/
+.idea/
+
+# git stuff
+.gitignore
+*.md
+
+# DOCKER stuff
+docker-compose.yml
+*/Dockerfile
+Dockerfile
+*.Dockerfile
+.dockerignore
+
+# PYTHON stuff
+__pycache__/
+*.pyc
+*faces/env/*
+*faces/images/*
+frontend
+Makefile

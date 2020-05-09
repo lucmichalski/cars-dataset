@@ -1,0 +1,494 @@
+version: 2.1
+
+executors:
+  test-runner:
+    docker:
+      - image: codesmag/opencv
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    environment:
+      GO111MODULE: "on"
+  job-runner:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    environment:
+      GO111MODULE: "on"
+jobs:
+  tests:
+    executor: test-runner
+    steps:
+      - checkout
+      # specify any bash command here prefixed with `run: `
+      - run: go test -v ./...
+  scraper-image:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/scraper/user/Dockerfile codesmag/insta_user-scraper
+
+  postgres-inserter-image:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/inserter/postgres/Dockerfile codesmag/insta_postgres-inserter
+
+  insta-comments-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/inserter/comments/Dockerfile codesmag/insta_comments-inserter
+
+  insta-comments-scraper:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/scraper/comments/Dockerfile codesmag/insta_comments-scraper
+
+  insta-posts-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/inserter/posts/Dockerfile codesmag/insta-posts-inserter
+
+  insta-posts-scraper:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/scraper/posts/Dockerfile codesmag/insta_posts-scraper
+
+  postgres-setup:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/db/kubernetes/Dockerfile codesmag/postgres-setup
+  # TWITTER
+  twitter_inserter_users:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh twitter/inserter/users/Dockerfile codesmag/twitter_inserter_users
+  twitter_inserter_posts:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh twitter/inserter/posts/Dockerfile codesmag/twitter_inserter_posts
+  twitter_filter_user_names:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh twitter/filter/user_names/Dockerfile codesmag/twitter_filter_user_names
+  twitter_scraper:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh twitter/scraper/Dockerfile codesmag/twitter_scraper twitter/scraper/
+
+  insta_user_names-filter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/filter/user_names/Dockerfile codesmag/insta_user_names_filter
+
+  insta_post_pictures-filter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/filter/post_pictures/Dockerfile codesmag/insta_post_pictures_filter
+  insta_pics_downloader:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/pics-downloader/Dockerfile codesmag/insta_pics_downloader
+
+  grpc-server:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh api/grpcserver/Dockerfile codesmag/grpc-server
+
+  envoy-proxy:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh api/envoy-proxy/Dockerfile codesmag/envoy-proxy
+
+  cli:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh cli/Dockerfile codesmag/cli
+  aws_service:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh aws_service/Dockerfile codesmag/aws_service
+  tools:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh tools/Dockerfile codesmag/tools tools
+  insta_likes-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: ./build_and_upload_image.sh insta/inserter/likes/Dockerfile codesmag/insta_likes-inserter
+  insta_likes-scraper:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/scraper/likes/Dockerfile codesmag/insta_likes-scraper
+            ./build_and_upload_image.sh insta/filter/post_face-recon/Dockerfile codesmag/face-recon-filter
+            ./build_and_upload_image.sh insta/posts_face-detection/worker.Dockerfile codesmag/face-detection-prefilter
+
+  neo4j_insta_posts-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/inserter/neo4j/posts/Dockerfile codesmag/neo4j_insta_posts-inserter
+  neo4j_insta_user-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/inserter/neo4j/user/Dockerfile codesmag/neo4j_insta_user-inserter
+  neo4j_insta_tagged_users-inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/inserter/neo4j/tagged_users/Dockerfile codesmag/neo4j_insta_tagged_users-inserter
+
+  face_recognition:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh faces/Dockerfile codesmag/face_recognizer faces
+            ./build_and_upload_image.sh face-recognition/Dockerfile codesmag/face-recognition-worker
+
+  elasticsearch:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh elastic/build/Dockerfile codesmag/elasticsearch
+
+  elastic_indexer_faces:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/indexer/faces/Dockerfile codesmag/elastic_indexer_faces
+
+  elastic_indexer_posts:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/indexer/posts/Dockerfile codesmag/elastic_indexer_posts
+
+  elastic_indexer_users:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/indexer/users/Dockerfile codesmag/elastic_indexer_users
+
+  elastic_indexer_comments:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/indexer/comments/Dockerfile codesmag/elastic_indexer_comments
+
+  insta_posts_faces_inserter:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh insta/inserter/posts_face/Dockerfile codesmag/insta_posts_face-inserter
+
+  neo4j-create-import-user-json:
+    executor: job-runner
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Publish Docker Image to Docker Hub
+          command: |
+            ./build_and_upload_image.sh neo4j/create-import-user-json/Dockerfile codesmag/neo4j-create-import-user-json
+
+workflows:
+  version: 2
+  workflow:
+    jobs:
+      - tests
+      - scraper-image:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - postgres-inserter-image:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta-comments-inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta-comments-scraper:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta-posts-scraper:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta-posts-inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      # TWITTER
+      - twitter_scraper:
+          filters:
+            branches:
+              only: master
+      - twitter_inserter_users:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - twitter_inserter_posts:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - twitter_filter_user_names:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+
+      - postgres-setup:
+          filters:
+            branches:
+              only: master
+      - cli:
+          filters:
+            branches:
+              only: master
+      - aws_service:
+          filters:
+            branches:
+              only: master
+      - insta_user_names-filter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta_post_pictures-filter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta_pics_downloader:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - neo4j_insta_posts-inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - neo4j_insta_user-inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - neo4j_insta_tagged_users-inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - grpc-server:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - envoy-proxy:
+          filters:
+            branches:
+              only: master
+      - tools:
+          filters:
+            branches:
+              only: master
+      - insta_likes-inserter:
+          filters:
+            branches:
+              only: master
+      - insta_likes-scraper:
+          filters:
+            branches:
+              only: master
+      - face_recognition:
+          filters:
+            branches:
+              only: master
+      - elasticsearch:
+          filters:
+            branches:
+              only: master
+      - elastic_indexer_faces:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - elastic_indexer_users:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - elastic_indexer_posts:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - elastic_indexer_comments:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - insta_posts_faces_inserter:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
+      - neo4j-create-import-user-json:
+          requires:
+            - tests
+          filters:
+            branches:
+              only: master
