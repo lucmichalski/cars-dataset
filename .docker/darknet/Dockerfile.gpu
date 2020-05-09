@@ -66,6 +66,9 @@ RUN \
     && go get -u github.com/sirupsen/logrus \
     && go get -u github.com/spf13/pflag
 
+RUN go get -u github.com/corpix/uarand \
+    && go get -u golang.org/x/net/proxy
+
 WORKDIR /darknet
 
 COPY download_data.sh .

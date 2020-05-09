@@ -13,18 +13,19 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
-	"math/rand"
 	"strings"
 	"sync"
 	"time"
 
 	darknet "github.com/LdDl/go-darknet"
+	// "github.com/corpix/uarand"
 	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
 	"github.com/h2non/filetype"
@@ -32,6 +33,7 @@ import (
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
+	// "golang.org/x/net/proxy"
 
 	"github.com/lucmichalski/cars-dataset/pkg/grab"
 	"github.com/lucmichalski/cars-dataset/pkg/models"
@@ -42,21 +44,28 @@ import (
 	TO DO:
 	- Make more elegant this dirty hacky code
 	- Comment the code as much as possible
+
+docker run --name darknet7 --runtime=nvidia -ti -p 9009:9009 -e DARKNET_PORT=9009 -v `pwd`/darknet:/darknet -v `pwd`/models:/darknet/models lucmichalski/darknet:gpu-latest sh -c 'go run server.go --config-file=./models/stanford-1class.cfg --weights-file=./models/stanford-1class_final.weights --gpu 1'
 */
+
+const (
+	torProxyAddress   = "socks5://51.91.21.67:5566"
+	torPrivoxyAddress = "socks5://51.91.21.67:8119"
+)
 
 var (
 	isHelp      bool
 	isVerbose   bool
 	isDryMode   bool
-	gpuId	    int
+	gpuId       int
 	weightsFile string
 	configFile  string
 	geoIpFile   string
 	labelmeVer  string
 	geoReader   *geoip2.Reader
 	m           yoloModel
-    minWidth 	= 700
-    maxWidth 	= 800
+	minWidth    = 700
+	maxWidth    = 800
 )
 
 // yoloModel represents the yolllow network model loaded and it read/write mutex
@@ -84,7 +93,7 @@ func main() {
 	pflag.StringVarP(&configFile, "config-file", "c", "./models/yolov4.cfg", "Path to network layer configuration file. Example: cfg/yolov4.cfg")
 	pflag.StringVarP(&geoIpFile, "geoip-db", "", "./geoip2/GeoLite2-City.mmdb", "geoip filepath.")
 	pflag.StringVarP(&labelmeVer, "labelme-ver", "", "3.6.10", "labelme version JSON format.")
-        pflag.IntVarP(&gpuId, "gpu", "", 0, "gpu id (eg 0,1).")
+	pflag.IntVarP(&gpuId, "gpu", "", 0, "gpu id (eg 0,1).")
 	pflag.BoolVarP(&isVerbose, "verbose", "v", false, "verbose mode.")
 	pflag.BoolVarP(&isHelp, "help", "h", false, "help info.")
 	pflag.Parse()
@@ -127,7 +136,7 @@ func main() {
 }
 
 func init() {
-    rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 }
 
 func server() {
@@ -136,10 +145,10 @@ func server() {
 
 	// globally use middlewares
 	//r.Use(
-		// middlewares.RealIP(),
-		// middlewares.RecoveryWithWriter(os.Stderr),
-		// middlewares.Logger(geoReader),
-		// middlewares.CORS(),
+	// middlewares.RealIP(),
+	// middlewares.RecoveryWithWriter(os.Stderr),
+	// middlewares.Logger(geoReader),
+	// middlewares.CORS(),
 	//	gin.ErrorLogger(),
 	//)
 
@@ -221,7 +230,7 @@ func server() {
 			case "image/jpeg":
 				src, err = jpeg.Decode(file)
 				if err != nil {
-					// fmt.Println("jpeg.Decode failed")					
+					// fmt.Println("jpeg.Decode failed")
 					panic(err.Error())
 				}
 			case "image/png":
@@ -243,7 +252,7 @@ func server() {
 			}
 
 			if b.Max.X > 700 {
-				width := rand.Intn(maxWidth - minWidth + 1) + minWidth
+				width := rand.Intn(maxWidth-minWidth+1) + minWidth
 				src = imaging.Resize(src, width, 0, imaging.Lanczos)
 			}
 
@@ -272,7 +281,6 @@ func server() {
 
 			lc.ImageHeight = b.Max.Y
 			lc.ImageWidth = b.Max.X
-
 
 			lc.LineColor = []int{0, 255, 0, 128}
 			lc.Version = labelmeVer
@@ -320,7 +328,7 @@ func server() {
 				buf := new(bytes.Buffer)
 				err := jpeg.Encode(buf, src, nil)
 				if err != nil {
-					panic(err.Error())					
+					panic(err.Error())
 				}
 
 				// Encode as base64.
@@ -358,7 +366,7 @@ func server() {
 				sc.Points = append(sc.Points, points...)
 				lc.Shapes = append(lc.Shapes, sc)
 			} else {
-                                lc.Shapes = nil
+				lc.Shapes = nil
 			}
 			c.JSON(200, &lc)
 		} else {
@@ -512,7 +520,7 @@ func server() {
 			if err != nil {
 				// Handle error
 				panic(err.Error())
-			}			
+			}
 
 		} else {
 			c.String(200, "Nothing")
@@ -801,6 +809,30 @@ func cropZone(inputFile string, idx int, className string, bbox image.Rectangle)
 
 func grabFileByURL(rawURL string) (*os.File, int64, error) {
 	clientGrab := grab.NewClient()
+
+	clientGrab.UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" // uarand.GetRandom()
+
+	/*
+		client := &http.Client{
+			Timeout: 40 * time.Second,
+		}
+
+		tbProxyURL, err := url.Parse(torPrivoxyAddress)
+		if err != nil {
+			return nil, 0, errors.New("----> could not parse proxy address.\n")
+		}
+
+		tbDialer, err := proxy.FromURL(tbProxyURL, proxy.Direct)
+		if err != nil {
+			return nil, 0, errors.New("----> could not get proxy.\n")
+		}
+		tbTransport := &http.Transport{
+			Dial: tbDialer.Dial,
+		}
+		client.Transport = tbTransport
+
+		clientGrab.HTTPClient = client
+	*/
 
 	req, _ := grab.NewRequest(os.TempDir(), rawURL)
 	if req == nil {
