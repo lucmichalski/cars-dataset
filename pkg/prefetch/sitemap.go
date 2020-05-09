@@ -261,7 +261,7 @@ func ExtractSitemapGZ(rawUrl string) ([]string, error) {
 func ExtractSitemap(rawUrl string) ([]string, error) {
 
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 40 * time.Second,
 	}
 
 	tbProxyURL, err := url.Parse(torProxyAddress)
