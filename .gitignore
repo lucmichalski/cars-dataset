@@ -1,0 +1,19 @@
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+.DS_Store
+.vscode
+
+node_modules
+frontend/yarn.lock
+frontend/build
+
+env
+faces/images
+faces/img.jpg
+

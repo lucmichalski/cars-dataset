@@ -1,0 +1,14 @@
+{
+  "name": "inventory-connector",
+  "config": {
+    "plugin.name": "wal2json",
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "my-postgres-postgresql",
+    "database.port": "5432",
+    "database.user": "postgres",
+    "database.password": "12345678",
+    "database.dbname": "instascraper",
+    "database.server.name": "postgres"
+  }
+}
