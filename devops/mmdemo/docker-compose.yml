@@ -1,0 +1,114 @@
+version: '2'
+
+services:
+
+#  graylog-mongo:
+#    image: "mongo:3.0"
+#    volumes:
+#      - ./graylog/data/mongo:/data/db
+
+#  graylog-elasticsearch:
+#    image: "elasticsearch:2"
+#    command: "elasticsearch -Des.cluster.name='graylog'"
+#    environment:
+#      ES_HEAP_SIZE: 1g
+#    volumes:
+#      - ./graylog/data/elasticsearch:/usr/share/elasticsearch/data
+
+#  graylog:
+#    image: graylog2/server:2.0.1-1
+#    volumes:
+#      - ./graylog/data/journal:/usr/share/graylog/data/journal
+#      - ./graylog/config:/usr/share/graylog/data/config
+#    environment:
+#      GRAYLOG_REST_TRANSPORT_URI: http://127.0.0.1:12900
+#    links:
+#      - graylog-mongo:mongo
+#      - graylog-elasticsearch:elasticsearch
+#    ports:
+#      - "9000:9000"
+#      - "12900:12900"
+#      - "12201:12201"
+#      - "12201/udp:12201/udp"
+
+  redis:
+    image: redis:3.0
+    restart: always
+    networks:
+      common_network:
+        aliases:
+          - redis
+
+  mongodb:
+    image: mongo:3.2.11
+    command: mongod --auth
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data_dir:/data/db
+    restart: always
+    networks:
+      common_network:
+        aliases:
+          - mongodb
+
+  solr:
+    image: solr:6.6.6
+    ports:
+      - "8983:8983"
+    volumes:
+      - ./solr-cores:/opt/solr/server/solr
+    command: bin/solr -m 8g -f
+    environment:
+      LOG4J_PROPS: /opt/solr/server/solr/log4j.properties
+    restart: always
+    networks:
+      common_network:
+        aliases:
+         - solr
+  web:
+    build:
+      context: web-service
+    image: web
+    volumes:
+      - ./web-service/site:/var/www/site
+    ports:
+      - "80:80"
+    restart: always
+    environment:
+      MONGO_USER: admin
+      MONGO_PASSWORD: place_your_password_here
+    networks:
+      common_network:
+        aliases:
+          - web
+    depends_on:
+      - redis
+      - mongodb
+      - solr
+
+  streammanager:
+    build:
+      context: stream-manager-service
+    image: streammanager:lightweight
+    volumes:
+      - ./stream-manager-service/conf:/stream_manager/conf
+    restart: always
+    environment:
+      MONGO_USER: admin
+      MONGO_PASSWORD: place_your_password_here
+    networks:
+      common_network:
+        aliases:
+          - streammanager
+    depends_on:
+      - redis
+      - mongodb
+      - solr
+#    logging:
+#      driver: gelf
+#      options:
+#        gelf-address: "udp://localhost:12201"
+
+networks:
+  common_network:
