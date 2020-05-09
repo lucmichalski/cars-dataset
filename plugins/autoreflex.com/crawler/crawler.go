@@ -298,9 +298,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "listing") {
-						q.AddURL(loc)
-					}
+					q.AddURL(loc)
 				}
 			} else {
 				locs, err := prefetch.ExtractSitemap(sitemap)
@@ -310,9 +308,7 @@ func Extract(cfg *config.Config) error {
 				}
 				utils.Shuffle(locs)
 				for _, loc := range locs {
-					if strings.Contains(loc, "listing") {
-						q.AddURL(loc)
-					}
+					q.AddURL(loc)
 				}
 			}
 		}
