@@ -1,0 +1,40 @@
+{
+  "name": "playwright-docker-server",
+  "version": "0.1.1",
+  "description": "Minimalistic playwright server in docker.",
+  "main": "build/src/main.js",
+  "repository": "https://github.com/Cyrus-d/playwright-docker-server",
+  "devDependencies": {
+    "@types/http-proxy": "^1.17.3",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^10.14.17",
+    "jest": "~24.9.0",
+    "prettier": "~1.18.2",
+    "rimraf": "^3.0.0",
+    "ts-jest": "^24.0.0",
+    "tslint": "~5.19.0",
+    "tslint-config-prettier": "1.18.0",
+    "tslint-microsoft-contrib": "~6.2.0",
+    "tsutils": "~3.17.0",
+    "typescript": "~3.6.0"
+  },
+  "scripts": {
+    "clean": "rimraf coverage build tmp",
+    "build": "tsc -p tsconfig.release.json",
+    "build:watch": "tsc -w -p tsconfig.release.json",
+    "lint": "tslint -t stylish --project \"tsconfig.json\"",
+    "test": "jest --coverage",
+    "test:no-cache": "jest --coverage --no-cache",
+    "test:watch": "jest --watch",
+    "start": "node build/src/main.js",
+    "start-debug": "node --inspect=0.0.0.0 build/src/main.js"
+  },
+  "author": "mo doaie<mdoaie@yahoo.co.uk>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "http-proxy": "^1.18.0",
+    "jest-mock-console": "^1.0.0",
+    "playwright": "^0.13.0",
+    "tslib": "^1.10.0"
+  }
+}
