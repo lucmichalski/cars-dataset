@@ -19,6 +19,7 @@ const { chromium } = require("playwright-chromium");
   });
   const context = await browser.newContext();
   const page = await context.newPage();
+  await page._client.send('Page.setDownloadBehavior', {behavior: 'allow', downloadPath: './'});
   await page.goto("http://whatsmyuseragent.org/");
   await page.screenshot({ path: `example-chromium.png` });
   await browser.close();

@@ -18,6 +18,7 @@ import (
 	"github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+        "github.com/gocolly/colly/v2/proxy"
 	log "github.com/sirupsen/logrus"
 	ccsv "github.com/tsak/concurrent-csv-writer"
 	"golang.org/x/net/proxy"
@@ -64,6 +65,14 @@ func Sitemap(cfg *config.Config) error {
 		colly.AllowedDomains(cfg.AllowedDomains...),
 		colly.CacheDir(cfg.CacheDir),
 	)
+
+	// Add proxy balancer
+	// to do: pass as argument all proxies' addresses
+	rp, err := proxy.RoundRobinProxySwitcher("socks5://localhost:1080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.SetProxyFunc(rp)
 
 	// create a request queue with `x` consumer threads
 	q, _ := queue.New(
