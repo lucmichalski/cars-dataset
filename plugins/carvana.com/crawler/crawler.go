@@ -10,6 +10,7 @@ import (
 	"github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
+        "github.com/gocolly/colly/v2/proxy"
 	"github.com/k0kubun/pp"
 	pmodels "github.com/lucmichalski/cars-contrib/autosphere.fr/models"
 	"github.com/qor/media/media_library"
@@ -27,13 +28,13 @@ func Extract(cfg *config.Config) error {
 	c := colly.NewCollector(
 		colly.UserAgent(uarand.GetRandom()),
 		colly.CacheDir(cfg.CacheDir),
-		/*
-			colly.URLFilters(
-				regexp.MustCompile("https://autosphere\\.fr/(|e.+)$"),
-				regexp.MustCompile("https://www.autosphere\\.fr/h.+"),
-			),
-		*/
 	)
+
+	rp, err := proxy.RoundRobinProxySwitcher("socks5://localhost:1080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.SetProxyFunc(rp)
 
 	// create a request queue with 1 consumer thread until we solve the multi-threadin of the darknet model
 	q, _ := queue.New(
@@ -146,28 +147,40 @@ func Extract(cfg *config.Config) error {
 				continue
 			}
 
-			proxyURL := fmt.Sprintf("http://darknet:9003/crop?url=%s", carImage)
+			proxyURL := fmt.Sprintf("http://51.91.21.67:9007/labelme?url=%s", carImage)
 			log.Println("proxyURL:", proxyURL)
-			if file, size, checksum, err := utils.OpenFileByURL(proxyURL); err != nil {
+			if content, err := utils.GetJSON(proxyURL); err != nil {
 				fmt.Printf("open file failure, got err %v", err)
 			} else {
-				defer file.Close()
 
-				if size < 40000 {
-					if cfg.IsClean {
-						// delete tmp file
-						err := os.Remove(file.Name())
-						if err != nil {
-							log.Fatal(err)
-						}
-					}
-					log.Infoln("----> Skipping file: ", file.Name(), "size: ", size)
+				if string(content) == "" {
 					continue
 				}
 
-				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage}
+				var detection *models.Labelme
+				if err := json.Unmarshal(content, &detection); err != nil {
+					log.Warnln("unmarshal error, ", err)
+					continue
+				}
 
-				log.Println("----> Scanning file: ", file.Name(), "size: ", size)
+				file, checksum, err := utils.DecodeToFile(carImage, detection.ImageData)
+				if err != nil {
+					log.Fatalln("decodeToFile error, ", err)
+				}
+
+				if len(detection.Shapes) != 1 {
+					continue
+				}
+
+				// we expect online one focused image
+				maxX := detection.Shapes[0].Points[0][0]
+				maxY := detection.Shapes[0].Points[0][1]
+				minX := detection.Shapes[0].Points[1][0]
+				minY := detection.Shapes[0].Points[1][1]
+				bbox := fmt.Sprintf("%d,%d,%d,%d", maxX, maxY, minX, minY)
+				image := models.VehicleImage{Title: vehicle.Name, SelectedType: "image", Checksum: checksum, Source: carImage, BBox: bbox}
+
+				log.Println("----> Scanning file: ", file.Name())
 				if err := image.File.Scan(file); err != nil {
 					log.Fatalln("image.File.Scan, err:", err)
 					continue

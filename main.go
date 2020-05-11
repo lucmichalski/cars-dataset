@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -51,7 +51,7 @@ var (
 	isTor        bool
 	isExtract    bool
 	parallelJobs int
-	torAddress   string 
+	torAddress   string
 	analyzerURL  string
 	geoIpFile    string
 	pluginDir    string
@@ -202,7 +202,7 @@ func main() {
 			}
 			c.IsDebug = true
 			c.IsClean = isClean
-			c.AnalyzerURL = analyzerURL			
+			c.AnalyzerURL = analyzerURL
 			c.ConsumerThreads = 6
 			pp.Println(c)
 			c.DB = DB
@@ -336,14 +336,14 @@ func main() {
 		router.Static("/public", "./public")
 
 		fmt.Println("Listening on: 9008")
-	        s := &http.Server{
-	                Addr:           ":9008",
-	                Handler:        router,
-	                ReadTimeout:    10 * time.Second,
-	                WriteTimeout:   10 * time.Second,
-	                MaxHeaderBytes: 1 << 20,
-	        }
-	        s.ListenAndServe()
+		s := &http.Server{
+			Addr:           ":9008",
+			Handler:        router,
+			ReadTimeout:    10 * time.Second,
+			WriteTimeout:   10 * time.Second,
+			MaxHeaderBytes: 1 << 20,
+		}
+		s.ListenAndServe()
 		// log.Fatal(router.Run(fmt.Sprintf("%s:%s", "", "9008")))
 		// http.ListenAndServe(":9008", mux)
 

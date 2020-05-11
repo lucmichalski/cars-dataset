@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	//"bytes"
 	"log"
 	"fmt"
 
@@ -14,7 +14,7 @@ func main() {
 	c := colly.NewCollector(colly.AllowURLRevisit())
 
 	// Rotate two socks5 proxies
-	rp, err := proxy.RoundRobinProxySwitcher("socks5h://localhost:1080")
+	rp, err := proxy.RoundRobinProxySwitcher("socks5://localhost:1080")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,7 +28,8 @@ func main() {
 	// Print the response
 	c.OnResponse(func(r *colly.Response) {
 		log.Printf("Proxy Address: %s\n", r.Request.ProxyURL)
-		log.Printf("%s\n", bytes.Replace(r.Body, []byte("\n"), nil, -1))
+		log.Println("Body", string(r.Body))
+		//log.Printf("%s\n", bytes.Replace(r.Body, []byte("\n"), nil, -1))
 	})
 
 	// Fetch httpbin.org/ip five times
@@ -36,4 +37,9 @@ func main() {
 		fmt.Println("Visiting")
 		c.Visit("https://httpbin.org/ip")
 	}
+
+        c.Visit("https://www.carvana.com/robots.txt")
+
+	c.Visit("https://www.carvana.com/sitemap.xml")
+
 }
