@@ -17,8 +17,8 @@ import (
 	"github.com/beevik/etree"
 	"github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/proxy"
 	"github.com/gocolly/colly/v2/queue"
-        "github.com/gocolly/colly/v2/proxy"
 	log "github.com/sirupsen/logrus"
 	ccsv "github.com/tsak/concurrent-csv-writer"
 	"golang.org/x/net/proxy"
@@ -179,14 +179,14 @@ func ExtractSitemapIndex(rawUrl string) ([]string, error) {
 	defer response.Body.Close()
 
 	/*
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return nil, err
+		}
 
-	// log.Println(string(body))	
-	fmt.Println("Body:", string(body))
-	os.Exit(1)
+		// log.Println(string(body))
+		fmt.Println("Body:", string(body))
+		os.Exit(1)
 	*/
 
 	doc := etree.NewDocument()

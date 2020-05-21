@@ -12,6 +12,7 @@ const { chromium } = require("playwright-chromium");
 (async () => {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+    args: ["--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox"],
     logger: {
       isEnabled: (name, severity) => name === "browser" || "context",
       log: (name, severity, message, args) => console.log(`${name} ${message}`),

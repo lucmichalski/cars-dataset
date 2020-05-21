@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/confluentinc/confluent-kafka-go v1.4.2 // indirect
 	github.com/corpix/uarand v0.1.1 // indirect
 	github.com/daetal-us/getld v1.0.1 // indirect
@@ -14,6 +15,7 @@ require (
 	github.com/gin-gonic/gin v1.6.2
 	github.com/gocolly/colly v1.2.0 // indirect
 	github.com/gocolly/colly/v2 v2.0.1 // indirect
+	github.com/gocolly/twocaptcha v0.0.0-20180302192906-5ade8d29ba53 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/sessions v1.2.0 // indirect
