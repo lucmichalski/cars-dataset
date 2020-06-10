@@ -222,12 +222,15 @@ func Extract(cfg *config.Config) error {
 			}
 		})
 
-		pp.Println(carDataImage)
-		pp.Println(vehicle)
+		// pp.Println(carDataImage)
+		// pp.Println(vehicle)
 
 		if vehicle.Manufacturer == "" && vehicle.Modl == "" && vehicle.Year == "" {
 			return
 		}
+
+                pp.Println(carDataImage)
+                pp.Println(vehicle)
 
 		// Pictures
 		for _, carImage := range carDataImage {

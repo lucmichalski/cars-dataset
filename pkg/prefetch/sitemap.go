@@ -17,7 +17,7 @@ import (
 	"github.com/beevik/etree"
 	"github.com/corpix/uarand"
 	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/proxy"
+	cproxy "github.com/gocolly/colly/v2/proxy"
 	"github.com/gocolly/colly/v2/queue"
 	log "github.com/sirupsen/logrus"
 	ccsv "github.com/tsak/concurrent-csv-writer"
@@ -68,7 +68,7 @@ func Sitemap(cfg *config.Config) error {
 
 	// Add proxy balancer
 	// to do: pass as argument all proxies' addresses
-	rp, err := proxy.RoundRobinProxySwitcher("socks5://localhost:1080")
+	rp, err := cproxy.RoundRobinProxySwitcher("socks5://localhost:1080")
 	if err != nil {
 		log.Fatal(err)
 	}

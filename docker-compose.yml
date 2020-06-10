@@ -164,7 +164,7 @@ services:
     environment:
     - privoxy=1
     - privoxy_port=8119
-    - tors=50
+    - tors=75
     networks:
     - internal
     - web
@@ -222,6 +222,7 @@ services:
     ports:
     - 3306:3306
     volumes:
+    - ./.config/mysql/cars.cnf:/etc/mysql/conf.d/my.cnf
     - db-data:/var/lib/mysql
     networks:
     - internal

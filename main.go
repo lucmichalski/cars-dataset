@@ -48,6 +48,7 @@ var (
 	isCatalog    bool
 	isDryMode    bool
 	isNoCache    bool
+	isNasha      bool
 	isTor        bool
 	isExtract    bool
 	parallelJobs int
@@ -83,6 +84,7 @@ func main() {
 	pflag.StringSliceVarP(&usePlugins, "plugins", "", defaultPlugins, "plugins to load.")
 	pflag.IntVarP(&parallelJobs, "parallel-jobs", "j", 35, "parallel jobs.")
 	pflag.BoolVarP(&isCrawl, "crawl", "c", false, "launch the crawler.")
+	pflag.BoolVarP(&isNasha, "replicate", "r", false, "copy image to nasha")
 	pflag.BoolVarP(&isDataset, "dataset", "d", false, "launch the crawler.")
 	pflag.BoolVarP(&isClean, "clean", "", false, "auto-clean temporary files.")
 	pflag.BoolVarP(&isAdmin, "admin", "", false, "launch the admin interface.")
@@ -105,12 +107,25 @@ func main() {
 	// Instanciate geoip2 database
 	geo = must(geoip2.Open(geoIpFile)).(*geoip2.Reader)
 
+	dsl := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE"))
+	fmt.Println("Dsl:", dsl)
+
 	// Instanciate the mysql client
-	DB, err := gorm.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8mb4,utf8&parseTime=True", os.Getenv("MYSQL_USER"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_HOST"), os.Getenv("MYSQL_PORT"), os.Getenv("MYSQL_DATABASE")))
+	DB, err := gorm.Open("mysql", dsl)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer DB.Close()
+
+	// ref. https://gorm.io/docs/generic_interface.html
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	DB.DB().SetMaxIdleConns(64)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	DB.DB().SetMaxOpenConns(100)
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	DB.DB().SetConnMaxLifetime(time.Minute)
 
 	// callback for images and validation
 	validations.RegisterCallbacks(DB)
@@ -344,14 +359,99 @@ func main() {
 			MaxHeaderBytes: 1 << 20,
 		}
 		s.ListenAndServe()
-		// log.Fatal(router.Run(fmt.Sprintf("%s:%s", "", "9008")))
-		// http.ListenAndServe(":9008", mux)
+
+	}
+
+	if isNasha {
+
+		// Scan
+		type cnt struct {
+			Count int
+		}
+
+		type res struct {
+			Images string
+		}
+
+		type entryProperty struct {
+			ID          int
+			Url         string
+			VideoLink   string
+			FileName    string
+			Description string
+		}
+
+		var count cnt
+		DB.Raw("select count(images) as count FROM vehicles").Scan(&count)
+
+		// instanciate throttler
+		t := throttler.New(42, count.Count)
+
+		counter := 0
+		imgCounter := 0
+
+		var results []res
+		DB.Raw("select images FROM vehicles").Scan(&results)
+		for _, result := range results {
+
+			go func(r res) error {
+				defer t.Done(nil)
+
+				if r.Images == "" {
+					return nil
+				}
+
+				var ep []entryProperty
+				if err := json.Unmarshal([]byte(r.Images), &ep); err != nil {
+					log.Fatalln("unmarshal error, ", err)
+				}
+
+				prefixPath := filepath.Join("/mnt/nasha/lucmichalski/cars-dataset/")
+				os.MkdirAll(prefixPath, 0755)
+				pp.Println("prefixPath:", prefixPath)
+
+				for _, entry := range ep {
+					sourceFile := filepath.Join("./", "public", entry.Url)
+					input, err := ioutil.ReadFile(sourceFile)
+					if err != nil {
+						log.Warnln("reading file error, ", err)
+						continue
+					}
+					destinationFile := filepath.Join(prefixPath, "public", entry.Url)
+					err = ioutil.WriteFile(destinationFile, input, 0644)
+					if err != nil {
+						log.Fatalln("creating file error, ", err)
+					}
+					imgCounter++
+				}
+
+				percent := ((counter * 100) / count.Count)
+				fmt.Printf("REF COUNTER=%v/%v (%v percent), IMG COUNTER=%v\n", counter, count.Count, percent, imgCounter)
+				counter++
+				return nil
+			}(result)
+			t.Throttle()
+		}
+
+		// throttler errors iteration
+		if t.Err() != nil {
+			// Loop through the errors to see the details
+			for i, err := range t.Errs() {
+				log.Printf("error #%d: %s", i, err)
+			}
+			log.Fatal(t.Err())
+		}
+
+		os.Exit(0)
 
 	}
 
 	if isDataset {
 
-		csvDataset, err := ccsv.NewCsvWriter("dataset.txt")
+		// 322525 class
+		// 2217792 images
+
+		csvDataset, err := ccsv.NewCsvWriter("/mnt/nasha/lucmichalski/cars-dataset/datasets/cars_dataset.txt")
 		if err != nil {
 			panic("Could not open `dataset.txt` for writing")
 		}
@@ -359,7 +459,7 @@ func main() {
 		// Flush pending writes and close file upon exit of Sitemap()
 		defer csvDataset.Close()
 
-		csvDataset.Write([]string{"name", "make", "model", "year", "image_path"})
+		csvDataset.Write([]string{"name", "make", "model", "year", "image_path", "maxX", "maxY", "minX", "minY"})
 		csvDataset.Flush()
 
 		// Scan
@@ -384,16 +484,16 @@ func main() {
 		}
 
 		var count cnt
-		DB.Raw("select count(id) as count FROM vehicles WHERE class='car'").Scan(&count)
+		DB.Raw("select count(id) as count FROM vehicles WHERE class='car' AND modl!='' AND year!='' AND manufacturer NOT IN ('Harley-Davidson', 'KTM', 'Triumph')").Scan(&count)
 
 		// instanciate throttler
-		t := throttler.New(48, count.Count)
+		t := throttler.New(42, count.Count)
 
 		counter := 0
 		imgCounter := 0
 
 		var results []res
-		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles WHERE class='car'").Scan(&results)
+		DB.Raw("select name, manufacturer as make, modl, year, images FROM vehicles WHERE class='car' AND modl!='' AND year!='' AND manufacturer NOT IN ('Harley-Davidson', 'KTM', 'Triumph')").Scan(&results)
 		for _, result := range results {
 
 			go func(r res) error {
@@ -413,12 +513,30 @@ func main() {
 				//	return nil
 				//}
 
+				manufacturer := strings.Replace(strings.ToUpper(r.Make), " ", "-", -1)
+				switch manufacturer {
+				case "CITROËN":
+					manufacturer = "CITROEN"
+				case "DS":
+					manufacturer = "DS-AUTOMOBILES"
+				case "LANDROVER":
+					manufacturer = "LAND-ROVER"
+				case "MERCEDES":
+					manufacturer = "MERCEDES-BENZ"
+				case "ROLLSROYCE":
+					manufacturer = "ROLLS-ROYCE"
+				}
+
 				// prefixPath := filepath.Join("./", "datasets", "cars", result.Name)
-				prefixPath := filepath.Join("./", "datasets", "cars", strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year)
+				prefixPath := filepath.Join("/mnt/nasha/lucmichalski/cars-dataset/", "datasets", "cars", manufacturer, strings.ToUpper(r.Modl), r.Year)
 				os.MkdirAll(prefixPath, 0755)
 				// pp.Println("prefixPath:", prefixPath)
 
 				for _, entry := range ep {
+
+					if entry.ID < 250000 {
+						continue
+					}
 
 					// get image Info (to test)
 					var vi models.VehicleImage
@@ -427,7 +545,7 @@ func main() {
 						log.Warnln("VehicleImage", err)
 						continue
 					}
-					// fmt.Println("image checksum", vi.Checksum)
+					// fmt.Println("image checksum:", vi.Checksum, ", bounding_box:", vi.BBox)
 
 					sourceFile := filepath.Join("./", "public", entry.Url)
 					// pp.Println("sourceFile:", sourceFile)
@@ -447,14 +565,15 @@ func main() {
 					}
 					// pp.Println("destinationFile:", destinationFile)
 
-					csvDataset.Write([]string{r.Name, strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year, destinationFile})
+					bbox := strings.Split(vi.BBox, ",")
+					csvDataset.Write([]string{r.Name, strings.Replace(strings.ToUpper(r.Make), " ", "-", -1), strings.ToUpper(r.Modl), r.Year, destinationFile, bbox[0], bbox[1], bbox[2], bbox[3]})
 					csvDataset.Flush()
 
 					imgCounter++
 				}
 
-				percent := (counter * 100) / count.Count
-				fmt.Printf("REF COUNTER=%d/%d (%.2f%), IMG COUNTER=%d\n", counter, count.Count, percent, imgCounter)
+				percent := ((counter * 100) / count.Count)
+				fmt.Printf("REF COUNTER=%v/%v (%v percent), IMG COUNTER=%v\n", counter, count.Count, percent, imgCounter)
 				counter++
 
 				return nil

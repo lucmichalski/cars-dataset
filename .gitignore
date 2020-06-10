@@ -1,3 +1,5 @@
+tools/*.jpg
+
 *.gz
 dataset.txt
 
