@@ -32,7 +32,7 @@
   "author": "mo doaie<mdoaie@yahoo.co.uk>",
   "license": "Apache-2.0",
   "dependencies": {
-    "http-proxy": "^1.18.0",
+    "http-proxy": "^1.18.1",
     "jest-mock-console": "^1.0.0",
     "playwright": "^0.13.0",
     "tslib": "^1.10.0"
